@@ -9,4 +9,5 @@ class BVRuntimeConfig (
         private @Value("\${config.location}") val sourcesConfigFolder: Path) {
     val sourcesConfigFileName = sourcesConfigFolder.resolve("bv-sources.json")
     val usersConfigFileName = sourcesConfigFolder.resolve("bv-users.json")
+    val gDriveRenewTokenFile = sourcesConfigFolder.resolve("bv-gdrive.token")
 }

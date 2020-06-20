@@ -7,8 +7,8 @@ import org.birdview.source.github.model.GithubIssue
 import org.birdview.source.github.model.GithubPullRequest
 import org.birdview.source.github.model.GithubSearchIssuesResponse
 import org.birdview.utils.BVConcurrentUtils
-import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.WebTargetFactory
+import org.birdview.utils.remote.BasicAuth
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable

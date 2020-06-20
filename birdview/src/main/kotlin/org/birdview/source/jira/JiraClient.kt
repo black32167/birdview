@@ -6,9 +6,8 @@ import org.birdview.source.BVTaskListsDefaults
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
-import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.WebTargetFactory
-
+import org.birdview.utils.remote.BasicAuth
 import java.time.format.DateTimeFormatter
 import javax.ws.rs.client.Entity
 

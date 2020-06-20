@@ -48,7 +48,7 @@ class BVTaskService(
         val groupedDocuments:List<BVDocument> = groupedDocumentsMap
                 .map { (groupDocId, collection) -> newGroupDoc(groupDocId, collection) }
                 .sortedByDescending { it.getLastUpdated() } +
-                listOf(newGroupDoc(null, orphanedDocs).apply { title = "--- Others ---" })
+                listOf(newGroupDoc(null, orphanedDocs).apply { title = "--- Ungrouped items ---" })
 
 
         groupDescriber.describe(groupedDocuments)

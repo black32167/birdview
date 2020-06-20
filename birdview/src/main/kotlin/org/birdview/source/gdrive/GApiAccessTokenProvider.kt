@@ -1,9 +1,9 @@
 package org.birdview.source.gdrive
 
 import org.birdview.config.BVGDriveConfig
+import org.birdview.config.BVRuntimeConfig
 import org.birdview.utils.remote.WebTargetFactory
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import javax.inject.Named
 import javax.ws.rs.client.Entity
@@ -11,11 +11,12 @@ import javax.ws.rs.core.Form
 
 @Named
 class GApiAccessTokenProvider(
-        val authorizationCodeProvider: GApiAuthorizationCodeProvider) {
+        val authorizationCodeProvider: GApiAuthorizationCodeProvider,
+        bvRuntimeConfig: BVRuntimeConfig) {
     companion object {
         private const val tokenExchangeUrl = "https://oauth2.googleapis.com/token"
-        private val refreshTokenFile = Paths.get("/tmp/birdview/gapir")
     }
+    private val refreshTokenFile = bvRuntimeConfig.gDriveRenewTokenFile
 
     fun getToken(config: BVGDriveConfig, scope:String): String? = loadLocalRefreshToken()
             ?.let { refreshToken-> getRemoteAccessToken(refreshToken, config) }

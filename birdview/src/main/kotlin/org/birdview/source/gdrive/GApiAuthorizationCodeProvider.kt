@@ -5,8 +5,6 @@ import org.glassfish.grizzly.http.server.HttpServer
 import org.glassfish.grizzly.http.server.Request
 import org.glassfish.grizzly.http.server.Response
 import org.birdview.config.BVGDriveConfig
-import java.awt.Desktop
-import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
@@ -21,9 +19,6 @@ class GApiAuthorizationCodeProvider {
     private val timeoutMs = 99999999L//5000L
 
     fun getAuthCode(config: BVGDriveConfig, scope:String):String? {
-        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            return null
-        }
         val httpServer = HttpServer.createSimpleServer(null, config.authorizationCodeListingPort)
         try {
             // Start server
@@ -42,8 +37,7 @@ class GApiAuthorizationCodeProvider {
             })
             httpServer.start()
 
-            Desktop.getDesktop().browse(URI(
-                    getAuthTokenUrl(config.clientId, config.redirectUri, scope)));
+            println("Please open the following URL in the browser: ${getAuthTokenUrl(config.clientId, config.redirectUri, scope)}")
 
             return completableFuture.get(timeoutMs, TimeUnit.MILLISECONDS)
         } finally {
