@@ -50,7 +50,6 @@ class BVTaskService(
                 .sortedByDescending { it.getLastUpdated() } +
                 listOf(newGroupDoc(null, orphanedDocs).apply { title = "--- Ungrouped items ---" })
 
-
         groupDescriber.describe(groupedDocuments)
 
         return groupedDocuments

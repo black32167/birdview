@@ -6,17 +6,22 @@ import org.birdview.source.BVTaskListsDefaults
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
+import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.remote.WebTargetFactory
 import org.birdview.utils.remote.BasicAuth
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 import javax.ws.rs.client.Entity
+import javax.ws.rs.client.WebTarget
 
 class JiraClient(
         private val jiraConfig: BVJiraConfig,
         private val taskListDefaults: BVTaskListsDefaults,
         val usersConfigProvider: BVUsersConfigProvider) {
+    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun findIssues(filter: JiraIssuesFilter): Array<JiraIssue> =
+    fun findIssues(filter: JiraIssuesFilter): List<JiraIssue> =
             findIssues(getJql(filter))
 
     private fun getJql(filter: JiraIssuesFilter): String =
@@ -31,12 +36,11 @@ class JiraClient(
             if(userAlias == null) { "currentUser()" }
             else { "\"${usersConfigProvider.getUserName(userAlias, jiraConfig.sourceName)}\""}
 
-    fun findIssues(jql: String): Array<JiraIssue> {
-        val jiraRestTarget = WebTargetFactory(jiraConfig.baseUrl) {
-            BasicAuth(jiraConfig.user, jiraConfig.token)
-        }.getTarget("/rest/api/2")
+    fun findIssues(jql: String): List<JiraIssue> {
+        val jiraRestTarget = getTarget()
 
-        val jiraIssuesResponse = jiraRestTarget.path("search").request()
+        val jiraIssuesResponse = jiraRestTarget.path("search")
+                .request()
                 .post(Entity.json(JiraIssuesFilterRequest(
                 maxResults = taskListDefaults.getMaxResult(),
                 fields = arrayOf("*all"),
@@ -47,13 +51,39 @@ class JiraClient(
             throw RuntimeException("Error reading Jira tasks: ${jiraIssuesResponse.readEntity(String::class.java)}")
         }
 
+        val issues = jiraIssuesResponse.readEntity(JiraIssuesFilterResponse::class.java)
+                .issues
+                .map { executor.submit(Callable { loadIssue(it.self) }) }
+                .map { future -> future.get() }
+
+//        val maybeIssue = issues.firstOrNull()?.self?.let (this::loadIssue)
+//        println(maybeIssue)
         // println(jiraIssuesResponse.readEntity(String::class.java))
 
-        return jiraIssuesResponse.readEntity(JiraIssuesFilterResponse::class.java).issues
+        return issues
     }
 
-    fun loadIssues(keys:List<String>): Array<JiraIssue> {
+    private fun loadIssue(url:String): JiraIssue =
+        getTargetFactory(url).getTarget("")
+                .queryParam("expand", "changelog")
+                .request()
+                .get()
+                .also { response -> if(response.status != 200) {
+                    throw RuntimeException("Error reading Jira tasks: ${response.readEntity(String::class.java)}")
+                } }
+                .let { it.readEntity(JiraIssue::class.java) }
+
+
+    fun loadIssues(keys:List<String>): List<JiraIssue> {
         val issues = findIssues("issueKey IN (${keys.joinToString(",")})");
         return issues;
+    }
+
+    private fun getTarget(): WebTarget = getTargetFactory().getTarget("/rest/api/2")
+
+    private fun getTargetFactory() = getTargetFactory(jiraConfig.baseUrl)
+
+    private fun getTargetFactory(url: String) = WebTargetFactory(url) {
+        BasicAuth(jiraConfig.user, jiraConfig.token)
     }
 }

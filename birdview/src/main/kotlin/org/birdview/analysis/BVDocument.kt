@@ -12,7 +12,8 @@ open class BVDocument (
         val subDocuments: MutableList<BVDocument> = mutableListOf(),
         val groupIds: Set<BVDocumentId> = emptySet(),
         val refsIds: Set<String> = emptySet(),
-        val status: String? = null
+        val status: String? = null,
+        val operations: List<BVDocumentOperation> = emptyList()
 ) {
     val inferredIds: MutableSet<BVDocumentId> = mutableSetOf<BVDocumentId>()
             .apply { addAll(ids) }
@@ -25,6 +26,12 @@ open class BVDocument (
     fun getLastUpdated(): Date? =
             subDocuments.mapNotNull { it.updated }.min()
 }
+
+class BVDocumentOperation (
+        val field: String,
+        val author: String,
+        val created: Date
+)
 
 data class BVDocumentId(
         val id:String,

@@ -2,11 +2,13 @@ package org.birdview.source.jira
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
+import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.utils.BVFilters
 import javax.inject.Named
@@ -44,14 +46,32 @@ class JiraTaskService(
                     body = description,
                     refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
                     groupIds = extractGroupIds(issue, config.sourceName),
-                    status = issue.fields.status.name
+                    status = issue.fields.status.name,
+                    operations = extractOperations(issue, config)
             )
         }
+                .filter { it.operations.isNotEmpty() }
         return tasks
     }
 
-    override fun getType() = "jira"
+    private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
+        issue.changelog
+                ?.histories
+                ?.flatMap (this::toOperation)
+                ?.filter { it.author.equals(config.user) }
+                ?: emptyList()
 
+    private fun toOperation(changelogItem: JiraChangelogItem): List<BVDocumentOperation> =
+            changelogItem.items.map { historyItem ->
+                BVDocumentOperation(
+                        author = changelogItem.author.emailAddress,
+                        field = historyItem.field,
+                        created = dateTimeFormat.parse(changelogItem.created)
+                )
+            }
+
+
+    override fun getType() = "jira"
 
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +
