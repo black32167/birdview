@@ -16,7 +16,7 @@ class BVTaskService(
         private val groupDescriber: GroupDescriber,
         private var sources: List<BVTaskSource>
 )  {
-    private val executor = Executors.newFixedThreadPool(3, BVConcurrentUtils.getDaemonThreadFactory())
+    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     fun getTaskGroups(request: TasksRequest): List<BVDocument> {
         val docs:MutableList<BVDocument> = sources
