@@ -3,9 +3,7 @@ package org.birdview.source.github
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.source.BVTaskListsDefaults
-import org.birdview.source.github.model.GithubIssue
-import org.birdview.source.github.model.GithubPullRequest
-import org.birdview.source.github.model.GithubSearchIssuesResponse
+import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.remote.WebTargetFactory
 import org.birdview.utils.remote.BasicAuth
@@ -45,6 +43,46 @@ class GithubClient(
             prState = issueState,
             since = since,
             userAlias = user))
+
+    fun getIssueComments(pullRequest: GithubPullRequest) =
+        getTarget(pullRequest.comments_url)
+                ?.request()
+                ?.get()
+                ?.also {
+                    if(it.status != 200) {
+                        throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
+                    }
+                }
+                ?.readEntity(Array<GithubIssueComment>::class.java)
+                ?.asList()
+                ?: emptyList()
+
+    fun getReviewComments(pullRequest: GithubPullRequest) =
+            getTarget(pullRequest.review_comments_url)
+                    ?.request()
+                    ?.get()
+                    ?.also {
+                        if(it.status != 200) {
+                            throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
+                        }
+                    }
+                    ?.readEntity(Array<GithubReviewComment>::class.java)
+                    ?.asList()
+                    ?: emptyList()
+
+    fun getIssueEvents(issue: GithubIssue) =
+            getTarget(issue.events_url)
+                    ?.request()
+                    ?.get()
+                    ?.also {
+  //                      println(it.readEntity(String::class.java))
+                        if(it.status != 200) {
+                            throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
+                        }
+                    }
+                    ?.readEntity(Array<GithubIssueEvent>::class.java)
+                    ?.asList()
+                    ?: emptyList()
 
     private fun findIssues(filter:GithubIssuesFilter):List<GithubIssue> =
         getTarget()
@@ -116,5 +154,4 @@ class GithubClient(
         ?.let { config-> WebTargetFactory(url) {
             BasicAuth(config.user, config.token)
         }.getTarget("") }
-
 }

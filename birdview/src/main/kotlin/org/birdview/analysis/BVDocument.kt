@@ -28,7 +28,7 @@ open class BVDocument (
 }
 
 class BVDocumentOperation (
-        val field: String,
+        val description: String,
         val author: String,
         val created: Date
 )

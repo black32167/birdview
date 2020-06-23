@@ -9,5 +9,7 @@ class GithubPullRequest (
         val head: GithubBranch,
         val base: GithubBranch,
         val state: String,
-        val body: String?
+        val body: String?,
+        val review_comments_url: String,
+        val comments_url: String
 )
