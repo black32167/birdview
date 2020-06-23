@@ -96,5 +96,5 @@ class TaskListCommand(val taskService: BVTaskService) : Callable<Int> {
             "${task.status?.take(10)?.padEnd(10)} - " +
             "${BVColorUtils.red(task.title ?: "???")} : " +
             "${task.httpUrl}" +
-            task.operations?.firstOrNull()?.let { " (${it.author}:${it.description})" } ?: ""
+            (task.operations.firstOrNull()?.let { " (${it.author}:${it.description})" } ?: "")
 }
