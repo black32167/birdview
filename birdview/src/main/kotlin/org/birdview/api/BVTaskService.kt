@@ -19,41 +19,41 @@ class BVTaskService(
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     fun getTaskGroups(request: TasksRequest): List<BVDocument> {
-        val docs:MutableList<BVDocument> = sources
+        val filteredDocs:MutableList<BVDocument> = sources
                 .filter { filterSource(it, request) }
                 .map { source -> executor.submit(Callable<List<BVDocument>> { source.getTasks(request) }) }
                 .map { getSwallowException(it) }
                 .filterNotNull()
                 .flatten()
                 .toMutableList()
+        val materializedIds = filteredDocs.flatMap { it.ids }.map { it.id }
+        val referencedIds = filteredDocs.flatMap { it.refsIds }
+        val missedDocsIds = referencedIds - materializedIds
+        val referredDocs = loadDocs(missedDocsIds)
+        val allDocs = (filteredDocs + referredDocs).toMutableList()
 
-        linkDocs(docs)
+        linkDocs(allDocs)
 
-        // Collect all groupIds
-        val groupedDocumentsMap = docs.fold(mutableMapOf<BVDocumentId, MutableList<BVDocument>>()) { acc, doc ->
-            doc.groupIds.forEach { groupId ->
-                acc.computeIfAbsent(groupId) { mutableListOf() }.add(doc)
-            }
-            acc
-        }
-
-        val groupedDocsIds = groupedDocumentsMap.values
-                .flatten()
-                .flatMap { it.ids }
-                .toSet()
-
-        // Remove grouped documents
-        val orphanedDocs = docs.filter { doc -> doc.ids.none(groupedDocsIds::contains) }
-
-        val groupedDocuments:List<BVDocument> = groupedDocumentsMap
-                .map { (groupDocId, collection) -> newGroupDoc(groupDocId, collection) }
-                .sortedByDescending { it.getLastUpdated() } +
-                listOf(newGroupDoc(null, orphanedDocs).apply { title = "--- Ungrouped items ---" })
-
-        groupDescriber.describe(groupedDocuments)
-
-        return groupedDocuments
+        return allDocs
     }
+
+    private fun loadDocs(missedDocsIds: List<String>): List<BVDocument> {
+        val type2Ids:Map<String, List<String>> = missedDocsIds
+                .fold(mutableMapOf<String, MutableList<String>>()) { acc, id ->
+                    getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
+                    acc
+                }
+        return sources
+                .filter { source -> type2Ids.contains(source.getType()) }
+                .flatMap { source ->
+                    type2Ids[source.getType()]
+                        ?.let { ids -> source.loadByIds(ids) }
+                        ?: emptyList()
+                }
+    }
+
+    private fun getSourceTypes(id: String): String? =
+        sources.find{ it.canHadleId(id) } ?.getType()
 
     private fun filterSource(source: BVTaskSource, request: TasksRequest) =
             request.sourceType ?.let { it == source.getType() }
@@ -75,17 +75,17 @@ class BVTaskService(
 
     private fun linkDocs(docs: MutableList<BVDocument>) {
         val groupId2Group = docs
-                .flatMap { collection -> collection.ids.map { it to collection } }
+                .flatMap { doc -> doc.ids.map { id -> id to doc } }
                 .groupBy ({ entry -> entry.first.id }, { entry -> entry.second })
 
         val collectionsIterator = docs.iterator()
         while (collectionsIterator.hasNext()) {
             collectionsIterator.next()
                     .also { doc:BVDocument ->
-                        val targetDocs:List<BVDocument> = doc.refsIds
+                        val parentDocs:List<BVDocument> = (doc.refsIds + doc.groupIds.map { it.id })
                                 .flatMap { refId -> (groupId2Group[refId] ?: emptyList<BVDocument>()) }
-                        if (!targetDocs.isEmpty()) {
-                            targetDocs.forEach{ it.subDocuments.add(doc) }
+                        if (!parentDocs.isEmpty()) {
+                            parentDocs.forEach{ it.subDocuments.add(doc) }
                             collectionsIterator.remove()
                         }
                     }

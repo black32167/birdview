@@ -69,7 +69,7 @@ class GithubTaskService(
         return (reviewComments.map { toOperation(it) } +
                 issueEventsFuture.get().map { toOperation(it) } +
                 issueCommentsFuture.get().map { toOperation(it) })
-                .filter { it.author ==  githubConfig.user }
+              //!!!  .filter { it.author ==  githubConfig.user }
                 .sortedByDescending { it.created }
     }
 

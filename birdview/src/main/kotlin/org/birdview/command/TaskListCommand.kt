@@ -74,20 +74,19 @@ class TaskListCommand(val taskService: BVTaskService) : Callable<Int> {
     fun printTaskGroups(tasksGroup:List<BVDocument>) {
         tasksGroup.forEach { group->
             if(noItems) {
-                println("[${group.title}]")
-            } else if (group.subDocuments.size > 1) {
-                println("[${group.title}]")
-                group.subDocuments.forEach { task ->
-                    println("    ${describe(task)}")
-                    task.subDocuments.forEach { subDoc ->
-                        println("      |-> ${describe(subDoc)}")
-                    }
-                }
-            } else {
-                group.subDocuments.firstOrNull()?.also { task->
-                    println(describe(task))
-                }
+                describe(group)
+            } else  {
+                describe(group, 0)
             }
+        }
+    }
+
+    fun describe(doc: BVDocument, level: Int) {
+        println(" ".repeat(level*2) +
+                ((if (level > 0) "|-> " else "") + describe(doc)))
+
+        doc.subDocuments.forEach { subDoc ->
+            describe(subDoc, level + 1)
         }
     }
 

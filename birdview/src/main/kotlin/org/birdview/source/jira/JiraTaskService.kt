@@ -30,28 +30,41 @@ class JiraTaskService(
         jiraConfigs.flatMap { config -> getTasks(request, config) }
 
     private fun getTasks(request: TasksRequest, config: BVJiraConfig): List<BVDocument> {
-        val jiraIssues = jiraClientProvider.getJiraClient(config).findIssues(JiraIssuesFilter(
-                request.user,
-                getIssueStatus(request.status),
-                request.since))
+        val jiraIssues = jiraClientProvider
+                .getJiraClient(config)
+                .findIssues(JiraIssuesFilter(
+                    request.user,
+                    getIssueStatus(request.status),
+                    request.since))
 
-        val tasks = jiraIssues.map { issue ->
-            val description = issue.fields.description ?: ""
-            BVDocument(
-                    ids = setOf(BVDocumentId( id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
-                    title = issue.fields.summary,
-                    updated = dateTimeFormat.parse(issue.fields.updated),
-                    created = dateTimeFormat.parse(issue.fields.created),
-                    httpUrl = "${config.baseUrl}/browse/${issue.key}",
-                    body = description,
-                    refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
-                    groupIds = extractGroupIds(issue, config.sourceName),
-                    status = issue.fields.status.name,
-                    operations = extractOperations(issue, config)
-            )
-        }
+        return jiraIssues
+                .map { mapDocument( it, config) }
                 .filter { it.operations.isNotEmpty() }
-        return tasks
+    }
+
+    override fun canHadleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
+
+    override fun loadByIds(keyList: List<String>): List<BVDocument> =
+                jiraConfigs.flatMap { config ->
+                    jiraClientProvider.getJiraClient(config)
+                            .let { client -> client.findIssues("key IN (${keyList.joinToString(",")})") }
+                            .map { mapDocument( it, config) }
+                }
+
+    private fun mapDocument(issue: JiraIssue, config: BVJiraConfig): BVDocument {
+        val description = issue.fields.description ?: ""
+        return BVDocument(
+                ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
+                title = issue.fields.summary,
+                updated = dateTimeFormat.parse(issue.fields.updated),
+                created = dateTimeFormat.parse(issue.fields.created),
+                httpUrl = "${config.baseUrl}/browse/${issue.key}",
+                body = description,
+                refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
+                groupIds = extractGroupIds(issue, config.sourceName),
+                status = issue.fields.status.name,
+                operations = extractOperations(issue, config)
+        )
     }
 
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
