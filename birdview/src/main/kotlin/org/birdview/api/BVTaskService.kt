@@ -27,7 +27,7 @@ class BVTaskService(
                 .flatten()
                 .toMutableList()
         val materializedIds = filteredDocs.flatMap { it.ids }.map { it.id }
-        val referencedIds = filteredDocs.flatMap { it.refsIds }
+        val referencedIds = filteredDocs.flatMap { it.refsIds } + filteredDocs.flatMap { it.groupIds }.map { it.id }
         val missedDocsIds = referencedIds - materializedIds
         val referredDocs = loadDocs(missedDocsIds)
         val allDocs = (filteredDocs + referredDocs).toMutableList()
