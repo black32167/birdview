@@ -7,6 +7,7 @@ import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
+import org.birdview.utils.BVFilters
 import java.util.*
 import javax.inject.Named
 
@@ -35,6 +36,7 @@ class GDriveTaskService(
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) =
             BVDocument(
                         ids = setOf(BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)),
+                        refsIds = BVFilters.filterIdsFromText(file.name),
                         title = file.name,
                         updated = parseDate(file.modifiedTime),
                         httpUrl = file.webViewLink,
