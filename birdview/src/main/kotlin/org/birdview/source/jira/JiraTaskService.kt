@@ -34,12 +34,12 @@ class JiraTaskService(
                 .getJiraClient(config)
                 .findIssues(JiraIssuesFilter(
                     request.user,
-                    getIssueStatus(request.status),
+                    getIssueStatuses(request.status),
                     request.since))
 
         return jiraIssues
                 .map { mapDocument( it, config) }
-                .filter { it.operations.isNotEmpty() }
+    //            .filter { it.operations.isNotEmpty() }
     }
 
     override fun canHadleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
@@ -83,19 +83,18 @@ class JiraTaskService(
                 )
             }
 
-
     override fun getType() = "jira"
 
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +
                     (issue.fields.parent?.let{ setOf(BVDocumentId(it.key, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>())
-
-    private fun getIssueStatus(status: String): String? = when (status) {
-        "done" -> "Done"
-        "progress" -> "In Progress"
-        "planned" -> "To Do"
-        "backlog" -> "Backlog"
-        "blocked" -> "Blocked"
+//TODO: "worked on", "planned work"
+    private fun getIssueStatuses(status: String): List<String>? = when (status) {
+        "done" -> listOf("Done")
+        "progress" -> listOf("In Progress", "In Review")
+        "planned" -> listOf("To Do")
+        "backlog" -> listOf("Backlog")
+        "blocked" -> listOf("Blocked")
         else -> null
     }
 }
