@@ -26,16 +26,31 @@ class BVTaskService(
                 .filterNotNull()
                 .flatten()
                 .toMutableList()
-        val materializedIds = filteredDocs.flatMap { it.ids }.map { it.id }
-        val referencedIds = filteredDocs.flatMap { it.refsIds } + filteredDocs.flatMap { it.groupIds }.map { it.id }
-        val missedDocsIds = referencedIds - materializedIds
-        val referredDocs = loadDocs(missedDocsIds)
-        val allDocs = (filteredDocs + referredDocs).toMutableList()
 
-        linkDocs(allDocs)
+        val allDocs = (filteredDocs + getReferredDocs(filteredDocs, request)).toMutableList()
 
-        return allDocs
+        if (request.grouping) {
+            linkDocs(allDocs)
+            return allDocs
+        } else {
+            return removeParents(allDocs)
+        }
     }
+
+    private fun removeParents(allDocs: List<BVDocument>): List<BVDocument> {
+        val references = allDocs.flatMap { doc -> doc.refsIds + doc.groupIds.map { it.id } }.toSet()
+        return allDocs.filter { doc -> !doc.ids.asSequence().map { it.id }.any { id-> references.contains(id) } }
+    }
+
+    private fun getReferredDocs(filteredDocs: MutableList<BVDocument>, request: TasksRequest): List<BVDocument> =
+            if (request.grouping) {
+                val materializedIds = filteredDocs.flatMap { it.ids }.map { it.id }
+                val referencedIds = filteredDocs.flatMap { it.refsIds } + filteredDocs.flatMap { it.groupIds }.map { it.id }
+                val missedDocsIds = referencedIds - materializedIds
+                loadDocs(missedDocsIds)
+            } else {
+                listOf()
+            }
 
     private fun loadDocs(missedDocsIds: List<String>): List<BVDocument> {
         val type2Ids:Map<String, List<String>> = missedDocsIds
