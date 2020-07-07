@@ -33,14 +33,21 @@ class JiraTaskService(
     private fun getTasks(request: TasksRequest, config: BVJiraConfig): List<BVDocument> {
         val jiraIssues = jiraClientProvider
                 .getJiraClient(config)
-                .findIssues(JiraIssuesFilter(
-                    request.user,
-                    getIssueStatuses(request.reportType),
-                    request.since))
+                .findIssues(getIssueFilter(request))
 
         return jiraIssues
                 .map { mapDocument( it, config) }
     //            .filter { it.operations.isNotEmpty() }
+    }
+
+    private fun getIssueFilter(request: TasksRequest): JiraIssuesFilter = when (request.reportType){
+        ReportType.WORKED -> JiraIssuesFilter(
+                request.user,
+                listOf("Done", "In Progress", "In Review", "Blocked"),
+                request.since)
+        ReportType.PLANNED -> JiraIssuesFilter(
+                request.user,
+                listOf("In Progress", "In Review", "To Do", "Blocked"))
     }
 
     override fun canHadleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
@@ -91,7 +98,7 @@ class JiraTaskService(
                     (issue.fields.parent?.let{ setOf(BVDocumentId(it.key, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>())
 
     private fun getIssueStatuses(reportType: ReportType): List<String>? = when (reportType) {
-        ReportType.DONE -> listOf("Done", "In Progress", "In Review", "Blocked")
+        ReportType.WORKED -> listOf("Done", "In Progress", "In Review", "Blocked")
         ReportType.PLANNED -> listOf("In Progress", "In Review", "To Do", "Blocked")
         else -> null
     }

@@ -12,6 +12,11 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
+//class GithubIssuesFilter(
+//        val issueState: String?,
+//        val since: ZonedDateTime?,
+//        val user:String?
+//)
 class GithubClient(
         val githubConfig: BVGithubConfig,
         val sourceConfig: BVTaskListsDefaults,
@@ -38,11 +43,6 @@ class GithubClient(
             }
             ?: listOf<GithubIssue>()
 
-    fun getPullRequestIssues(issueState: String?, since: ZonedDateTime, user:String?):List<GithubIssue> =
-        findIssues(GithubIssuesFilter(
-            prState = issueState,
-            since = since,
-            userAlias = user))
 
     fun getIssueComments(pullRequest: GithubPullRequest) =
         getTarget(pullRequest.comments_url)
@@ -84,7 +84,7 @@ class GithubClient(
                     ?.asList()
                     ?: emptyList()
 
-    private fun findIssues(filter:GithubIssuesFilter):List<GithubIssue> =
+    fun findIssues(filter:GithubIssuesFilter):List<GithubIssue> =
         getTarget()
                 ?.path("search")
                 ?.path("issues")

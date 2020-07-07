@@ -34,14 +34,7 @@ class TrelloTaskService(
                     .flatMap { config-> getTasks(request, config) }
 
     private fun getTasks(request: TasksRequest, trelloConfig: BVTrelloConfig): List<BVDocument> {
-        val status = request.reportType
-        val listNames = getLists(status)
-
-        val cards = trelloClientProvider.getTrelloClient(trelloConfig).getCards(TrelloCardsFilter(
-                since = request.since,
-                user = request.user,
-                listNames = listNames
-        ))
+        val cards = trelloClientProvider.getTrelloClient(trelloConfig).getCards(getCardsFilter(request))
 
         val listsMap = trelloClientProvider.getTrelloClient(trelloConfig).loadLists(cards.map { it.idList  })
                 .associateBy { it.id }
@@ -62,6 +55,16 @@ class TrelloTaskService(
         return tasks
     }
 
+    private fun getCardsFilter(request: TasksRequest): TrelloCardsFilter = when(request.reportType) {
+        ReportType.WORKED -> TrelloCardsFilter(
+                since = request.since,
+                user = request.user,
+                listNames = listOf("Done", "Progress", "Blocked"))
+        ReportType.PLANNED -> TrelloCardsFilter(
+                user = request.user,
+                listNames = listOf("Planned", "Progress", "Blocked", "Backlog"))
+    }
+
     override fun getType() = "trello"
 
     private fun extractIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
@@ -72,13 +75,6 @@ class TrelloTaskService(
     private fun extractGroupIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
             setOf(BVDocumentId(card.idBoard, TRELLO_BOARD_TYPE, sourceName)) +
                     card.labels.map { BVDocumentId(it.id, TRELLO_LABEL_TYPE, sourceName) }
-
-
-    private fun getLists(reportType: ReportType): List<String> = when (reportType) {
-        ReportType.DONE -> listOf("Done", "Progress", "Blocked")
-        ReportType.PLANNED -> listOf("Planned", "Progress", "Blocked", "Backlog")
-        else -> emptyList()
-    }
 
     private fun parseDate(dateString: String):Date = dateTimeFormat.parse(dateString)//Date.parse(dateString, dateTimeFormat)
 }

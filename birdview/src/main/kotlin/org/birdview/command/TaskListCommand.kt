@@ -20,8 +20,8 @@ class TaskListCommand(val taskService: BVTaskService) : Callable<Int> {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd")
             .also { it.timeZone = TimeZone.getTimeZone("UTC") }
 
-    @CommandLine.Option(names = ["-r", "--reportType"], description = ["done|planned"])
-    var reportType = ReportType.DONE
+    @CommandLine.Option(names = ["-r", "--reportType"], description = ["worked|planned"])
+    var reportType = ReportType.WORKED
 
     @CommandLine.Option(names = ["-t", "--type"], description = ["filter by the source type"])
     var sourceType:String? = null

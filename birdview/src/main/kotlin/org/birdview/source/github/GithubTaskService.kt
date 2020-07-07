@@ -20,8 +20,8 @@ import javax.inject.Named
 
 @Named
 class GithubTaskService(
-        val sourcesConfigProvider: BVSourcesConfigProvider,
-        val githubClientProvider: GithubClientProvider
+        private val sourcesConfigProvider: BVSourcesConfigProvider,
+        private val githubClientProvider: GithubClientProvider
 ): BVTaskSource {
     companion object {
         val GITHUB_ID = "githubId"
@@ -36,13 +36,21 @@ class GithubTaskService(
 
     private fun getTasks(request: TasksRequest, githubConfig:BVGithubConfig): List<BVDocument> {
         val client = githubClientProvider.getGithubClient(githubConfig)
-        val state = getIssueStates(request.reportType)
-        return client.getPullRequestIssues(state, request.since, request.user)
+        return client.findIssues(getGithubIssuesFilter(request))
                 .map { issue: GithubIssue -> executor.submit(Callable {
                     getPr(issue, client)
                             ?.let { pr -> toBVDocument(pr, issue, client, githubConfig) }
                 })}
                 .mapNotNull (Future<BVDocument?>::get)
+    }
+
+    private fun getGithubIssuesFilter(request: TasksRequest): GithubIssuesFilter = when(request.reportType) {
+        ReportType.WORKED -> GithubIssuesFilter(
+                since = request.since,
+                userAlias = request.user)
+        ReportType.PLANNED -> GithubIssuesFilter(
+                prState = "open",
+                userAlias = request.user)
     }
 
     private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {
@@ -106,10 +114,4 @@ class GithubTaskService(
             issue.pull_request?.url
                     ?.let { url -> githubClient.getPullRequest(url) }
 
-    private fun getIssueStates(reportType: ReportType):String? =
-        when(reportType) {
-            ReportType.DONE ->  null
-            ReportType.PLANNED  ->  "open"
-            else -> "none"
-        }
 }

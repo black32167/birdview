@@ -66,7 +66,7 @@ class TrelloClient(private val trelloConfig: BVTrelloConfig,
     private fun getQuery(cardsFilter: TrelloCardsFilter, trelloConfig: BVTrelloConfig): String =
             "@${getUser(cardsFilter.user, trelloConfig.sourceName)}" +
                     (cardsFilter.listNames.joinToString (",") { " list:\"${it}\"" } ?: "") +
-                    " edited:${getDaysBackFromNow(cardsFilter.since)}" +
+                    (cardsFilter.since?.let { " edited:${getDaysBackFromNow(it)}" } ?: "" ) +
                     " sort:edited"
 
     private fun getUser(userAlias: String?, sourceName:String): String =

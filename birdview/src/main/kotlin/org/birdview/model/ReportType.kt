@@ -1,6 +1,6 @@
 package org.birdview.model
 
 enum class ReportType {
-    DONE,
+    WORKED,
     PLANNED
 }

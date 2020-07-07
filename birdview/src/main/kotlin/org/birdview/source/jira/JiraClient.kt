@@ -29,7 +29,7 @@ class JiraClient(
                 " or creator = ${getUser(filter.userAlias)}" +
                     ")" +
                 (filter.issueStatuses?.let { " and status in (${it.joinToString(",") { "\"${it}\"" }})" } ?: "") +
-                filter.since.let {  " and updatedDate >= \"${it.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}\" " } +
+                (filter.since?.let {  " and updatedDate >= \"${it.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}\" " } ?: "") +
                 " order by lastViewed DESC"
 
     private fun getUser(userAlias: String?): String =

@@ -4,10 +4,12 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.utils.BVFilters
+import java.time.ZonedDateTime
 import java.util.*
 import javax.inject.Named
 
@@ -25,11 +27,17 @@ class GDriveTaskService(
             bvConfigProvider.getConfigOfType(BVGDriveConfig::class.java)
                     ?.let { config ->
                         clientProvider.getGoogleApiClient(config)
-                                .getFiles(request, config.sourceName)
+                                .getFiles(getFilesFilter(request), config.sourceName)
                                 .files
                                 .map { file -> toBVDocument(file, config) }
                     }
                     ?:emptyList()
+
+    private fun getFilesFilter(request: TasksRequest): GDriveFilesFilter =
+            GDriveFilesFilter(
+                    since = request.since ?: ZonedDateTime.now(),
+                    user = request.user
+            )
 
     override fun getType() = "gdrive"
 

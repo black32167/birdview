@@ -7,7 +7,7 @@ class TasksRequest(
         val reportType: ReportType,
         val grouping: Boolean,
         val groupingThreshold: Double,
-        val since: ZonedDateTime,
+        val since: ZonedDateTime? = null,
         val user:String?,
         val sourceType:String?
 )

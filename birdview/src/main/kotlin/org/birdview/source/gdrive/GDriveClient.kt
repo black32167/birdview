@@ -12,9 +12,9 @@ import java.time.format.DateTimeFormatter
 import javax.ws.rs.client.Entity
 
 class GDriveClient(
-        val accessTokenProvider: GApiAccessTokenProvider,
-        val userConfigProvider: BVUsersConfigProvider,
-        val config: BVGDriveConfig
+        private val accessTokenProvider: GApiAccessTokenProvider,
+        private val userConfigProvider: BVUsersConfigProvider,
+        private val config: BVGDriveConfig
 ) {
     companion object {
         private val SCOPE_DRIVE = "https://www.googleapis.com/auth/drive"
@@ -34,14 +34,14 @@ class GDriveClient(
                 }
                 .readEntity(GDriveActivityResponse::class.java)
 
-    fun getFiles(taskRequest:TasksRequest, sourceName: String): GDriveFileListResponse =
+    fun getFiles(filesFilter: GDriveFilesFilter, sourceName: String): GDriveFileListResponse =
             targetFactoryV3
                     .getTarget("/files")
                     .queryParam("includeItemsFromAllDrives", true)
                     .queryParam("supportsAllDrives", true)
                     .queryParam("orderBy", "modifiedTime")
                     .queryParam("fields", "files(id,name,modifiedTime,webViewLink)")
-                    .queryParam("q", getFileListQuery(taskRequest, sourceName))
+                    .queryParam("q", getFileListQuery(filesFilter, sourceName))
                     .request()
                     .get()
                     .also { response ->
@@ -57,10 +57,10 @@ class GDriveClient(
             ?.let(::BearerAuth)
             ?: throw RuntimeException("Failed retrieving Google API access token")
 
-    private fun getFileListQuery(taskRequest: TasksRequest, sourceName: String): String =
-            "'${taskRequest.user?.let { getUser(it, sourceName) } ?: "me"}' in owners " +
+    private fun getFileListQuery(filter: GDriveFilesFilter, sourceName: String): String =
+            "'${filter.user?.let { getUser(it, sourceName) } ?: "me"}' in owners " +
                     "AND mimeType='application/vnd.google-apps.document' " +
-                    "AND modifiedTime>'${taskRequest.since.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))}'" //TODO: use taskRequest
+                    "AND modifiedTime>'${filter.since.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))}'" //TODO: use taskRequest
 
     private fun getUser(userAlias: String, sourceName: String): String =
             userConfigProvider.getUserName(userAlias, sourceName)
