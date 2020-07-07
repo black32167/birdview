@@ -38,7 +38,7 @@ class GithubClient(
             }
             ?: listOf<GithubIssue>()
 
-    fun getPullRequestIssues(issueState: String, since: ZonedDateTime, user:String?):List<GithubIssue> =
+    fun getPullRequestIssues(issueState: String?, since: ZonedDateTime, user:String?):List<GithubIssue> =
         findIssues(GithubIssuesFilter(
             prState = issueState,
             since = since,
@@ -107,7 +107,7 @@ class GithubClient(
 
     private fun getFilterQuery(filter: GithubIssuesFilter): String =
             "type:pr" +
-            (filter.prState.takeIf { it != "any" }?.let {" state:${it}"} ?: "") +
+            (filter.prState?.let{ " state:${it}" } ?: "") +
             (filter.repository?.let { " repo:${it}" } ?: "") +
             filter.userAlias.let { " author:${getGithubUser(it)}" } +
             (filter.since?.let { " updated:>=${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" } ?: "")

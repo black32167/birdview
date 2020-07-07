@@ -18,7 +18,7 @@ import javax.ws.rs.client.WebTarget
 class JiraClient(
         private val jiraConfig: BVJiraConfig,
         private val taskListDefaults: BVTaskListsDefaults,
-        val usersConfigProvider: BVUsersConfigProvider) {
+        private val usersConfigProvider: BVUsersConfigProvider) {
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     fun findIssues(filter: JiraIssuesFilter): List<JiraIssue> =
@@ -28,7 +28,7 @@ class JiraClient(
             "(assignee = ${getUser(filter.userAlias)}" +
                 " or creator = ${getUser(filter.userAlias)}" +
                     ")" +
-                (filter.issueStatuses?.let { " and status in (${it.map { "\"${it}\"" }.joinToString(",")})" } ?: "") +
+                (filter.issueStatuses?.let { " and status in (${it.joinToString(",") { "\"${it}\"" }})" } ?: "") +
                 filter.since.let {  " and updatedDate >= \"${it.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}\" " } +
                 " order by lastViewed DESC"
 

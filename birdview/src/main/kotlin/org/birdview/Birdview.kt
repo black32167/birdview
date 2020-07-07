@@ -9,6 +9,8 @@ fun main(vararg args:String) {
     AnnotationConfigApplicationContext(BirdviewConfiguration::class.java).use {ctx->
         val taskService =  ctx.getBean(BVTaskService::class.java)
         val groupDescriber = ctx.getBean(GroupDescriber::class.java)
-        CommandLine(TaskListCommand(taskService)).execute(*args)
+        CommandLine(TaskListCommand(taskService))
+                .also { it.isCaseInsensitiveEnumValuesAllowed = true }
+                .execute(*args)
     }
 }

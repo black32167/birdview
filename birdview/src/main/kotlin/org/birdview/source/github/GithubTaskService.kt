@@ -5,6 +5,7 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
@@ -35,14 +36,13 @@ class GithubTaskService(
 
     private fun getTasks(request: TasksRequest, githubConfig:BVGithubConfig): List<BVDocument> {
         val client = githubClientProvider.getGithubClient(githubConfig)
-        return getIssueState(request.status)
-                ?.let { status -> client.getPullRequestIssues(status, request.since, request.user) }
-                ?.map { issue: GithubIssue -> executor.submit(Callable {
+        val state = getIssueStates(request.reportType)
+        return client.getPullRequestIssues(state, request.since, request.user)
+                .map { issue: GithubIssue -> executor.submit(Callable {
                     getPr(issue, client)
                             ?.let { pr -> toBVDocument(pr, issue, client, githubConfig) }
                 })}
-                ?.mapNotNull (Future<BVDocument?>::get)
-                ?: listOf()
+                .mapNotNull (Future<BVDocument?>::get)
     }
 
     private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {
@@ -106,11 +106,10 @@ class GithubTaskService(
             issue.pull_request?.url
                     ?.let { url -> githubClient.getPullRequest(url) }
 
-    private fun getIssueState(status: String):String? =
-        when(status) {
-            "done" ->  "closed"
-            "progress" ->  "open"
-            "any" -> "any"
-            else -> null
+    private fun getIssueStates(reportType: ReportType):String? =
+        when(reportType) {
+            ReportType.DONE ->  null
+            ReportType.PLANNED  ->  "open"
+            else -> "none"
         }
 }

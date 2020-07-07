@@ -5,5 +5,5 @@ import java.time.ZonedDateTime
 class TrelloCardsFilter(
         val since: ZonedDateTime,
         val user:String?,
-        val listName: String?
+        val listNames: List<String>
 )

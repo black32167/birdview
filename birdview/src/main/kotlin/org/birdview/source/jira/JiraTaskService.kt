@@ -6,6 +6,7 @@ import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.jira.model.JiraChangelogItem
@@ -34,7 +35,7 @@ class JiraTaskService(
                 .getJiraClient(config)
                 .findIssues(JiraIssuesFilter(
                     request.user,
-                    getIssueStatuses(request.status),
+                    getIssueStatuses(request.reportType),
                     request.since))
 
         return jiraIssues
@@ -88,13 +89,10 @@ class JiraTaskService(
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +
                     (issue.fields.parent?.let{ setOf(BVDocumentId(it.key, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>())
-//TODO: "worked on", "planned work"
-    private fun getIssueStatuses(status: String): List<String>? = when (status) {
-        "done" -> listOf("Done")
-        "progress" -> listOf("In Progress", "In Review")
-        "planned" -> listOf("To Do")
-        "backlog" -> listOf("Backlog")
-        "blocked" -> listOf("Blocked")
+
+    private fun getIssueStatuses(reportType: ReportType): List<String>? = when (reportType) {
+        ReportType.DONE -> listOf("Done", "In Progress", "In Review", "Blocked")
+        ReportType.PLANNED -> listOf("In Progress", "In Review", "To Do", "Blocked")
         else -> null
     }
 }

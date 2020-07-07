@@ -5,6 +5,7 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
+import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.trello.model.TrelloCard
@@ -33,13 +34,13 @@ class TrelloTaskService(
                     .flatMap { config-> getTasks(request, config) }
 
     private fun getTasks(request: TasksRequest, trelloConfig: BVTrelloConfig): List<BVDocument> {
-        val status = request.status
-        val listName = getList(status)
+        val status = request.reportType
+        val listNames = getLists(status)
 
         val cards = trelloClientProvider.getTrelloClient(trelloConfig).getCards(TrelloCardsFilter(
                 since = request.since,
                 user = request.user,
-                listName = listName
+                listNames = listNames
         ))
 
         val listsMap = trelloClientProvider.getTrelloClient(trelloConfig).loadLists(cards.map { it.idList  })
@@ -63,7 +64,6 @@ class TrelloTaskService(
 
     override fun getType() = "trello"
 
-
     private fun extractIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
             setOf(
                     BVDocumentId( id = card.id, type = TRELLO_CARD_ID_TYPE, sourceName = sourceName),
@@ -74,13 +74,10 @@ class TrelloTaskService(
                     card.labels.map { BVDocumentId(it.id, TRELLO_LABEL_TYPE, sourceName) }
 
 
-    private fun getList(status: String): String? = when (status) {
-        "done" -> "Done"
-        "progress" -> "Progress"
-        "planned" -> "Planned"
-        "backlog" -> "Backlog"
-        "blocked" -> "Blocked"
-        else -> null
+    private fun getLists(reportType: ReportType): List<String> = when (reportType) {
+        ReportType.DONE -> listOf("Done", "Progress", "Blocked")
+        ReportType.PLANNED -> listOf("Planned", "Progress", "Blocked", "Backlog")
+        else -> emptyList()
     }
 
     private fun parseDate(dateString: String):Date = dateTimeFormat.parse(dateString)//Date.parse(dateString, dateTimeFormat)

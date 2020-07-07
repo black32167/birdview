@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit
 
 class TrelloClient(private val trelloConfig: BVTrelloConfig,
                    private val sourceConfig: BVTaskListsDefaults,
-                   val usersConfigProvider: BVUsersConfigProvider) {
+                   private val usersConfigProvider: BVUsersConfigProvider) {
     fun getCards(cardsFilter: TrelloCardsFilter): List<TrelloCard> {
         val trelloCardsResponse = getTarget().path("search")
                 .queryParam("query", getQuery(cardsFilter, trelloConfig))
@@ -65,7 +65,7 @@ class TrelloClient(private val trelloConfig: BVTrelloConfig,
 
     private fun getQuery(cardsFilter: TrelloCardsFilter, trelloConfig: BVTrelloConfig): String =
             "@${getUser(cardsFilter.user, trelloConfig.sourceName)}" +
-                    (cardsFilter.listName?.let { " list:\"${cardsFilter.listName}\"" } ?: "") +
+                    (cardsFilter.listNames.joinToString (",") { " list:\"${it}\"" } ?: "") +
                     " edited:${getDaysBackFromNow(cardsFilter.since)}" +
                     " sort:edited"
 

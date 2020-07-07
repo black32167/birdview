@@ -2,6 +2,7 @@ package org.birdview.command
 
 import org.birdview.analysis.BVDocument
 import org.birdview.api.BVTaskService
+import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.utils.BVColorUtils
 import org.birdview.utils.BVColorUtils.bold
@@ -19,8 +20,8 @@ class TaskListCommand(val taskService: BVTaskService) : Callable<Int> {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd")
             .also { it.timeZone = TimeZone.getTimeZone("UTC") }
 
-    @CommandLine.Option(names = ["-s", "--status"], description = ["any|progress|todo|done"])
-    var status = "progress"
+    @CommandLine.Option(names = ["-r", "--reportType"], description = ["done|planned"])
+    var reportType = ReportType.DONE
 
     @CommandLine.Option(names = ["-t", "--type"], description = ["filter by the source type"])
     var sourceType:String? = null
@@ -50,7 +51,7 @@ class TaskListCommand(val taskService: BVTaskService) : Callable<Int> {
 
         val taskGroups = taskService.getTaskGroups(
                 TasksRequest(
-                status = status,
+                reportType = reportType,
                 grouping = !noGrouping,
                 groupingThreshold = groupingThreshold,
                 since = sinceDateTime,
@@ -58,7 +59,7 @@ class TaskListCommand(val taskService: BVTaskService) : Callable<Int> {
                 sourceType = sourceType
                 ))
 
-        println("Listing work in '${bold(BVColorUtils.red(status))}' state.")
+        println("Listing '${bold(BVColorUtils.red(reportType.name))}' work.")
         val now = LocalDate.now()
         println("Activity" +
                 (user?.let { " for ${bold(it)}" } ?: "") +
