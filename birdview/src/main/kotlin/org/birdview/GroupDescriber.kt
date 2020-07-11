@@ -16,6 +16,7 @@ class GroupDescriber(
                 .forEach { group ->
                     group.title = group.ids.firstOrNull()
                             ?.let { docId -> groupDescriptions[docId] }
+                            ?: ""
                 }
     }
 }

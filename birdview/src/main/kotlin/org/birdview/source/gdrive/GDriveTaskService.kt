@@ -48,7 +48,9 @@ class GDriveTaskService(
                         title = file.name,
                         updated = parseDate(file.modifiedTime),
                         httpUrl = file.webViewLink,
-                        status = "open")
+                        status = "open",
+                        key = ""
+            )
 
     private fun parseDate(dateString: String): Date = dateTimeFormat.parse(dateString)
 }

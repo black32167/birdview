@@ -49,14 +49,15 @@ class TrelloTaskService(
                 body = card.desc,
                 refsIds = BVFilters.filterIdsFromText("${card.desc} ${card.name}"),
                 groupIds = extractGroupIds(card, trelloConfig.sourceName),
-                status = listsMap[card.idList]?.name
+                status = listsMap[card.idList]?.name ?: "",
+                key = "#${card.id}"
             )
         }
         return tasks
     }
 
     private fun getCardsFilter(request: TasksRequest): TrelloCardsFilter = when(request.reportType) {
-        ReportType.WORKED -> TrelloCardsFilter(
+        ReportType.WORKED, ReportType.LAST_DAY  -> TrelloCardsFilter(
                 since = request.since,
                 user = request.user,
                 listNames = listOf("Done", "Progress", "Blocked"))

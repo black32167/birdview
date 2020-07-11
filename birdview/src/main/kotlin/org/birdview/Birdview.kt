@@ -1,6 +1,5 @@
 package org.birdview
 
-import org.birdview.api.BVTaskService
 import org.birdview.command.TaskListCommand
 import org.birdview.web.ReportWebService
 import org.springframework.context.annotation.AnnotationConfigApplicationContext

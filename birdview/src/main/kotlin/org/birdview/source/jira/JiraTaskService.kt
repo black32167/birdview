@@ -41,7 +41,7 @@ class JiraTaskService(
     }
 
     private fun getIssueFilter(request: TasksRequest): JiraIssuesFilter = when (request.reportType){
-        ReportType.WORKED -> JiraIssuesFilter(
+        ReportType.WORKED, ReportType.LAST_DAY  -> JiraIssuesFilter(
                 request.user,
                 listOf("Done", "In Progress", "In Review", "Blocked"),
                 request.since)
@@ -71,7 +71,8 @@ class JiraTaskService(
                 refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
                 groupIds = extractGroupIds(issue, config.sourceName),
                 status = issue.fields.status.name,
-                operations = extractOperations(issue, config)
+                operations = extractOperations(issue, config),
+                key = issue.key
         )
     }
 

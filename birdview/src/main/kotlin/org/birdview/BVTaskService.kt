@@ -1,29 +1,28 @@
-package org.birdview.api
+package org.birdview
 
-import org.birdview.GroupDescriber
 import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.utils.BVConcurrentUtils
+import org.springframework.cache.annotation.Cacheable
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.inject.Named
 
 @Named
-class BVTaskService(
+open class BVTaskService(
         private val groupDescriber: GroupDescriber,
         private var sources: List<BVTaskSource>
 )  {
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun getTaskGroups(request: TasksRequest): List<BVDocument> {
+    @Cacheable("bv")
+    open fun getTaskGroups(request: TasksRequest): List<BVDocument> {
         val filteredDocs:MutableList<BVDocument> = sources
                 .filter { filterSource(it, request) }
                 .map { source -> executor.submit(Callable<List<BVDocument>> { source.getTasks(request) }) }
-                .map { getSwallowException(it) }
-                .filterNotNull()
+                .mapNotNull { getSwallowException(it) }
                 .flatten()
                 .toMutableList()
 
@@ -83,11 +82,6 @@ class BVTaskService(
         return null
     }
 
-    private fun newGroupDoc(groupDocId: BVDocumentId?, collection: List<BVDocument>):BVDocument =
-            BVDocument(
-                    ids = groupDocId?.let { setOf(it) } ?: emptySet(),
-                    subDocuments = collection.toMutableList())
-
     private fun linkDocs(docs: MutableList<BVDocument>) {
         val groupId2Group = docs
                 .flatMap { doc -> doc.ids.map { id -> id to doc } }
@@ -99,7 +93,7 @@ class BVTaskService(
                     .also { doc:BVDocument ->
                         val parentDocs:List<BVDocument> = (doc.refsIds + doc.groupIds.map { it.id })
                                 .flatMap { refId -> (groupId2Group[refId] ?: emptyList<BVDocument>()) }
-                        if (!parentDocs.isEmpty()) {
+                        if (parentDocs.isNotEmpty()) {
                             parentDocs.forEach{ it.subDocuments.add(doc) }
                             collectionsIterator.remove()
                         }

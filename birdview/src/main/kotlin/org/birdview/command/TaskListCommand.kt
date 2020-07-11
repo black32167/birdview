@@ -1,7 +1,7 @@
 package org.birdview.command
 
 import org.birdview.analysis.BVDocument
-import org.birdview.api.BVTaskService
+import org.birdview.BVTaskService
 import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.utils.BVColorUtils
@@ -60,11 +60,9 @@ class TaskListCommand(
                 TasksRequest(
                 reportType = reportType,
                 grouping = !noGrouping,
-                groupingThreshold = groupingThreshold,
                 since = sinceDateTime,
                 user = user,
-                sourceType = sourceType
-                ))
+                sourceType = sourceType))
 
         println("Listing '${bold(BVColorUtils.red(reportType.name))}' work.")
         val now = LocalDate.now()
@@ -78,7 +76,7 @@ class TaskListCommand(
         printTaskGroups(taskGroups)
 
         if(web) {
-            reportWebService.run(taskGroups)
+            reportWebService.run()
             readLine()
         }
 

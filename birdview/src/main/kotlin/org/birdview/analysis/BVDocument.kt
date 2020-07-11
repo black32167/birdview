@@ -4,15 +4,16 @@ import java.util.*
 
 open class BVDocument (
         val ids: Set<BVDocumentId>,
-        var title: String? = null,
+        var title: String,
+        val key: String,
         val body: String = "",
         val updated: Date? = null,
         val created: Date? = null,
-        val httpUrl: String? = null,
+        val httpUrl: String,
         val subDocuments: MutableList<BVDocument> = mutableListOf(),
         val groupIds: Set<BVDocumentId> = emptySet(),
         val refsIds: Set<String> = emptySet(),
-        val status: String? = null,
+        val status: String,
         val operations: List<BVDocumentOperation> = emptyList()
 ) {
     val inferredIds: MutableSet<BVDocumentId> = mutableSetOf<BVDocumentId>()

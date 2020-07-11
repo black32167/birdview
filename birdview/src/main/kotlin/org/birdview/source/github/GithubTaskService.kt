@@ -44,8 +44,8 @@ class GithubTaskService(
                 .mapNotNull (Future<BVDocument?>::get)
     }
 
-    private fun getGithubIssuesFilter(request: TasksRequest): GithubIssuesFilter = when(request.reportType) {
-        ReportType.WORKED -> GithubIssuesFilter(
+    private fun getGithubIssuesFilter(request: TasksRequest): GithubIssuesFilter = when (request.reportType) {
+        ReportType.WORKED, ReportType.LAST_DAY -> GithubIssuesFilter(
                 since = request.since,
                 userAlias = request.user)
         ReportType.PLANNED -> GithubIssuesFilter(
@@ -57,7 +57,7 @@ class GithubTaskService(
         val description = pr.body ?: ""
         return BVDocument(
                 ids = setOf(BVDocumentId(id = pr.id, type = GITHUB_ID, sourceName = githubConfig.sourceName)),
-                title = pr.title,
+                title = BVFilters.removeIdsFromText(pr.title),
                 body = description,
                 updated = parseDate(pr.updated_at),
                 created = parseDate(pr.created_at),
@@ -66,7 +66,8 @@ class GithubTaskService(
                         BVFilters.filterIdsFromText(pr.head.ref),
                 groupIds = setOf(),
                 status = pr.state,
-                operations = extractOperations(pr, issue, client, githubConfig)
+                operations = extractOperations(pr, issue, client, githubConfig),
+                key = pr.html_url.replace(".*/".toRegex(), "#")
         )
     }
 
