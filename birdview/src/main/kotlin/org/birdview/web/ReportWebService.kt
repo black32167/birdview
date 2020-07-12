@@ -17,7 +17,7 @@ import javax.inject.Named
 @Named
 class ReportWebService(
         private val taskService: BVTaskService) {
-    private val reportTemplatePath = "/web/report.ftl"
+    private val reportTemplatePath = "web/report.ftl"
     private val port = 8888
     private val freemarkerConfig = Configuration(Configuration.VERSION_2_3_29).apply {
         setClassForTemplateLoading(this::class.java, "/")
@@ -29,17 +29,21 @@ class ReportWebService(
                 .apply {
                     serverConfiguration.addHttpHandler(object : HttpHandler() {
                         override fun service(request: Request, response: Response) {
+                            // Refresh cache if requested
+                            request.getParameter("refresh")
+                                    ?.also { taskService.invalidateCache() }
+
                             val reportType = request.getParameter("report")
                                     ?.toUpperCase()
                                     ?.let { ReportType.valueOf(it) }
                                     ?: ReportType.LAST_DAY
-                            val request = buildTSRequest(reportType)
-                            val docs = taskService.getTaskGroups(request)
+
+                            val docs = taskService.getTaskGroups(buildTSRequest(reportType))
                                     .map(BVDocumentViewFactory::create)
 
                             response.apply {
                                 contentType = "text/html"
-                                freemarkerConfig.getTemplate("web/report.ftl")
+                                freemarkerConfig.getTemplate(reportTemplatePath)
                                         .process(
                                                 mapOf(
                                                         "reportTypes" to ReportType.values().map { it.name.toLowerCase() },
@@ -48,14 +52,6 @@ class ReportWebService(
                                                         "reportPath" to "report-${reportType}.ftl",
                                                         "format" to getFormat(reportType)),
                                                 OutputStreamWriter(outputStream))
-
-//                                val reportContent = this::class.java.getResource(reportTemplatePath).readText()
-//                                PrintWriter(outputStream).use { writer ->
-//
-//                                    writer.println(reportContent)
-//                                    freemarker
-//
-//                                }
                             }
                         }
                     })
@@ -64,7 +60,7 @@ class ReportWebService(
     }
 
     private fun buildTSRequest(reportType: ReportType) :TasksRequest {
-        val sourceType = "github"
+        val sourceType = null
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         return when(reportType) {
             ReportType.LAST_DAY -> {

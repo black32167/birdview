@@ -4,11 +4,13 @@ import org.birdview.analysis.BVDocument
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.utils.BVConcurrentUtils
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.inject.Named
+
 
 @Named
 open class BVTaskService(
@@ -34,6 +36,10 @@ open class BVTaskService(
         } else {
             return removeParents(allDocs)
         }
+    }
+
+    @CacheEvict(value = ["bv"], allEntries = true)
+    open fun invalidateCache() {
     }
 
     private fun removeParents(allDocs: List<BVDocument>): List<BVDocument> {

@@ -1,12 +1,11 @@
 package org.birdview.command
 
-import org.birdview.analysis.BVDocument
 import org.birdview.BVTaskService
+import org.birdview.analysis.BVDocument
 import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.utils.BVColorUtils
 import org.birdview.utils.BVColorUtils.bold
-import org.birdview.web.ReportWebService
 import picocli.CommandLine
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -18,8 +17,7 @@ import java.util.concurrent.Callable
 @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
         description = ["Lists tasks."])
 class TaskListCommand(
-        val taskService: BVTaskService,
-        val reportWebService: ReportWebService
+        val taskService: BVTaskService
 ) : Callable<Int> {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd")
             .also { it.timeZone = TimeZone.getTimeZone("UTC") }
@@ -48,9 +46,6 @@ class TaskListCommand(
     @CommandLine.Option(names = ["--daysBack"], description = ["Days back"])
     var daysBack:Long = 2
 
-    @CommandLine.Option(names = ["--web"], description = ["Start web server"])
-    var web:Boolean = false
-
     override fun call(): Int {
         BVColorUtils.useColors = !noColors
 
@@ -74,11 +69,6 @@ class TaskListCommand(
         println("")
 
         printTaskGroups(taskGroups)
-
-        if(web) {
-            reportWebService.run()
-            readLine()
-        }
 
         return 0
     }
@@ -104,8 +94,8 @@ class TaskListCommand(
 
     fun describe(task: BVDocument)
             = "${dateFormat.format(task.updated)} - " +
-            "${task.status?.take(10)?.padEnd(10)} - " +
-            "${BVColorUtils.red(task.title ?: "???")} : " +
-            "${task.httpUrl}" +
+            "${task.status.take(10).padEnd(10)} - " +
+            "${BVColorUtils.red(task.title)} : " +
+            task.httpUrl +
             (task.operations.firstOrNull()?.let { " (${it.author}:${BVColorUtils.red(it.description)})" } ?: "")
 }
