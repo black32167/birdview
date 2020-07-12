@@ -3,9 +3,10 @@ package org.birdview.command
 import picocli.CommandLine
 import java.util.concurrent.Callable
 
-@CommandLine.Command
+@CommandLine.Command(helpCommand = true)
 class BirdviewCommand() : Callable<Int> {
     override fun call(): Int {
-        throw UnsupportedOperationException()
+        println("Use one of subcommands [list,web]")
+        return 0
     }
 }
