@@ -35,6 +35,7 @@ class ReportWebService(
                                     ?: ReportType.LAST_DAY
                             val request = buildTSRequest(reportType)
                             val docs = taskService.getTaskGroups(request)
+                                    .map(BVDocumentViewFactory::create)
 
                             response.apply {
                                 contentType = "text/html"
