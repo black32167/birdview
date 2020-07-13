@@ -1,7 +1,7 @@
 package org.birdview.source.trello.model
 
 class TrelloCardsSearchResponse (
-        val cards: Array<TrelloCard>
+        val cards: Array<TrelloCard> = arrayOf()
 )
 
 class TrelloCard (

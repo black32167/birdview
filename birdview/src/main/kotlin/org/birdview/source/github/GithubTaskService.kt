@@ -11,7 +11,6 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVFilters
-import java.lang.Exception
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -111,8 +110,12 @@ class GithubTaskService(
     }
     override fun getType() = "github"
 
-    private fun getPr(issue: GithubIssue, githubClient:GithubClient): GithubPullRequest? =
-            issue.pull_request?.url
-                    ?.let { url -> githubClient.getPullRequest(url) }
+    private fun getPr(issue: GithubIssue, githubClient:GithubClient): GithubPullRequest? = try {
+        issue.pull_request?.url
+                ?.let { url -> githubClient.getPullRequest(url) }
+    } catch (e:Exception) {
+        e.printStackTrace()
+        null
+    }
 
 }

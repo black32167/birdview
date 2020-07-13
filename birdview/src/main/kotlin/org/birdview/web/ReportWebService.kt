@@ -64,10 +64,11 @@ class ReportWebService(
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         return when(reportType) {
             ReportType.LAST_DAY -> {
-                val minusDays:Long = if(listOf(DayOfWeek.MONDAY, DayOfWeek.SUNDAY).contains(today.dayOfWeek))
-                    today.dayOfWeek.ordinal - DayOfWeek.FRIDAY.ordinal.toLong()
-                else
-                    1L
+                val minusDays:Long = when(today.dayOfWeek) {
+                    DayOfWeek.MONDAY -> 3L
+                    DayOfWeek.SUNDAY -> 2L
+                    else -> 1L
+                }
                 TasksRequest(
                         reportType = reportType,
                         grouping = false,
