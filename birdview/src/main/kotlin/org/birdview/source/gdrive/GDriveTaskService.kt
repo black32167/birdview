@@ -4,7 +4,6 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
@@ -49,7 +48,7 @@ class GDriveTaskService(
                         updated = parseDate(file.modifiedTime),
                         httpUrl = file.webViewLink,
                         status = "open",
-                        key = ""
+                        key = "open"
             )
 
     private fun parseDate(dateString: String): Date = dateTimeFormat.parse(dateString)
