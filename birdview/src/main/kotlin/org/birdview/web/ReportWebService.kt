@@ -18,11 +18,10 @@ import javax.inject.Named
 class ReportWebService(
         private val taskService: BVTaskService) {
     private val reportTemplatePath = "web/report.ftl"
-    private val port = 8888
     private val freemarkerConfig = Configuration(Configuration.VERSION_2_3_29).apply {
         setClassForTemplateLoading(this::class.java, "/")
     }
-    fun run() {
+    fun runWebServer(port: Int) {
         val baseUrl = "http://localhost:${port}"
         println("Open $baseUrl")
         HttpServer.createSimpleServer(null, port)

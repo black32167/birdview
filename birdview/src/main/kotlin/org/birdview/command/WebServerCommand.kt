@@ -9,8 +9,11 @@ import java.util.concurrent.Callable
 class WebServerCommand(
         private val reportWebService: ReportWebService
 ) : Callable<Int> {
+    @CommandLine.Option(names = ["-p", "--port"], description = ["Web server port"])
+    var webPort:Int = 8888
+
     override fun call(): Int {
-        reportWebService.run()
+        reportWebService.runWebServer(webPort)
         readLine()
         return 0
     }
