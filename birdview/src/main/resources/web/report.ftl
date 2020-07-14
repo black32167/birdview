@@ -76,8 +76,8 @@
 
 <div class="menu">
 |
-<#list reportTypes as reportType>
-<a href="${baseURL}?report=${reportType}" >${reportType?capitalize}</a>
+<#list reportLinks as reportLink>
+<a href="${reportLink.reportUrl}">${reportLink.reportName}</a>
 |
 </#list>
 

@@ -17,6 +17,7 @@ import javax.inject.Named
 @Named
 class ReportWebService(
         private val taskService: BVTaskService) {
+    class ReportLink(val reportUrl:String, val reportName:String)
     private val reportTemplatePath = "web/report.ftl"
     private val freemarkerConfig = Configuration(Configuration.VERSION_2_3_29).apply {
         setClassForTemplateLoading(this::class.java, "/")
@@ -32,12 +33,8 @@ class ReportWebService(
                             request.getParameter("refresh")
                                     ?.also { taskService.invalidateCache() }
 
-                            val reportType = request.getParameter("report")
-                                    ?.toUpperCase()
-                                    ?.let { ReportType.valueOf(it) }
-                                    ?: ReportType.LAST_DAY
-
-                            val docs = taskService.getTaskGroups(buildTSRequest(reportType))
+                            val tsRequest = buildTSRequest(request)
+                            val docs = taskService.getTaskGroups(tsRequest)
                                     .map(BVDocumentViewFactory::create)
 
                             response.apply {
@@ -45,11 +42,15 @@ class ReportWebService(
                                 freemarkerConfig.getTemplate(reportTemplatePath)
                                         .process(
                                                 mapOf(
-                                                        "reportTypes" to ReportType.values().map { it.name.toLowerCase() },
+                                                        "reportLinks" to ReportType.values()
+                                                                .map { ReportLink(
+                                                                        reportUrl = reportUrl(it, tsRequest, baseUrl),
+                                                                        reportName = it.name.toLowerCase().capitalize()) },
+                                                        "user" to tsRequest.user,
                                                         "docs" to docs,
                                                         "baseURL" to baseUrl,
-                                                        "reportPath" to "report-${reportType}.ftl",
-                                                        "format" to getFormat(reportType)),
+                                                        "reportPath" to "report-${tsRequest.reportType}.ftl",
+                                                        "format" to getFormat(tsRequest.reportType)),
                                                 OutputStreamWriter(outputStream))
                             }
                         }
@@ -58,8 +59,18 @@ class ReportWebService(
             .start()
     }
 
-    private fun buildTSRequest(reportType: ReportType) :TasksRequest {
+    private fun reportUrl(reportType: ReportType, tsRequest: TasksRequest, baseUrl: String): String {
+        return "${baseUrl}?report=${reportType.name.toLowerCase()}" +
+                (tsRequest.user?.let { "&user=${it}" } ?: "")
+    }
+
+    private fun buildTSRequest(request: Request) :TasksRequest {
         val sourceType = null
+        val user = request.getParameter("user")
+        val reportType = request.getParameter("report")
+                ?.toUpperCase()
+                ?.let { ReportType.valueOf(it) }
+                ?: ReportType.LAST_DAY
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         return when(reportType) {
             ReportType.LAST_DAY -> {
@@ -72,20 +83,20 @@ class ReportWebService(
                         reportType = reportType,
                         grouping = false,
                         since = today.minusDays(minusDays),
-                        user = null,
+                        user = user,
                         sourceType = sourceType)
             }
             ReportType.PLANNED -> TasksRequest(
                     reportType = reportType,
                     grouping = true,
                     since = null,
-                    user = null,
+                    user = user,
                     sourceType = sourceType)
             ReportType.WORKED -> TasksRequest(
                     reportType = reportType,
                     grouping = true,
                     since = today.minusDays(10),
-                    user = null,
+                    user = user,
                     sourceType = sourceType)
         }
     }
