@@ -58,7 +58,7 @@ open class BVTaskService(
             }
 
     private fun loadDocs(missedDocsIds: List<String>): List<BVDocument> {
-        val type2Ids:Map<String, List<String>> = missedDocsIds
+            val type2Ids:Map<String, List<String>> = missedDocsIds
                 .fold(mutableMapOf<String, MutableList<String>>()) { acc, id ->
                     getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
@@ -67,7 +67,12 @@ open class BVTaskService(
                 .filter { source -> type2Ids.contains(source.getType()) }
                 .flatMap { source ->
                     type2Ids[source.getType()]
-                        ?.let { ids -> source.loadByIds(ids) }
+                        ?.let { ids -> try {
+                            source.loadByIds(ids)
+                        } catch (e:Exception) {
+                            e.printStackTrace()
+                            null
+                        }}
                         ?: emptyList()
                 }
     }

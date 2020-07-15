@@ -22,7 +22,7 @@ class JiraChangelogItem (
 )
 
 class JiraUser (
-        val emailAddress: String
+        val emailAddress: String?
 )
 
 class JiraHistoryItem (

@@ -7,8 +7,8 @@ import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
 import org.birdview.utils.BVConcurrentUtils
-import org.birdview.utils.remote.WebTargetFactory
 import org.birdview.utils.remote.BasicAuth
+import org.birdview.utils.remote.WebTargetFactory
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -54,7 +54,12 @@ class JiraClient(
         val issues = jiraIssuesResponse.readEntity(JiraIssuesFilterResponse::class.java)
                 .issues
                 .map { executor.submit(Callable { loadIssue(it.self) }) }
-                .map { future -> future.get() }
+                .mapNotNull { future -> try {
+                    future.get()
+                } catch (e:Exception) {
+                    e.printStackTrace()
+                    null
+                }}
 
 //        val maybeIssue = issues.firstOrNull()?.self?.let (this::loadIssue)
 //        println(maybeIssue)

@@ -86,7 +86,7 @@ class JiraTaskService(
     private fun toOperation(changelogItem: JiraChangelogItem): List<BVDocumentOperation> =
             changelogItem.items.map { historyItem ->
                 BVDocumentOperation(
-                        author = changelogItem.author.emailAddress,
+                        author = changelogItem.author.emailAddress ?: "???",
                         description = historyItem.field,
                         created = dateTimeFormat.parse(changelogItem.created)
                 )
