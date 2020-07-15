@@ -1,0 +1,19 @@
+.menu {
+    background: cyan;
+    height: 1.5em;
+}
+.date {
+    color: gray;
+    text-align: right;
+}
+.title {
+    color: gray;
+}
+.title_leaf {
+    color: red;
+}
+.source {
+}
+.menu_right {
+  float: right;
+}

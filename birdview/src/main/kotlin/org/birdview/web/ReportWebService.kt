@@ -4,10 +4,7 @@ import freemarker.template.Configuration
 import org.birdview.BVTaskService
 import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
-import org.glassfish.grizzly.http.server.HttpHandler
-import org.glassfish.grizzly.http.server.HttpServer
-import org.glassfish.grizzly.http.server.Request
-import org.glassfish.grizzly.http.server.Response
+import org.glassfish.grizzly.http.server.*
 import java.io.OutputStreamWriter
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
@@ -23,10 +20,11 @@ class ReportWebService(
         setClassForTemplateLoading(this::class.java, "/")
     }
     fun runWebServer(port: Int) {
-        val baseUrl = "http://localhost:${port}"
+        val baseUrl = "http://localhost:${port}/app"
         println("Open $baseUrl")
         HttpServer.createSimpleServer(null, port)
                 .apply {
+                    serverConfiguration.addHttpHandler(CLStaticHttpHandler(ReportWebService::class.java.classLoader, "/web/"))
                     serverConfiguration.addHttpHandler(object : HttpHandler() {
                         override fun service(request: Request, response: Response) {
                             // Refresh cache if requested
@@ -54,7 +52,7 @@ class ReportWebService(
                                                 OutputStreamWriter(outputStream))
                             }
                         }
-                    })
+                    }, "/app")
                 }
             .start()
     }

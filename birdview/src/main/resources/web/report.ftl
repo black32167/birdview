@@ -37,40 +37,21 @@
 </#if>
 </#macro>
 
-
-<html>
 <!-- -------------------------------------------------------------- -->
-<style>
-.menu {
-    background: cyan;
-    height: 1.5em;
-}
-.date {
-    color: gray;
-    text-align: right;
-}
-.title {
-    color: gray;
-}
-.title_leaf {
-    color: red;
-}
-.source {
-}
-.menu_right {
-  float: right;
-}
-</style>
-
+<html>
+<head>
+<link rel="stylesheet" href="report.css"></link>
+<script src="js/jquery-3.5.1.min.js"></script>
 <script>
-<!--
     function refresh() {
         window.location.replace(window.location.pathname + "?refresh")
         return false
     }
--->
+    $(function() {
+        console.log( "document loaded!" );
+    })
 </script>
-
+</head>
 <!-- -------------------------------------------------------------- -->
 <body>
 
