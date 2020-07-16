@@ -11,28 +11,31 @@
 </#if>
 </#macro>
 
-<#macro long_table docs level>
+<#macro long_table docs parentId level>
 <#list docs as doc>
-    <tr>
-        <td class="source">${doc.sourceName}</td>
-        <td class="status">${doc.status}</td>
-        <td class="date">${doc.updated?date}</td>
+    <#if level == 0>
+      <tr data-tt-id="${doc.id}">
+    <#else>
+      <tr data-tt-id="${doc.id}" data-tt-parent-id="${parentId}">
+    </#if>
         <#if doc.subDocuments?has_content>
             <td class="title">
         <#else>
             <td class="title_leaf">
         </#if>
-        <#list 0..<level*4 as i>&nbsp;</#list>
         ${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)</td>
+        <td class="source">${doc.sourceName}</td>
+        <td class="status">${doc.status}</td>
+        <td class="date">${doc.updated?date}</td>
     </tr>
-    <@long_table doc.subDocuments level+1/>
+    <@long_table doc.subDocuments doc.id level+1/>
 </#list>
 </#macro>
 
 <#macro long docs>
 <#if docs?has_content>
-<table>
-<@long_table docs 0/>
+<table id="reportTable">
+<@long_table docs "" 0 />
 </table>
 </#if>
 </#macro>
@@ -40,15 +43,20 @@
 <!-- -------------------------------------------------------------- -->
 <html>
 <head>
-<link rel="stylesheet" href="report.css"></link>
+<link rel="stylesheet" href="css/report.css"></link>
+<link rel="stylesheet" href="css/jquery.treetable.css"></link>
+<link rel="stylesheet" href="css/jquery.treetable.theme.default.css"></link>
+
 <script src="js/jquery-3.5.1.min.js"></script>
+<script src="js/jquery.treetable.js"></script>
 <script>
     function refresh() {
         window.location.replace(window.location.pathname + "?refresh")
         return false
     }
     $(function() {
-        console.log( "document loaded!" );
+        console.log( "document loaded!" )
+        $("#reportTable").treetable({ expandable: true })
     })
 </script>
 </head>

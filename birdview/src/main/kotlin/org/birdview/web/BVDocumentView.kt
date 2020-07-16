@@ -3,6 +3,7 @@ package org.birdview.web
 import java.util.*
 
 class BVDocumentView (
+        val id: String,
         val subDocuments: List<BVDocumentView>,
         val title: String,
         val updated: Date?,
