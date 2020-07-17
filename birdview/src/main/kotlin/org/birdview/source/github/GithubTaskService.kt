@@ -5,6 +5,7 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.DocumentStatus
 import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
@@ -64,10 +65,16 @@ class GithubTaskService(
                 refsIds = BVFilters.filterIdsFromText("${description} ${pr.title}") +
                         BVFilters.filterIdsFromText(pr.head.ref),
                 groupIds = setOf(),
-                status = pr.state,
+                status = mapStatus(pr.state),
                 operations = extractOperations(pr, issue, client, githubConfig),
                 key = pr.html_url.replace(".*/".toRegex(), "#")
         )
+    }
+
+    private fun mapStatus(state: String): DocumentStatus? = when (state) {
+        "open" -> DocumentStatus.PROGRESS
+        "closed" -> DocumentStatus.BACKLOG
+        else -> null
     }
 
     private fun extractOperations(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): List<BVDocumentOperation> {

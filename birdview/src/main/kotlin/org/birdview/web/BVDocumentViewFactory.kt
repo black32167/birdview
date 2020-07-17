@@ -13,7 +13,7 @@ object BVDocumentViewFactory {
                             .firstOrNull()
                             ?.sourceName
                             ?: "???",
-                    status = doc.status,
+                    status = doc.status ?.let { it.name } ?: "???",
                     title = doc.title,
                     updated = doc.updated,
                     key = doc.key

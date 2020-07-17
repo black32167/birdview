@@ -5,6 +5,7 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
+import org.birdview.model.DocumentStatus
 import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
@@ -49,11 +50,19 @@ class TrelloTaskService(
                 body = card.desc,
                 refsIds = BVFilters.filterIdsFromText("${card.desc} ${card.name}"),
                 groupIds = extractGroupIds(card, trelloConfig.sourceName),
-                status = listsMap[card.idList]?.name ?: "",
+                status = mapStatus(listsMap[card.idList]?.name ?: ""),
                 key = "#${card.id}"
             )
         }
         return tasks
+    }
+
+    private fun mapStatus(state: String): DocumentStatus? = when (state) {
+        "Done" -> DocumentStatus.DONE
+        "Progress", "In Progress", "In Review", "Blocked" -> DocumentStatus.PROGRESS
+        "To Do", "Planned" -> DocumentStatus.PLANNED
+        "Backlog" -> DocumentStatus.BACKLOG
+        else -> null
     }
 
     private fun getCardsFilter(request: TasksRequest): TrelloCardsFilter = when(request.reportType) {

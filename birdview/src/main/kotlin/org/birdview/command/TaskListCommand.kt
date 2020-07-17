@@ -94,7 +94,7 @@ class TaskListCommand(
 
     fun describe(task: BVDocument)
             = "${dateFormat.format(task.updated)} - " +
-            "${task.status.take(10).padEnd(10)} - " +
+            "${task.status} - " +
             "${BVColorUtils.red(task.title)} : " +
             task.httpUrl +
             (task.operations.firstOrNull()?.let { " (${it.author}:${BVColorUtils.red(it.description)})" } ?: "")

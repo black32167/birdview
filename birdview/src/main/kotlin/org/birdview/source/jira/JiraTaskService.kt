@@ -6,6 +6,7 @@ import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.DocumentStatus
 import org.birdview.model.ReportType
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
@@ -70,10 +71,18 @@ class JiraTaskService(
                 body = description,
                 refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
                 groupIds = extractGroupIds(issue, config.sourceName),
-                status = issue.fields.status.name,
+                status = mapStatus(issue.fields.status.name),
                 operations = extractOperations(issue, config),
                 key = issue.key
         )
+    }
+
+    private fun mapStatus(state: String): DocumentStatus? = when (state) {
+        "Done" -> DocumentStatus.DONE
+        "In Progress", "In Review", "Blocked" -> DocumentStatus.PROGRESS
+        "To Do" -> DocumentStatus.PLANNED
+        "Backlog" -> DocumentStatus.BACKLOG
+        else -> null
     }
 
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =

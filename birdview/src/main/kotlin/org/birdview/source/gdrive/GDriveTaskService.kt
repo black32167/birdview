@@ -4,6 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.DocumentStatus
 import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
@@ -47,7 +48,7 @@ class GDriveTaskService(
                         title = file.name,
                         updated = parseDate(file.modifiedTime),
                         httpUrl = file.webViewLink,
-                        status = "open",
+                        status = DocumentStatus.PROGRESS,
                         key = "open"
             )
 
