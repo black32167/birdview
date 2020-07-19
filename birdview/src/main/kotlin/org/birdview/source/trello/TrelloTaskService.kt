@@ -5,9 +5,8 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
+import org.birdview.model.BVDocumentFilter
 import org.birdview.model.DocumentStatus
-import org.birdview.model.ReportType
-import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.utils.BVFilters
@@ -16,9 +15,10 @@ import javax.inject.Named
 
 @Named
 class TrelloTaskService(
-        val sourcesConfigProvider: BVSourcesConfigProvider,
+        private val sourcesConfigProvider: BVSourcesConfigProvider,
         val tokenizer: TextTokenizer,
-        private val trelloClientProvider: TrelloClientProvider
+        private val trelloClientProvider: TrelloClientProvider,
+        private val trelloQueryBuilder: TrelloQueryBuilder
 ) : BVTaskSource {
     companion object {
         val TRELLO_CARD_ID_TYPE = "trelloCardId"
@@ -30,12 +30,14 @@ class TrelloTaskService(
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
     // TODO: parallelize
-    override fun getTasks(request: TasksRequest): List<BVDocument> =
+    override fun getTasks(request: BVDocumentFilter): List<BVDocument> =
             sourcesConfigProvider.getConfigsOfType(BVTrelloConfig::class.java)
                     .flatMap { config-> getTasks(request, config) }
 
-    private fun getTasks(request: TasksRequest, trelloConfig: BVTrelloConfig): List<BVDocument> {
-        val cards = trelloClientProvider.getTrelloClient(trelloConfig).getCards(getCardsFilter(request))
+    private fun getTasks(request: BVDocumentFilter, trelloConfig: BVTrelloConfig): List<BVDocument> {
+        val cards = trelloQueryBuilder.getQueries(request, trelloConfig)
+                .flatMap { query ->
+                    trelloClientProvider.getTrelloClient(trelloConfig).getCards(query) }
 
         val listsMap = trelloClientProvider.getTrelloClient(trelloConfig).loadLists(cards.map { it.idList  })
                 .associateBy { it.id }
@@ -63,16 +65,6 @@ class TrelloTaskService(
         "To Do", "Planned" -> DocumentStatus.PLANNED
         "Backlog" -> DocumentStatus.BACKLOG
         else -> null
-    }
-
-    private fun getCardsFilter(request: TasksRequest): TrelloCardsFilter = when(request.reportType) {
-        ReportType.WORKED, ReportType.LAST_DAY  -> TrelloCardsFilter(
-                since = request.since,
-                user = request.user,
-                listNames = listOf("Done", "Progress", "Blocked"))
-        ReportType.PLANNED -> TrelloCardsFilter(
-                user = request.user,
-                listNames = listOf("Planned", "Progress", "Blocked", "Backlog"))
     }
 
     override fun getType() = "trello"

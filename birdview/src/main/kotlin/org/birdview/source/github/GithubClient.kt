@@ -1,12 +1,11 @@
 package org.birdview.source.github
 
 import org.birdview.config.BVGithubConfig
-import org.birdview.config.BVUsersConfigProvider
 import org.birdview.source.BVTaskListsDefaults
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
-import org.birdview.utils.remote.WebTargetFactory
 import org.birdview.utils.remote.BasicAuth
+import org.birdview.utils.remote.WebTargetFactory
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
@@ -18,13 +17,12 @@ import java.util.concurrent.Executors
 //        val user:String?
 //)
 class GithubClient(
-        val githubConfig: BVGithubConfig,
-        val sourceConfig: BVTaskListsDefaults,
-        val usersConfigProvider: BVUsersConfigProvider
+        private val githubConfig: BVGithubConfig,
+        private val sourceConfig: BVTaskListsDefaults
 ) {
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun getCurrentUserIssues(issueState: String, since:ZonedDateTime):List<GithubIssue> =
+    private fun getCurrentUserIssues(issueState: String, since:ZonedDateTime):List<GithubIssue> =
         getTarget()
             ?.let { githubRestTarget->
                 val githubIssuesResponse = githubRestTarget.path("issues")
@@ -84,11 +82,11 @@ class GithubClient(
                     ?.asList()
                     ?: emptyList()
 
-    fun findIssues(filter:GithubIssuesFilter):List<GithubIssue> =
+    fun findIssues(query:String):List<GithubIssue> =
         getTarget()
                 ?.path("search")
                 ?.path("issues")
-                ?.queryParam("q", getFilterQuery(filter))
+                ?.queryParam("q", query)
 //                ?.also {
 //                    println("Url:${it.uri}")
 //                }
@@ -104,17 +102,6 @@ class GithubClient(
                 ?.readEntity(GithubSearchIssuesResponse::class.java)?.items
                 ?.asList()
                 ?:listOf()
-
-    private fun getFilterQuery(filter: GithubIssuesFilter): String =
-            "type:pr" +
-            (filter.prState?.let{ " state:${it}" } ?: "") +
-            (filter.repository?.let { " repo:${it}" } ?: "") +
-            filter.userAlias.let { " author:${getGithubUser(it)}" } +
-            (filter.since?.let { " updated:>=${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" } ?: "")
-
-    private fun getGithubUser(userAlias: String?): String? =
-            if (userAlias == null) "@me"
-            else usersConfigProvider.getUserName(userAlias, githubConfig.sourceName)
 
     private fun getUserIdByEMail(email: String): String =
             getTarget()

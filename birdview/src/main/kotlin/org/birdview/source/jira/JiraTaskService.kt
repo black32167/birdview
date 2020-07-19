@@ -3,12 +3,9 @@ package org.birdview.source.jira
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
-import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.model.DocumentStatus
-import org.birdview.model.ReportType
-import org.birdview.request.TasksRequest
+import org.birdview.model.BVDocumentFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
@@ -18,40 +15,30 @@ import javax.inject.Named
 @Named
 class JiraTaskService(
         private val jiraClientProvider: JiraClientProvider,
-        private val tokenizer: TextTokenizer,
-        sourcesConfigProvider: BVSourcesConfigProvider
+        sourcesConfigProvider: BVSourcesConfigProvider,
+        private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
     companion object {
-        val JIRA_KEY_TYPE = "jiraKey"
+        const val JIRA_KEY_TYPE = "jiraKey"
     }
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private val jiraConfigs: List<BVJiraConfig> = sourcesConfigProvider.getConfigsOfType(BVJiraConfig::class.java)
 
     // TODO: parallelize
-    override fun getTasks(request: TasksRequest): List<BVDocument> =
+    override fun getTasks(request: BVDocumentFilter): List<BVDocument> =
         jiraConfigs.flatMap { config -> getTasks(request, config) }
 
-    private fun getTasks(request: TasksRequest, config: BVJiraConfig): List<BVDocument> {
+    private fun getTasks(request: BVDocumentFilter, config: BVJiraConfig): List<BVDocument> {
         val jiraIssues = jiraClientProvider
                 .getJiraClient(config)
-                .findIssues(getIssueFilter(request))
+                .findIssues(jqlBuilder.getJql(request, config))
 
         return jiraIssues
                 .map { mapDocument( it, config) }
     //            .filter { it.operations.isNotEmpty() }
     }
 
-    private fun getIssueFilter(request: TasksRequest): JiraIssuesFilter = when (request.reportType){
-        ReportType.WORKED, ReportType.LAST_DAY  -> JiraIssuesFilter(
-                request.user,
-                listOf("Done", "In Progress", "In Review", "Blocked"),
-                request.since)
-        ReportType.PLANNED -> JiraIssuesFilter(
-                request.user,
-                listOf("In Progress", "In Review", "To Do", "Blocked"))
-    }
-
-    override fun canHadleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
+    override fun canHandleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
 
     override fun loadByIds(keyList: List<String>): List<BVDocument> =
                 jiraConfigs.flatMap { config ->
@@ -71,18 +58,10 @@ class JiraTaskService(
                 body = description,
                 refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
                 groupIds = extractGroupIds(issue, config.sourceName),
-                status = mapStatus(issue.fields.status.name),
+                status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                 operations = extractOperations(issue, config),
                 key = issue.key
         )
-    }
-
-    private fun mapStatus(state: String): DocumentStatus? = when (state) {
-        "Done" -> DocumentStatus.DONE
-        "In Progress", "In Review", "Blocked" -> DocumentStatus.PROGRESS
-        "To Do" -> DocumentStatus.PLANNED
-        "Backlog" -> DocumentStatus.BACKLOG
-        else -> null
     }
 
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
@@ -106,10 +85,4 @@ class JiraTaskService(
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +
                     (issue.fields.parent?.let{ setOf(BVDocumentId(it.key, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>())
-
-    private fun getIssueStatuses(reportType: ReportType): List<String>? = when (reportType) {
-        ReportType.WORKED -> listOf("Done", "In Progress", "In Review", "Blocked")
-        ReportType.PLANNED -> listOf("In Progress", "In Review", "To Do", "Blocked")
-        else -> null
-    }
 }

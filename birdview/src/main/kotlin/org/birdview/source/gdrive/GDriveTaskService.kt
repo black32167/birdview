@@ -4,40 +4,33 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.BVDocumentFilter
 import org.birdview.model.DocumentStatus
-import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.utils.BVFilters
-import java.time.ZonedDateTime
 import java.util.*
 import javax.inject.Named
 
 @Named
 class GDriveTaskService(
         private val clientProvider: GDriveClientProvider,
-        private val bvConfigProvider: BVSourcesConfigProvider
+        private val bvConfigProvider: BVSourcesConfigProvider,
+        private val gDriveQueryBuilder: GDriveQueryBuilder
 ) : BVTaskSource {
     companion object {
         val GDRIVE_FILE_TYPE = "gDriveFile"
     }
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
-    override fun getTasks(request: TasksRequest): List<BVDocument> =
+    override fun getTasks(request: BVDocumentFilter): List<BVDocument> =
             bvConfigProvider.getConfigOfType(BVGDriveConfig::class.java)
                     ?.let { config ->
                         clientProvider.getGoogleApiClient(config)
-                                .getFiles(getFilesFilter(request), config.sourceName)
-                                .files
-                                .map { file -> toBVDocument(file, config) }
-                    }
-                    ?:emptyList()
-
-    private fun getFilesFilter(request: TasksRequest): GDriveFilesFilter =
-            GDriveFilesFilter(
-                    since = request.since ?: ZonedDateTime.now(),
-                    user = request.user
-            )
+                                .getFiles(gDriveQueryBuilder.getQuery(request, config.sourceName))
+                                ?.files
+                                ?.map { file -> toBVDocument(file, config) }
+                    } ?: emptyList()
 
     override fun getType() = "gdrive"
 

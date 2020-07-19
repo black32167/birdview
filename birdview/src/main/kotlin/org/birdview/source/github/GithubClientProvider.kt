@@ -11,5 +11,5 @@ class GithubClientProvider(
         private val usersConfigProvider: BVUsersConfigProvider
 ) {
     fun getGithubClient(githubConfig: BVGithubConfig) =
-            GithubClient(githubConfig, taskListDefaults, usersConfigProvider)
+            GithubClient(githubConfig, taskListDefaults)
 }

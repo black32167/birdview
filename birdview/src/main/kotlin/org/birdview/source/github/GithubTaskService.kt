@@ -5,9 +5,8 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.model.BVDocumentFilter
 import org.birdview.model.DocumentStatus
-import org.birdview.model.ReportType
-import org.birdview.request.TasksRequest
 import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
@@ -21,7 +20,8 @@ import javax.inject.Named
 @Named
 class GithubTaskService(
         private val sourcesConfigProvider: BVSourcesConfigProvider,
-        private val githubClientProvider: GithubClientProvider
+        private val githubClientProvider: GithubClientProvider,
+        private val githubQueryBuilder: GithubQueryBuilder
 ): BVTaskSource {
     companion object {
         val GITHUB_ID = "githubId"
@@ -30,27 +30,19 @@ class GithubTaskService(
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
     // TODO: parallelize
-    override fun getTasks(request: TasksRequest): List<BVDocument> =
+    override fun getTasks(request: BVDocumentFilter): List<BVDocument> =
             sourcesConfigProvider.getConfigsOfType(BVGithubConfig::class.java)
                     .flatMap { config-> getTasks(request, config) }
 
-    private fun getTasks(request: TasksRequest, githubConfig:BVGithubConfig): List<BVDocument> {
+    private fun getTasks(request: BVDocumentFilter, githubConfig:BVGithubConfig): List<BVDocument> {
         val client = githubClientProvider.getGithubClient(githubConfig)
-        return client.findIssues(getGithubIssuesFilter(request))
+        return githubQueryBuilder.getFilterQueries(request, githubConfig)
+                .flatMap { githubQuery -> client.findIssues(githubQuery) }
                 .map { issue: GithubIssue -> executor.submit(Callable {
                     getPr(issue, client)
                             ?.let { pr -> toBVDocument(pr, issue, client, githubConfig) }
                 })}
                 .mapNotNull (Future<BVDocument?>::get)
-    }
-
-    private fun getGithubIssuesFilter(request: TasksRequest): GithubIssuesFilter = when (request.reportType) {
-        ReportType.WORKED, ReportType.LAST_DAY -> GithubIssuesFilter(
-                since = request.since,
-                userAlias = request.user)
-        ReportType.PLANNED -> GithubIssuesFilter(
-                prState = "open",
-                userAlias = request.user)
     }
 
     private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {

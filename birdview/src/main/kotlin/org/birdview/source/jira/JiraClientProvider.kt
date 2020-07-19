@@ -11,5 +11,5 @@ class JiraClientProvider(
         private val usersConfigProvider: BVUsersConfigProvider
 ) {
     fun getJiraClient(jiraConfig:BVJiraConfig) =
-            JiraClient(jiraConfig, taskListDefaults, usersConfigProvider)
+            JiraClient(jiraConfig, taskListDefaults)
 }

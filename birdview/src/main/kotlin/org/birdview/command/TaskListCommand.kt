@@ -2,8 +2,10 @@ package org.birdview.command
 
 import org.birdview.BVTaskService
 import org.birdview.analysis.BVDocument
+import org.birdview.model.BVDocumentFilter
 import org.birdview.model.ReportType
-import org.birdview.request.TasksRequest
+import org.birdview.model.UserFilter
+import org.birdview.model.UserRole
 import org.birdview.utils.BVColorUtils
 import org.birdview.utils.BVColorUtils.bold
 import picocli.CommandLine
@@ -52,12 +54,12 @@ class TaskListCommand(
         val sinceDateTime = ZonedDateTime.now().minusDays(daysBack)
 
         val taskGroups = taskService.getTaskGroups(
-                TasksRequest(
-                reportType = reportType,
-                grouping = !noGrouping,
-                since = sinceDateTime,
-                user = user,
-                sourceType = sourceType))
+                BVDocumentFilter(
+                        reportType = reportType,
+                        grouping = !noGrouping,
+                        since = sinceDateTime,
+                        userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
+                        sourceType = sourceType))
 
         println("Listing '${bold(BVColorUtils.red(reportType.name))}' work.")
         val now = LocalDate.now()

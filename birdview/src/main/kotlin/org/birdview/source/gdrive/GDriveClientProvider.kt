@@ -10,5 +10,5 @@ class GDriveClientProvider(
         private val accessTokenProvider: GApiAccessTokenProvider
 ) {
     fun getGoogleApiClient(config: BVGDriveConfig)
-            = GDriveClient(accessTokenProvider, userConfigProvider, config)
+            = GDriveClient(accessTokenProvider, config)
 }

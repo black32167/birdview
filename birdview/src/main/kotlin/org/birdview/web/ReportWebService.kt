@@ -2,8 +2,10 @@ package org.birdview.web
 
 import freemarker.template.Configuration
 import org.birdview.BVTaskService
+import org.birdview.model.BVDocumentFilter
 import org.birdview.model.ReportType
-import org.birdview.request.TasksRequest
+import org.birdview.model.UserFilter
+import org.birdview.model.UserRole
 import org.glassfish.grizzly.http.server.*
 import java.io.OutputStreamWriter
 import java.time.DayOfWeek
@@ -44,7 +46,7 @@ class ReportWebService(
                                                                 .map { ReportLink(
                                                                         reportUrl = reportUrl(it, tsRequest, baseUrl),
                                                                         reportName = it.name.toLowerCase().capitalize()) },
-                                                        "user" to tsRequest.user,
+                                                        "user" to tsRequest.userFilters.firstOrNull(),
                                                         "docs" to docs,
                                                         "baseURL" to baseUrl,
                                                         "reportPath" to "report-${tsRequest.reportType}.ftl",
@@ -57,12 +59,15 @@ class ReportWebService(
             .start()
     }
 
-    private fun reportUrl(reportType: ReportType, tsRequest: TasksRequest, baseUrl: String): String {
+    private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
         return "${baseUrl}?report=${reportType.name.toLowerCase()}" +
-                (tsRequest.user?.let { "&user=${it}" } ?: "")
+                (tsRequest.userFilters
+                        .firstOrNull { it.role == UserRole.IMPLEMENTOR }
+                        ?.userAlias
+                        ?.let { "&user=${it}" } ?: "")
     }
 
-    private fun buildTSRequest(request: Request) :TasksRequest {
+    private fun buildTSRequest(request: Request) : BVDocumentFilter {
         val sourceType = null
         val user = request.getParameter("user")
         val reportType = request.getParameter("report")
@@ -77,24 +82,24 @@ class ReportWebService(
                     DayOfWeek.SUNDAY -> 2L
                     else -> 1L
                 }
-                TasksRequest(
+                BVDocumentFilter(
                         reportType = reportType,
                         grouping = false,
                         since = today.minusDays(minusDays),
-                        user = user,
+                        userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
                         sourceType = sourceType)
             }
-            ReportType.PLANNED -> TasksRequest(
+            ReportType.PLANNED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
                     since = null,
-                    user = user,
+                    userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
                     sourceType = sourceType)
-            ReportType.WORKED -> TasksRequest(
+            ReportType.WORKED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
                     since = today.minusDays(10),
-                    user = user,
+                    userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
                     sourceType = sourceType)
         }
     }

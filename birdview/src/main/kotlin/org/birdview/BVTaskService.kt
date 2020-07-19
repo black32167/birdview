@@ -1,7 +1,7 @@
 package org.birdview
 
 import org.birdview.analysis.BVDocument
-import org.birdview.request.TasksRequest
+import org.birdview.model.BVDocumentFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.utils.BVConcurrentUtils
 import org.springframework.cache.annotation.CacheEvict
@@ -20,7 +20,7 @@ open class BVTaskService(
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     @Cacheable("bv")
-    open fun getTaskGroups(request: TasksRequest): List<BVDocument> {
+    open fun getTaskGroups(request: BVDocumentFilter): List<BVDocument> {
         val filteredDocs:MutableList<BVDocument> = sources
                 .filter { filterSource(it, request) }
                 .map { source -> executor.submit(Callable<List<BVDocument>> { source.getTasks(request) }) }
@@ -47,7 +47,7 @@ open class BVTaskService(
         return allDocs.filter { doc -> !doc.ids.asSequence().map { it.id }.any { id-> references.contains(id) } }
     }
 
-    private fun getReferredDocs(filteredDocs: MutableList<BVDocument>, request: TasksRequest): List<BVDocument> =
+    private fun getReferredDocs(filteredDocs: MutableList<BVDocument>, request: BVDocumentFilter): List<BVDocument> =
             if (request.grouping) {
                 val materializedIds = filteredDocs.flatMap { it.ids }.map { it.id }
                 val referencedIds = filteredDocs.flatMap { it.refsIds } + filteredDocs.flatMap { it.groupIds }.map { it.id }
@@ -78,9 +78,9 @@ open class BVTaskService(
     }
 
     private fun getSourceTypes(id: String): String? =
-        sources.find{ it.canHadleId(id) } ?.getType()
+        sources.find{ it.canHandleId(id) } ?.getType()
 
-    private fun filterSource(source: BVTaskSource, request: TasksRequest) =
+    private fun filterSource(source: BVTaskSource, request: BVDocumentFilter) =
             request.sourceType ?.let { it == source.getType() }
                     ?: true
 
