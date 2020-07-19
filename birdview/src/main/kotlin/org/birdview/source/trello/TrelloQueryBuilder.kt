@@ -1,6 +1,5 @@
 package org.birdview.source.trello
 
-import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.BVDocumentFilter
@@ -13,7 +12,6 @@ import javax.inject.Named
 
 @Named
 class TrelloQueryBuilder(
-        private val sourcesConfigProvider: BVSourcesConfigProvider,
         private val usersConfigProvider: BVUsersConfigProvider
 ) {
     fun getQueries(filter: BVDocumentFilter, trelloConfig: BVTrelloConfig): List<String> =

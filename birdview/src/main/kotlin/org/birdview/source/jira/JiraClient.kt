@@ -8,6 +8,7 @@ import org.birdview.source.jira.model.JiraIssuesFilterResponse
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.WebTargetFactory
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import javax.ws.rs.client.Entity
@@ -16,12 +17,14 @@ import javax.ws.rs.client.WebTarget
 class JiraClient(
         private val jiraConfig: BVJiraConfig,
         private val taskListDefaults: BVTaskListsDefaults) {
+    private val log = LoggerFactory.getLogger(JiraClient::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     fun findIssues(jql: String?): List<JiraIssue> {
         if (jql == null) {
             return emptyList()
         }
+        log.info("Running jql '{}'", jql)
         val jiraRestTarget = getTarget()
 
         val jiraIssuesResponse = jiraRestTarget.path("search")

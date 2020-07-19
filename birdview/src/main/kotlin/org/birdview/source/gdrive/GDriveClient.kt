@@ -4,6 +4,7 @@ import org.birdview.config.BVGDriveConfig
 import org.birdview.source.gdrive.model.GDriveFileListResponse
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.WebTargetFactory
+import org.slf4j.LoggerFactory
 
 class GDriveClient(
         private val accessTokenProvider: GApiAccessTokenProvider,
@@ -12,13 +13,15 @@ class GDriveClient(
     companion object {
         private val SCOPE_DRIVE = "https://www.googleapis.com/auth/drive"
     }
-    private val targetFactoryV2 = WebTargetFactory("https://driveactivity.googleapis.com/v2") { authCodeProvider(SCOPE_DRIVE) }
+
+    private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val targetFactoryV3 = WebTargetFactory("https://www.googleapis.com/drive/v3") { authCodeProvider(SCOPE_DRIVE) }
 
     fun getFiles(query: String?): GDriveFileListResponse? =
             if (query == null) {
                 null
             } else {
+                log.info("Running GDrive query '{}'", query)
                 targetFactoryV3
                         .getTarget("/files")
                         .queryParam("includeItemsFromAllDrives", true)

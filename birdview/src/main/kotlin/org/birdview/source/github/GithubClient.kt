@@ -6,6 +6,7 @@ import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.WebTargetFactory
+import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
@@ -20,6 +21,7 @@ class GithubClient(
         private val githubConfig: BVGithubConfig,
         private val sourceConfig: BVTaskListsDefaults
 ) {
+    private val log = LoggerFactory.getLogger(GithubClient::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     private fun getCurrentUserIssues(issueState: String, since:ZonedDateTime):List<GithubIssue> =
@@ -82,8 +84,9 @@ class GithubClient(
                     ?.asList()
                     ?: emptyList()
 
-    fun findIssues(query:String):List<GithubIssue> =
-        getTarget()
+    fun findIssues(query:String):List<GithubIssue> {
+        log.info("Running github query '{}'", query)
+        return getTarget()
                 ?.path("search")
                 ?.path("issues")
                 ?.queryParam("q", query)
@@ -93,7 +96,7 @@ class GithubClient(
                 ?.request()
                 ?.get()
                 ?.also {
-                    if(it.status != 200) {
+                    if (it.status != 200) {
                         throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
                     }
 //                    println(it.readEntity(String::class.java))
@@ -101,7 +104,8 @@ class GithubClient(
                 }
                 ?.readEntity(GithubSearchIssuesResponse::class.java)?.items
                 ?.asList()
-                ?:listOf()
+                ?: listOf()
+    }
 
     private fun getUserIdByEMail(email: String): String =
             getTarget()

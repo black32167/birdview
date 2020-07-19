@@ -7,10 +7,13 @@ import org.birdview.source.trello.model.TrelloCard
 import org.birdview.source.trello.model.TrelloCardsSearchResponse
 import org.birdview.source.trello.model.TrelloList
 import org.birdview.utils.remote.WebTargetFactory
+import org.slf4j.LoggerFactory
 
 class TrelloClient(private val trelloConfig: BVTrelloConfig,
                    private val sourceConfig: BVTaskListsDefaults) {
+    private val log = LoggerFactory.getLogger(TrelloClient::class.java)
     fun getCards(query:String): List<TrelloCard> {
+        log.info("Running Trello query '{}'", query)
         val trelloCardsResponse = getTarget().path("search")
                 .queryParam("query", query)
                 .queryParam("partial", true)
