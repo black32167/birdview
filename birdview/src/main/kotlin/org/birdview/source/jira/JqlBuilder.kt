@@ -20,7 +20,7 @@ class JqlBuilder(
                     userClause,
                     getIssueStatusJqlClause(filter.reportType),
                     getIssueUpdateDateJqlClause(filter.since)
-            ).joinToString(" and ") + " order by lastViewed DESC"
+            ).joinToString(" and ") + " order by updatedDate DESC"
         }
     }
 
