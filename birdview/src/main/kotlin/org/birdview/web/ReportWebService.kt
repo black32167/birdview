@@ -7,6 +7,7 @@ import org.birdview.model.ReportType
 import org.birdview.model.UserFilter
 import org.birdview.model.UserRole
 import org.glassfish.grizzly.http.server.*
+import org.slf4j.LoggerFactory
 import java.io.OutputStreamWriter
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
@@ -17,6 +18,7 @@ import javax.inject.Named
 class ReportWebService(
         private val taskService: BVTaskService) {
     class ReportLink(val reportUrl:String, val reportName:String)
+    private val log = LoggerFactory.getLogger(ReportWebService::class.java)
     private val reportTemplatePath = "web/report.ftl"
     private val freemarkerConfig = Configuration(Configuration.VERSION_2_3_29).apply {
         setClassForTemplateLoading(this::class.java, "/")
@@ -29,6 +31,8 @@ class ReportWebService(
                     serverConfiguration.addHttpHandler(CLStaticHttpHandler(ReportWebService::class.java.classLoader, "/web/"))
                     serverConfiguration.addHttpHandler(object : HttpHandler() {
                         override fun service(request: Request, response: Response) {
+                            log.info("Handling request '{}'", request.queryString)
+
                             // Refresh cache if requested
                             request.getParameter("refresh")
                                     ?.also { taskService.invalidateCache() }
