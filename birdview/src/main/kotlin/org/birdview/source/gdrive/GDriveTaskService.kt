@@ -28,8 +28,7 @@ class GDriveTaskService(
                     ?.let { config ->
                         clientProvider.getGoogleApiClient(config)
                                 .getFiles(gDriveQueryBuilder.getQuery(request, config.sourceName))
-                                ?.files
-                                ?.map { file -> toBVDocument(file, config) }
+                                .map { file -> toBVDocument(file, config) }
                     } ?: emptyList()
 
     override fun getType() = "gdrive"

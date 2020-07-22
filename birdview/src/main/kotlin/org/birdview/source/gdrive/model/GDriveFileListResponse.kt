@@ -1,7 +1,8 @@
 package org.birdview.source.gdrive.model
 
 class GDriveFileListResponse(
-        val files: List<GDriveFile>
+        val files: List<GDriveFile>,
+        val nextPageToken: String?
 )
 
 class GDriveFile(
