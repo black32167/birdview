@@ -1,6 +1,7 @@
 package org.birdview.source.jira.model
 
-class JiraIssuesFilterRequest (
+data class JiraIssuesFilterRequest (
+    val startAt:Int,
     val maxResults:Int,
     val jql: String,
     val fields: Array<String>,

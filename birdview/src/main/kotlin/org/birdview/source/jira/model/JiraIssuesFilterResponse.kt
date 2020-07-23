@@ -1,7 +1,10 @@
 package org.birdview.source.jira.model
 
 class JiraIssuesFilterResponse (
-        val issues: Array<JiraIssue>
+        val issues: Array<JiraIssue>,
+        val startAt: Int,
+        val total: Int,
+        val maxResults: Int
 )
 
 class JiraIssue (
