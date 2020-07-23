@@ -22,7 +22,7 @@ class JiraClient(
         private val jiraConfig: BVJiraConfig,
         private val taskListDefaults: BVTaskListsDefaults) {
     private val log = LoggerFactory.getLogger(JiraClient::class.java)
-    private val issuesPerPage = 2
+    private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     fun findIssues(jql: String?): Iterable<JiraIssue> {
