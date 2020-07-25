@@ -1,6 +1,6 @@
 package org.birdview.model
 
-enum class DocumentStatus {
+enum class BVDocumentStatus {
     DONE,
     PROGRESS,
     PLANNED,

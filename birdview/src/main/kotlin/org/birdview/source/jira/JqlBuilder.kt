@@ -2,40 +2,18 @@ package org.birdview.source.jira
 
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVUsersConfigProvider
-import org.birdview.model.*
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import org.birdview.model.UserFilter
+import org.birdview.model.UserRole
 import javax.inject.Named
 
 @Named
 class JqlBuilder(
         private val usersConfigProvider: BVUsersConfigProvider
 ) {
-    fun getJql(filter: BVDocumentFilter, jiraConfig: BVJiraConfig): String? {
-        val userClause = getUserJqlClause(filter.userFilters, jiraConfig)
-        return if (userClause.isBlank()) {
-            null
-        } else {
-            listOfNotNull(
-                    userClause,
-                    getIssueStatusJqlClause(filter.reportType),
-                    getIssueUpdateDateJqlClause(filter.since)
-            ).joinToString(" and ") + " order by updatedDate DESC"
-        }
-    }
-
-    private fun getIssueUpdateDateJqlClause(since: ZonedDateTime?): String? =
-            since?.let {  "updatedDate >= \"${it.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}\" " }
-
-    private fun getIssueStatusJqlClause(reportType: ReportType): String? = when(reportType) {
-        ReportType.WORKED -> listOf(DocumentStatus.PROGRESS, DocumentStatus.DONE)
-        ReportType.PLANNED -> listOf(DocumentStatus.PLANNED)
-        ReportType.LAST_DAY -> listOf(DocumentStatus.DONE)
-    }
-            .mapNotNull (JiraIssueStatusMapper::toJiraStatuses)
-            .flatten()
-            .joinToString (  ",", transform = { "\"${it}\"" })
-            .let { statuses -> "status in (${statuses})" }
+    fun getJql(userFilters: List<UserFilter>, jiraConfig: BVJiraConfig): String? =
+            getUserJqlClause(userFilters, jiraConfig)
+                .takeUnless { it.isBlank() }
+                ?.let { userClause -> "$userClause order by updatedDate DESC" }
 
     private fun getUserJqlClause(userFilters: List<UserFilter>, jiraConfig: BVJiraConfig): String = userFilters
             .joinToString(" or ", "(", ")", transform = {

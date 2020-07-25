@@ -1,45 +1,76 @@
 package org.birdview
 
 import org.birdview.analysis.BVDocument
+import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentFilter
+import org.birdview.model.BVDocumentStatus
+import org.birdview.model.ReportType
 import org.birdview.source.BVTaskSource
 import org.birdview.utils.BVConcurrentUtils
-import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.Cacheable
+import java.time.ZoneId
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.inject.Named
 
-
 @Named
 open class BVTaskService(
-        private val groupDescriber: GroupDescriber,
         private var sources: List<BVTaskSource>
 )  {
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
+    // id -> doc
+    private val docsMap = ConcurrentHashMap<BVDocumentId, BVDocument>()
 
-    @Cacheable("bv")
-    open fun getTaskGroups(request: BVDocumentFilter): List<BVDocument> {
+    open fun loadDocuments(request: BVDocumentFilter) {
         val filteredDocs:MutableList<BVDocument> = sources
                 .filter { filterSource(it, request) }
-                .map { source -> executor.submit(Callable<List<BVDocument>> { source.getTasks(request) }) }
+                .map { source -> executor.submit(Callable<List<BVDocument>> { source.getTasks(request.userFilters) }) }
                 .mapNotNull { getSwallowException(it) }
                 .flatten()
                 .toMutableList()
 
         val allDocs = (filteredDocs + getReferredDocs(filteredDocs, request)).toMutableList()
 
-        if (request.grouping) {
-            linkDocs(allDocs)
-            return allDocs
-        } else {
-            return removeParents(allDocs)
+        allDocs.forEach { doc ->
+            doc.ids.forEach { id ->
+                docsMap[id] = doc }
         }
     }
 
-    @CacheEvict(value = ["bv"], allEntries = true)
+  //  @Cacheable("bv")
+    open fun getTaskGroups(request: BVDocumentFilter): List<BVDocument> {
+        loadDocuments(request)
+        val docs = docsMap
+                .values
+                .filter { doc -> filterDocument(doc, request) }
+                .toMutableList()
+
+        linkDocs(docs)
+
+        return docs
+    }
+
+   // @CacheEvict(value = ["bv"], allEntries = true)
     open fun invalidateCache() {
+    }
+
+    private fun filterDocument(doc:BVDocument, request: BVDocumentFilter) : Boolean {
+        if (request.since != null && doc.created != null &&
+                request.since > doc.created.toInstant().atZone(ZoneId.of("UTC"))) {
+            return false
+        }
+        var documentStatuses = getDocStatuses(request.reportType)
+        if (documentStatuses.contains(doc.status)) {
+            return false
+        }
+        return true
+    }
+
+    private fun getDocStatuses(reportType: ReportType) = when (reportType) {
+        ReportType.LAST_DAY -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
+        ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
+        ReportType.WORKED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED)
     }
 
     private fun removeParents(allDocs: List<BVDocument>): List<BVDocument> {

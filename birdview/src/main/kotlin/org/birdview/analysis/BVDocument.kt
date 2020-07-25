@@ -1,6 +1,6 @@
 package org.birdview.analysis
 
-import org.birdview.model.DocumentStatus
+import org.birdview.model.BVDocumentStatus
 import java.util.*
 
 open class BVDocument (
@@ -14,7 +14,7 @@ open class BVDocument (
         val subDocuments: MutableList<BVDocument> = mutableListOf(),
         val groupIds: Set<BVDocumentId> = emptySet(),
         val refsIds: Set<String> = emptySet(),
-        val status: DocumentStatus?,
+        val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList()
 ) {
     val inferredIds: MutableSet<BVDocumentId> = mutableSetOf<BVDocumentId>()

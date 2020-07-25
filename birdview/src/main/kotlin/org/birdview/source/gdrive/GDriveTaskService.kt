@@ -4,11 +4,12 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.model.BVDocumentFilter
-import org.birdview.model.DocumentStatus
+import org.birdview.model.BVDocumentStatus
+import org.birdview.model.UserFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.utils.BVFilters
+import org.springframework.cache.annotation.Cacheable
 import java.util.*
 import javax.inject.Named
 
@@ -23,11 +24,12 @@ class GDriveTaskService(
     }
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
-    override fun getTasks(request: BVDocumentFilter): List<BVDocument> =
+    @Cacheable("bv")
+    override fun getTasks(userFilters: List<UserFilter>): List<BVDocument> =
             bvConfigProvider.getConfigOfType(BVGDriveConfig::class.java)
                     ?.let { config ->
                         clientProvider.getGoogleApiClient(config)
-                                .getFiles(gDriveQueryBuilder.getQuery(request, config.sourceName))
+                                .getFiles(gDriveQueryBuilder.getQuery(userFilters, config.sourceName))
                                 .map { file -> toBVDocument(file, config) }
                     } ?: emptyList()
 
@@ -40,7 +42,7 @@ class GDriveTaskService(
                         title = file.name,
                         updated = parseDate(file.modifiedTime),
                         httpUrl = file.webViewLink,
-                        status = DocumentStatus.PROGRESS,
+                        status = BVDocumentStatus.PROGRESS,
                         key = "open"
             )
 

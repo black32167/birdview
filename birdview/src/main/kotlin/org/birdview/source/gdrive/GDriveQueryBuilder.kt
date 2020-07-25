@@ -11,15 +11,14 @@ import javax.inject.Named
 class GDriveQueryBuilder (
         private val userConfigProvider: BVUsersConfigProvider
 ) {
-    fun getQuery(filter: BVDocumentFilter, sourceName: String): String? {
-        val userClause = getUserClause(filter, sourceName)
+    fun getQuery(userFilters: List<UserFilter>, sourceName: String): String? {
+        val userClause = getUserClause(userFilters, sourceName)
         return if (userClause.isBlank()) {
             null
         } else {
             listOfNotNull(
                     userClause,
-                    "mimeType='application/vnd.google-apps.document'",
-                    getModifiedTimeClause(filter)
+                    "mimeType='application/vnd.google-apps.document'"
             ).joinToString(" AND ")
         }
     }
@@ -28,8 +27,8 @@ class GDriveQueryBuilder (
             filter.since?.let { since->
                 "modifiedTime>'${since.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))}'" }
 
-    private fun getUserClause(filter: BVDocumentFilter, sourceName: String): String =
-        filter.userFilters
+    private fun getUserClause(userFilters: List<UserFilter>, sourceName: String): String =
+        userFilters
                 .mapNotNull { getUserClause(it, sourceName) }
                 .joinToString(" AND ")
 

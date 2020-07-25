@@ -5,12 +5,13 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.model.BVDocumentFilter
-import org.birdview.model.DocumentStatus
+import org.birdview.model.BVDocumentStatus
+import org.birdview.model.UserFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVFilters
+import org.springframework.cache.annotation.Cacheable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -27,16 +28,15 @@ class GithubTaskService(
         val GITHUB_ID = "githubId"
     }
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
-    private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
-    // TODO: parallelize
-    override fun getTasks(request: BVDocumentFilter): List<BVDocument> =
+    @Cacheable("bv")
+    override fun getTasks(userFilters: List<UserFilter>): List<BVDocument> =
             sourcesConfigProvider.getConfigsOfType(BVGithubConfig::class.java)
-                    .flatMap { config-> getTasks(request, config) }
+                    .flatMap { config-> getTasks(userFilters, config) }
 
-    private fun getTasks(request: BVDocumentFilter, githubConfig:BVGithubConfig): List<BVDocument> {
+    private fun getTasks(userFilters: List<UserFilter>, githubConfig:BVGithubConfig): List<BVDocument> {
         val client = githubClientProvider.getGithubClient(githubConfig)
-        return githubQueryBuilder.getFilterQueries(request, githubConfig)
+        return githubQueryBuilder.getFilterQueries(userFilters, githubConfig)
                 .flatMap { githubQuery -> client.findIssues(githubQuery) }
                 .map { issue: GithubIssue -> executor.submit(Callable {
                     getPr(issue, client)
@@ -63,9 +63,9 @@ class GithubTaskService(
         )
     }
 
-    private fun mapStatus(state: String): DocumentStatus? = when (state) {
-        "open" -> DocumentStatus.PROGRESS
-        "closed" -> DocumentStatus.BACKLOG
+    private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
+        "open" -> BVDocumentStatus.PROGRESS
+        "closed" -> BVDocumentStatus.BACKLOG
         else -> null
     }
 
