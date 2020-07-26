@@ -3,7 +3,7 @@ package org.birdview.analysis
 import org.birdview.model.BVDocumentStatus
 import java.util.*
 
-open class BVDocument (
+data class BVDocument (
         val ids: Set<BVDocumentId>,
         var title: String,
         val key: String,

@@ -5,16 +5,15 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.model.UserFilter
+import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.utils.BVFilters
-import org.springframework.cache.annotation.Cacheable
 import javax.inject.Named
 
 @Named
-class JiraTaskService(
+open class JiraTaskService(
         private val jiraClientProvider: JiraClientProvider,
         sourcesConfigProvider: BVSourcesConfigProvider,
         private val jqlBuilder: JqlBuilder
@@ -25,28 +24,36 @@ class JiraTaskService(
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private val jiraConfigs: List<BVJiraConfig> = sourcesConfigProvider.getConfigsOfType(BVJiraConfig::class.java)
 
-    @Cacheable("bv")
-    override fun getTasks(userFilters: List<UserFilter>): List<BVDocument> =
-        jiraConfigs.flatMap { config -> getTasks(userFilters, config) }
+    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+        jiraConfigs.forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
+    }
 
-    private fun getTasks(userFilters: List<UserFilter>, config: BVJiraConfig): List<BVDocument> {
-        val jiraIssues = jiraClientProvider
+    private fun getTasks(
+            user: String?,
+            updatedPeriod: TimeIntervalFilter,
+            config: BVJiraConfig,
+            chunkConsumer: (List<BVDocument>) -> Unit) {
+        jiraClientProvider
                 .getJiraClient(config)
-                .findIssues(jqlBuilder.getJql(userFilters, config))
-
-        return jiraIssues
-                .map { mapDocument( it, config) }
-    //            .filter { it.operations.isNotEmpty() }
+                .findIssues(jqlBuilder.getJql(user, updatedPeriod, config)) { jiraIssues->
+                    chunkConsumer.invoke(
+                            jiraIssues.map { mapDocument( it, config) }
+                    )
+                }
     }
 
     override fun canHandleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
 
-    override fun loadByIds(keyList: List<String>): List<BVDocument> =
-                jiraConfigs.flatMap { config ->
-                    jiraClientProvider.getJiraClient(config)
-                            .let { client -> client.findIssues("key IN (${keyList.joinToString(",")})") }
-                            .map { mapDocument( it, config) }
-                }
+    override fun loadByIds(keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
+        var loadedDocs = mutableListOf<BVDocument>()
+        jiraConfigs.forEach { config ->
+            var client = jiraClientProvider.getJiraClient(config)
+            client.findIssues(
+                    "key IN (${keyList.distinct().joinToString(",")})") { issues->
+                chunkConsumer.invoke(issues.map { mapDocument(it, config) })
+            }
+        }
+    }
 
     private fun mapDocument(issue: JiraIssue, config: BVJiraConfig): BVDocument {
         val description = issue.fields.description ?: ""

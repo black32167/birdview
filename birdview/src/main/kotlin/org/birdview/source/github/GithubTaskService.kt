@@ -6,12 +6,11 @@ import org.birdview.analysis.BVDocumentOperation
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.UserFilter
+import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVFilters
-import org.springframework.cache.annotation.Cacheable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -19,7 +18,7 @@ import java.util.concurrent.Future
 import javax.inject.Named
 
 @Named
-class GithubTaskService(
+open class GithubTaskService(
         private val sourcesConfigProvider: BVSourcesConfigProvider,
         private val githubClientProvider: GithubClientProvider,
         private val githubQueryBuilder: GithubQueryBuilder
@@ -29,20 +28,27 @@ class GithubTaskService(
     }
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    @Cacheable("bv")
-    override fun getTasks(userFilters: List<UserFilter>): List<BVDocument> =
-            sourcesConfigProvider.getConfigsOfType(BVGithubConfig::class.java)
-                    .flatMap { config-> getTasks(userFilters, config) }
+    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+        sourcesConfigProvider.getConfigsOfType(BVGithubConfig::class.java)
+                .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
+    }
 
-    private fun getTasks(userFilters: List<UserFilter>, githubConfig:BVGithubConfig): List<BVDocument> {
+    private fun getTasks(
+            user: String?,
+            updatedPeriod: TimeIntervalFilter,
+            githubConfig:BVGithubConfig,
+            chunkConsumer: (List<BVDocument>) -> Unit) {
         val client = githubClientProvider.getGithubClient(githubConfig)
-        return githubQueryBuilder.getFilterQueries(userFilters, githubConfig)
-                .flatMap { githubQuery -> client.findIssues(githubQuery) }
-                .map { issue: GithubIssue -> executor.submit(Callable {
+        val githubQuery = githubQueryBuilder.getFilterQueries(user, updatedPeriod, githubConfig)
+        client.findIssues(githubQuery) { issues->
+            val docs = issues.map { issue: GithubIssue ->
+                executor.submit(Callable {
                     getPr(issue, client)
-                            ?.let { pr -> toBVDocument(pr, issue, client, githubConfig) }
-                })}
-                .mapNotNull (Future<BVDocument?>::get)
+                        ?.let { pr -> toBVDocument(pr, issue, client, githubConfig) }
+                })
+            }.mapNotNull(Future<BVDocument?>::get)
+            chunkConsumer.invoke(docs)
+        }
     }
 
     private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {

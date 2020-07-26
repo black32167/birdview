@@ -2,7 +2,6 @@ package org.birdview.source.trello
 
 import org.birdview.config.BVTrelloConfig
 import org.birdview.source.BVTaskListsDefaults
-import org.birdview.source.ItemsIterable
 import org.birdview.source.ItemsPage
 import org.birdview.source.trello.model.TrelloBoard
 import org.birdview.source.trello.model.TrelloCard
@@ -18,16 +17,24 @@ class TrelloClient(private val trelloConfig: BVTrelloConfig,
     private val log = LoggerFactory.getLogger(TrelloClient::class.java)
     private val cardsPerPage = 50
 
-    fun getCards(query:String): Iterable<TrelloCard> {
+    fun getCards(query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
         log.info("Running Trello query '{}'", query)
-        return searchTrelloCards(query, 0)
-                .let { resp ->
-                    ItemsIterable(mapCardsPage(resp, 0)) { page ->
-                        log.info("Loading trello issues next page: {}", page)
-                        searchTrelloCards(query, page)
-                                ?.let { mapCardsPage(it, page) }
-                    }
-                }
+        var page = 0
+        while (searchTrelloCards(query, page, chunkConsumer)) {
+            page++
+        }
+    }
+
+    private fun searchTrelloCards(query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
+        log.info("Loading trello issues next page: {}", page)
+        var cards = searchTrelloCards(query, page)
+                .let { mapCardsList(it) }
+        return if(cards.isEmpty()) {
+            false
+        } else {
+            chunkConsumer.invoke(cards)
+            true
+        }
     }
 
     fun getBoards(boardIds: List<String>): List<TrelloBoard> =
@@ -77,6 +84,13 @@ class TrelloClient(private val trelloConfig: BVTrelloConfig,
                                 cardsResponse.cards.toList(),
                                 page + 1)
                     }
+
+    private fun mapCardsList(response: Response): List<TrelloCard> =
+            response
+                    .also (ResponseValidationUtils::validate)
+                    .let { resp -> resp.readEntity(TrelloCardsSearchResponse::class.java) }
+                    .cards
+                    .toList()
 
     private fun getTarget() = WebTargetFactory(trelloConfig.baseUrl)
             .getTarget("/1")

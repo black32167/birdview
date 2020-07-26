@@ -8,4 +8,10 @@ object BVConcurrentUtils {
         thread.isDaemon = true
         thread
     }
+
+    fun getDaemonThreadFactory(name: String) = ThreadFactory { runnable ->
+        val thread = Thread(runnable, name)
+        thread.isDaemon = true
+        thread
+    }
 }

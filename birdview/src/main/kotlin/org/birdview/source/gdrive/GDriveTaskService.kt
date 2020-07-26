@@ -5,16 +5,15 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.UserFilter
+import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.utils.BVFilters
-import org.springframework.cache.annotation.Cacheable
 import java.util.*
 import javax.inject.Named
 
 @Named
-class GDriveTaskService(
+open class GDriveTaskService(
         private val clientProvider: GDriveClientProvider,
         private val bvConfigProvider: BVSourcesConfigProvider,
         private val gDriveQueryBuilder: GDriveQueryBuilder
@@ -24,14 +23,15 @@ class GDriveTaskService(
     }
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
-    @Cacheable("bv")
-    override fun getTasks(userFilters: List<UserFilter>): List<BVDocument> =
-            bvConfigProvider.getConfigOfType(BVGDriveConfig::class.java)
-                    ?.let { config ->
-                        clientProvider.getGoogleApiClient(config)
-                                .getFiles(gDriveQueryBuilder.getQuery(userFilters, config.sourceName))
-                                .map { file -> toBVDocument(file, config) }
-                    } ?: emptyList()
+    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+        bvConfigProvider.getConfigOfType(BVGDriveConfig::class.java)
+                ?.also { config ->
+                    clientProvider.getGoogleApiClient(config)
+                            .getFiles(gDriveQueryBuilder.getQuery(user, updatedPeriod, config.sourceName)) { files->
+                                chunkConsumer.invoke(files.map { file -> toBVDocument(file, config) })
+                            }
+                }
+    }
 
     override fun getType() = "gdrive"
 

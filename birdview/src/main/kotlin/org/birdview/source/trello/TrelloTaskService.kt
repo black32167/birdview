@@ -2,22 +2,19 @@ package org.birdview.source.trello
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
-import org.birdview.analysis.tokenize.TextTokenizer
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.UserFilter
+import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.utils.BVFilters
-import org.springframework.cache.annotation.Cacheable
 import java.util.*
 import javax.inject.Named
 
 @Named
-class TrelloTaskService(
+open class TrelloTaskService(
         private val sourcesConfigProvider: BVSourcesConfigProvider,
-        val tokenizer: TextTokenizer,
         private val trelloClientProvider: TrelloClientProvider,
         private val trelloQueryBuilder: TrelloQueryBuilder
 ) : BVTaskSource {
@@ -30,34 +27,39 @@ class TrelloTaskService(
     //private val dateTimeFormat = DateTimeFormatter.ISO_DATE_TIME//java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")2020-04-29T04:12:34.125Z
     private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
-    @Cacheable("bv")
-    override fun getTasks(userFilters: List<UserFilter>): List<BVDocument> =
+    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
             sourcesConfigProvider.getConfigsOfType(BVTrelloConfig::class.java)
-                    .flatMap { config-> getTasks(userFilters, config) }
+                    .forEach { config-> getTasks(user, updatedPeriod, config, chunkConsumer) }
 
-    private fun getTasks(userFilters: List<UserFilter>, trelloConfig: BVTrelloConfig): List<BVDocument> {
-        val cards = trelloQueryBuilder.getQueries(userFilters, trelloConfig)
-                .flatMap { query ->
-                    trelloClientProvider.getTrelloClient(trelloConfig).getCards(query) }
+    private fun getTasks(
+            user: String?,
+            updatedPeriod: TimeIntervalFilter,
+            trelloConfig: BVTrelloConfig,
+            chunkConsumer: (List<BVDocument>) -> Unit) {
+        val query = trelloQueryBuilder.getQueries(user, updatedPeriod, trelloConfig)
 
-        val listsMap = trelloClientProvider.getTrelloClient(trelloConfig).loadLists(cards.map { it.idList  })
-                .associateBy { it.id }
+        trelloClientProvider.getTrelloClient(trelloConfig).getCards(query) { cards->
+            val listsMap = trelloClientProvider.getTrelloClient(trelloConfig)
+                    .loadLists(cards.map { it.idList  })
+                    .associateBy { it.id }
 
-        val tasks = cards.map { card ->
-            BVDocument(
-                ids = extractIds(card, trelloConfig.sourceName),
-                title = card.name,
-                updated = parseDate(card.dateLastActivity),
-                created = parseDate(card.dateLastActivity),
-                httpUrl = card.url,
-                body = card.desc,
-                refsIds = BVFilters.filterIdsFromText("${card.desc} ${card.name}"),
-                groupIds = extractGroupIds(card, trelloConfig.sourceName),
-                status = mapStatus(listsMap[card.idList]?.name ?: ""),
-                key = "#${card.id}"
-            )
+            val tasks = cards.map { card ->
+                BVDocument(
+                        ids = extractIds(card, trelloConfig.sourceName),
+                        title = card.name,
+                        updated = parseDate(card.dateLastActivity),
+                        created = parseDate(card.dateLastActivity),
+                        httpUrl = card.url,
+                        body = card.desc,
+                        refsIds = BVFilters.filterIdsFromText("${card.desc} ${card.name}"),
+                        groupIds = extractGroupIds(card, trelloConfig.sourceName),
+                        status = mapStatus(listsMap[card.idList]?.name ?: ""),
+                        key = "#${card.id}"
+                )
+            }
+
+            chunkConsumer.invoke(tasks)
         }
-        return tasks
     }
 
     private fun mapStatus(state: String): BVDocumentStatus? = when (state) {

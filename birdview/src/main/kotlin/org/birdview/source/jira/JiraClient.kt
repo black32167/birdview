@@ -1,7 +1,6 @@
 package org.birdview.source.jira
 
 import org.birdview.config.BVJiraConfig
-import org.birdview.source.BVTaskListsDefaults
 import org.birdview.source.ItemsIterable
 import org.birdview.source.ItemsPage
 import org.birdview.source.jira.model.JiraIssue
@@ -19,15 +18,14 @@ import javax.ws.rs.client.WebTarget
 import javax.ws.rs.core.Response
 
 class JiraClient(
-        private val jiraConfig: BVJiraConfig,
-        private val taskListDefaults: BVTaskListsDefaults) {
+        private val jiraConfig: BVJiraConfig) {
     private val log = LoggerFactory.getLogger(JiraClient::class.java)
     private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun findIssues(jql: String?): Iterable<JiraIssue> {
+    fun findIssues(jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
         if (jql == null) {
-            return emptyList()
+            return
         }
         log.info("Running jql '{}'", jql)
 
@@ -36,7 +34,18 @@ class JiraClient(
                 maxResults = issuesPerPage,
                 fields = arrayOf("*all"),
                 jql = jql)
-        return postIssuesSearch(jiraIssuesRequest)
+
+        var startAt:Int? = 0
+        do {
+            val page = postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt!!))
+                    ?.let (this::mapIssuesPage)
+                    ?.also { page->
+                        chunkConsumer.invoke(page.items)
+                    }
+
+            startAt = page?.continuation
+        } while (startAt != null)
+        postIssuesSearch(jiraIssuesRequest)
                 .let { resp->
                     ItemsIterable(mapIssuesPage (resp)) { startAt ->
                         log.info("Loading jira issues next page starting at: {}", startAt)
@@ -67,9 +76,11 @@ class JiraClient(
                                         null
                                     }
                                 }
-                        ItemsPage (
+                        ItemsPage(
                                 issues,
-                                issuesResponse.run { startAt + maxResults })
+                                issuesResponse
+                                        .takeUnless { issues.isEmpty() }
+                                        ?.run { startAt + maxResults })
                     }
 
     private fun loadIssue(url:String): JiraIssue =
@@ -81,9 +92,6 @@ class JiraClient(
                     throw RuntimeException("Error reading Jira tasks: ${response.readEntity(String::class.java)}")
                 } }
                 .let { it.readEntity(JiraIssue::class.java) }
-
-    fun loadIssues(keys:List<String>): Iterable<JiraIssue> =
-            findIssues("issueKey IN (${keys.joinToString(",")})")
 
     private fun getTarget(): WebTarget = getTargetFactory().getTarget("/rest/api/2")
 

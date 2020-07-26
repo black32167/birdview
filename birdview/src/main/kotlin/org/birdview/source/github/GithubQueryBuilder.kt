@@ -2,23 +2,32 @@ package org.birdview.source.github
 
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVUsersConfigProvider
-import org.birdview.model.UserFilter
-import org.birdview.model.UserRole
+import org.birdview.model.TimeIntervalFilter
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
 @Named
 class GithubQueryBuilder(
         private val usersConfigProvider: BVUsersConfigProvider
 ) {
-    fun getFilterQueries(userFilters: List<UserFilter>, githubConfig: BVGithubConfig): List<String> =
-            userFilters
-                    .mapNotNull { userClause(it, githubConfig) }
-                    .map { userClause -> "type:pr $userClause" }
+    fun getFilterQueries(user: String?, updatedPeriod: TimeIntervalFilter, githubConfig: BVGithubConfig): String =
+                listOfNotNull(
+                        "type:pr",
+                        userClause(user, githubConfig),
+                        getUpdateAfterClause(updatedPeriod.after),
+                        getUpdateBeforeClause(updatedPeriod.before)
+                ).joinToString(" ")
 
-    private fun userClause(filter: UserFilter, githubConfig: BVGithubConfig): String? = when (filter.role) {
-        UserRole.IMPLEMENTOR -> "author:${getGithubUser(filter.userAlias, githubConfig)}"
-        else -> null
-    }
+
+    private fun getUpdateAfterClause(after: ZonedDateTime?):String? =
+            after?.let { "updated:>=${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" }
+
+    private fun getUpdateBeforeClause(before: ZonedDateTime?):String? =
+            before?.let { "updated:<${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" }
+
+    private fun userClause(userAlias: String?, githubConfig: BVGithubConfig): String? =
+            "author:${getGithubUser(userAlias, githubConfig)}"
 
     private fun getGithubUser(userAlias: String?, githubConfig: BVGithubConfig): String? =
             if (userAlias == null) "@me"

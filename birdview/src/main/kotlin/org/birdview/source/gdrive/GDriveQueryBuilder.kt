@@ -1,9 +1,8 @@
 package org.birdview.source.gdrive
 
 import org.birdview.config.BVUsersConfigProvider
-import org.birdview.model.BVDocumentFilter
-import org.birdview.model.UserFilter
-import org.birdview.model.UserRole
+import org.birdview.model.TimeIntervalFilter
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
@@ -11,31 +10,28 @@ import javax.inject.Named
 class GDriveQueryBuilder (
         private val userConfigProvider: BVUsersConfigProvider
 ) {
-    fun getQuery(userFilters: List<UserFilter>, sourceName: String): String? {
-        val userClause = getUserClause(userFilters, sourceName)
-        return if (userClause.isBlank()) {
-            null
-        } else {
-            listOfNotNull(
-                    userClause,
-                    "mimeType='application/vnd.google-apps.document'"
-            ).joinToString(" AND ")
-        }
+    fun getQuery(user: String?, updatedPeriod: TimeIntervalFilter, sourceName: String): String? {
+        val userClause = getUserClause(user, sourceName)
+        return listOfNotNull(
+                userClause,
+                "mimeType='application/vnd.google-apps.document'",
+                getModifiedAfterTimeClause(updatedPeriod.after),
+                getModifiedBeforeTimeClause(updatedPeriod.before)
+        ).joinToString(" AND ")
     }
 
-    private fun getModifiedTimeClause(filter: BVDocumentFilter): String? =
-            filter.since?.let { since->
-                "modifiedTime>'${since.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))}'" }
+    private fun getModifiedAfterTimeClause(after: ZonedDateTime?): String? =
+            after?.let { "modifiedTime>='${formatDate(it)}'" }
 
-    private fun getUserClause(userFilters: List<UserFilter>, sourceName: String): String =
-        userFilters
-                .mapNotNull { getUserClause(it, sourceName) }
-                .joinToString(" AND ")
 
-    private fun getUserClause(filter: UserFilter, sourceName: String): String? = when (filter.role) {
-        UserRole.IMPLEMENTOR -> "'${getUser(filter.userAlias, sourceName)}' in owners"
-        else -> null
-    }
+    private fun getModifiedBeforeTimeClause(before: ZonedDateTime?): String? =
+            before?.let { "modifiedTime<'${formatDate(it)}'" }
+
+    private fun formatDate(date: ZonedDateTime) =
+            date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))
+
+    private fun getUserClause(user: String?, sourceName: String): String? =
+        "'${getUser(user, sourceName)}' in owners"
 
     private fun getUser(userAlias: String?, sourceName: String): String =
             userAlias?.let { userConfigProvider.getUserName(userAlias, sourceName) } ?: "me"

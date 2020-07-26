@@ -2,25 +2,35 @@ package org.birdview.source.trello
 
 import org.birdview.config.BVTrelloConfig
 import org.birdview.config.BVUsersConfigProvider
-import org.birdview.model.UserFilter
-import org.birdview.model.UserRole
+import org.birdview.model.TimeIntervalFilter
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Named
 
 @Named
 class TrelloQueryBuilder(
         private val usersConfigProvider: BVUsersConfigProvider
 ) {
-    fun getQueries(userFilters: List<UserFilter>, trelloConfig: BVTrelloConfig): List<String> =
-            userFilters
-                    .mapNotNull { userClause(it, trelloConfig) }
-                    .map { userClause -> "$userClause sort:edited" }
+    fun getQueries(user: String?, updatedPeriod: TimeIntervalFilter, trelloConfig: BVTrelloConfig): String =
+            listOfNotNull(
+                    userClause(user, trelloConfig),
+                    getUpdateAfterClause(updatedPeriod.after),
+                    getUpdateBeforeClause(updatedPeriod.before)
+            ).joinToString(" ") + " sort:edited"
+
+    private fun getUpdateAfterClause(after: ZonedDateTime?): String? =
+            after?.let { "edited:${getDaysBackFromNow(it)}" }
+
+    private fun getUpdateBeforeClause(before: ZonedDateTime?): String? =
+            before?.let { "-edited:${getDaysBackFromNow(it)}" }
+
+    private fun getDaysBackFromNow(since: ZonedDateTime): Int =
+            ChronoUnit.DAYS.between(since, ZonedDateTime.now()).toInt()
 
     private fun getUser(userAlias: String?, sourceName:String): String =
             if (userAlias == null) "me"
             else usersConfigProvider.getUserName(userAlias, sourceName)
 
-    private fun userClause(filter: UserFilter, trelloConfig: BVTrelloConfig): String? = when (filter.role) {
-        UserRole.IMPLEMENTOR -> "@${getUser(filter.userAlias, trelloConfig.sourceName)}"
-        else -> null
-    }
+    private fun userClause(user: String?, trelloConfig: BVTrelloConfig): String? =
+            "@${getUser(user, trelloConfig.sourceName)}"
 }

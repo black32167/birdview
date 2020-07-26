@@ -2,10 +2,7 @@ package org.birdview.web
 
 import freemarker.template.Configuration
 import org.birdview.BVTaskService
-import org.birdview.model.BVDocumentFilter
-import org.birdview.model.ReportType
-import org.birdview.model.UserFilter
-import org.birdview.model.UserRole
+import org.birdview.model.*
 import org.glassfish.grizzly.http.server.*
 import org.slf4j.LoggerFactory
 import java.io.OutputStreamWriter
@@ -38,7 +35,7 @@ class ReportWebService(
                                     ?.also { taskService.invalidateCache() }
 
                             val tsRequest = buildTSRequest(request)
-                            val docs = taskService.getTaskGroups(tsRequest)
+                            val docs = taskService.getDocuments(tsRequest)
                                     .map(BVDocumentViewFactory::create)
 
                             response.apply {
@@ -89,20 +86,20 @@ class ReportWebService(
                 BVDocumentFilter(
                         reportType = reportType,
                         grouping = false,
-                        since = today.minusDays(minusDays),
+                        updatedPeriod = TimeIntervalFilter(after = today.minusDays(minusDays)),
                         userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
                         sourceType = sourceType)
             }
             ReportType.PLANNED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
-                    since = null,
+                    updatedPeriod = TimeIntervalFilter(),
                     userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
                     sourceType = sourceType)
             ReportType.WORKED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
-                    since = today.minusDays(10),
+                    updatedPeriod = TimeIntervalFilter(after = today.minusDays(10)),
                     userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
                     sourceType = sourceType)
         }

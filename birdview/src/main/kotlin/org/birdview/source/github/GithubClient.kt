@@ -1,13 +1,13 @@
 package org.birdview.source.github
 
 import org.birdview.config.BVGithubConfig
-import org.birdview.source.ItemsIterable
 import org.birdview.source.ItemsPage
 import org.birdview.source.github.model.*
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory
+import javax.ws.rs.client.WebTarget
 import javax.ws.rs.core.Response
 
 class GithubClient(
@@ -56,22 +56,26 @@ class GithubClient(
                     ?.asList()
                     ?: emptyList()
 
-    fun findIssues(query:String): Iterable<GithubIssue> {
+    fun findIssues(query:String, chunkConsumer: (List<GithubIssue>) -> Unit) {
         log.info("Running github query '{}'", query)
-        return getTarget()
+
+        var target: WebTarget? = getTarget()
                 ?.path("search")
                 ?.path("issues")
                 ?.queryParam("q", query)
                 ?.queryParam("per_page", issuesPerPage)
-                ?.request()
-                ?.get()
-                ?.let { resp ->
-                    ItemsIterable(mapIssuesPage (resp)) { url ->
-                        log.info("Loading github issues next page: {}", url)
-                        getTarget(url)?.request()?.get()?.let (this::mapIssuesPage)
+        do {
+            log.info("Loading github issues next page: {}", target?.uri)
+            var page = target?.request()?.get()
+                    ?.let (this::mapIssuesPage)
+                    ?.takeUnless { it.items.isEmpty() }
+                    ?.also { page ->
+                        chunkConsumer.invoke(page.items)
                     }
-                }
-                ?: ItemsIterable<GithubIssue, String>()
+
+            target = page?.let (ItemsPage<GithubIssue, String>::continuation)
+                    ?.let(this::getTarget)
+        } while (target != null)
     }
 
     private fun mapIssuesPage(response: Response): ItemsPage<GithubIssue, String> =

@@ -5,7 +5,7 @@ import java.time.ZonedDateTime
 data class BVDocumentFilter(
         val reportType: ReportType,
         val grouping: Boolean,
-        val since: ZonedDateTime? = null,
+        val updatedPeriod: TimeIntervalFilter,
         val userFilters: List<UserFilter>,
         val sourceType:String? = null
 )
@@ -15,7 +15,12 @@ enum class UserRole {
     IMPLEMENTOR,
     WATCHER
 }
-data class UserFilter (
+data class UserFilter(
         val userAlias: String?,
         val role: UserRole
+)
+
+data class TimeIntervalFilter(
+    val after: ZonedDateTime? = null,
+    val before: ZonedDateTime? = null
 )

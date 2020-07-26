@@ -1,11 +1,12 @@
 package org.birdview.source
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.UserFilter
+import org.birdview.model.TimeIntervalFilter
 
 interface BVTaskSource {
-    fun getTasks(userFilters: List<UserFilter>):List<BVDocument>
+    fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit)
     fun getType(): String
     fun canHandleId(id: String): Boolean = false
-    fun loadByIds(list: List<String>) = listOf<BVDocument>()
+    fun loadByIds(list: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
+    }
 }
