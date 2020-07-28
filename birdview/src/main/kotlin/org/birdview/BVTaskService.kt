@@ -3,6 +3,7 @@ package org.birdview
 import org.apache.commons.logging.LogFactory
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.ReportType
@@ -17,7 +18,8 @@ import javax.inject.Named
 
 @Named
 open class BVTaskService(
-        private var sources: List<BVTaskSource>
+        private var sources: List<BVTaskSource>,
+        private val bvUsersConfigProvider: BVUsersConfigProvider
 )  {
     private val log = LogFactory.getLog(BVTaskService::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
@@ -74,31 +76,40 @@ open class BVTaskService(
        usersRetrieved.clear()
     }
 
-    private fun filterDocument(doc:BVDocument, request: BVDocumentFilter) : Boolean {
+    private fun filterDocument(doc:BVDocument, filter: BVDocumentFilter) : Boolean {
         val docCreated = doc.created?.toInstant()?.atZone(ZoneId.of("UTC"))
-        if (request.updatedPeriod.after != null) {
-            if(docCreated == null || request.updatedPeriod.after > docCreated) {
+        if (filter.updatedPeriod.after != null) {
+            if(docCreated == null || filter.updatedPeriod.after > docCreated) {
                 return false
             }
         }
 
-        if (request.updatedPeriod.before != null) {
-            if(docCreated == null || request.updatedPeriod.before <= docCreated) {
+        if (filter.updatedPeriod.before != null) {
+            if(docCreated == null || filter.updatedPeriod.before <= docCreated) {
                 return false
             }
         }
 
-        var documentStatuses = getDocStatuses(request.reportType)
-        if (documentStatuses.contains(doc.status)) {
+        var documentStatuses = getDocStatuses(filter.reportType)
+        if (!documentStatuses.contains(doc.status)) {
             return false
         }
+
+
+        var hasFilteredUser = doc.users.any{ docUser -> filter.userFilters.any { userFilter ->
+            var filteringUser = userFilter.userAlias ?: bvUsersConfigProvider.getDefaultUserAlias()
+            filteringUser == docUser.userName && userFilter.role == docUser.role
+        }}
+        if(!hasFilteredUser) {
+            return false
+        }
+
         return true
     }
 
     private fun getDocStatuses(reportType: ReportType) = when (reportType) {
-        ReportType.LAST_DAY -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
+        ReportType.LAST_DAY, ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
         ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
-        ReportType.WORKED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED)
     }
 
     private fun removeParents(allDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit): List<BVDocument> {
@@ -133,9 +144,11 @@ open class BVTaskService(
                 .filter { source -> type2Ids.contains(source.getType()) }
                 .forEach { source ->
                     type2Ids[source.getType()]
-                        ?.also { ids ->
+                        ?.also { ids -> try {
                             source.loadByIds(ids, chunkConsumer)
-                        }
+                        } catch (e: Exception) {
+                            log.error("", e)
+                        } }
                 }
     }
 

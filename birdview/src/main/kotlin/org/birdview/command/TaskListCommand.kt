@@ -16,7 +16,7 @@ import java.util.concurrent.Callable
 @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
         description = ["Lists tasks."])
 class TaskListCommand(
-        val taskService: BVTaskService
+        private val taskService: BVTaskService
 ) : Callable<Int> {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd")
             .also { it.timeZone = TimeZone.getTimeZone("UTC") }

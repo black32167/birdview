@@ -14,6 +14,10 @@ class JiraIssue (
     val changelog: JiraChangelog?
 )
 
+class JiraWatcher(
+        val self: String
+)
+
 class JiraChangelog (
     val histories: List<JiraChangelogItem>
 )
@@ -25,6 +29,8 @@ class JiraChangelogItem (
 )
 
 class JiraUser (
+        val self: String?,
+        val displayName: String?,
         val emailAddress: String?
 )
 
@@ -39,7 +45,11 @@ class JiraIssueFields (
     val status: JiraIssueStatus,
     val description: String?,
     val customfield_10007: String?, //EPIC key
-    val parent: JiraParentIssue?
+    val parent: JiraParentIssue?,
+    val watches: JiraWatcher?,
+    val creator: JiraUser?,
+    val reporter: JiraUser?,
+    val assignee: JiraUser?
 )
 
 class JiraIssueStatus(val name:String)

@@ -3,10 +3,13 @@ package org.birdview.source.github
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
+import org.birdview.analysis.BVDocumentUser
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
@@ -21,7 +24,8 @@ import javax.inject.Named
 open class GithubTaskService(
         private val sourcesConfigProvider: BVSourcesConfigProvider,
         private val githubClientProvider: GithubClientProvider,
-        private val githubQueryBuilder: GithubQueryBuilder
+        private val githubQueryBuilder: GithubQueryBuilder,
+        private val bvUsersConfigProvider: BVUsersConfigProvider
 ): BVTaskSource {
     companion object {
         val GITHUB_ID = "githubId"
@@ -65,13 +69,24 @@ open class GithubTaskService(
                 groupIds = setOf(),
                 status = mapStatus(pr.state),
                 operations = extractOperations(pr, issue, client, githubConfig),
-                key = pr.html_url.replace(".*/".toRegex(), "#")
+                key = pr.html_url.replace(".*/".toRegex(), "#"),
+                users = extractUsers(pr, githubConfig)
         )
     }
 
+    private fun extractUsers(pr: GithubPullRequest, config: BVGithubConfig): List<BVDocumentUser> =
+            listOf(UserRole.CREATOR, UserRole.IMPLEMENTOR).mapNotNull { mapDocumentUser(pr.user, config.sourceName, it) } +
+                    listOfNotNull(mapDocumentUser(pr.assignee, config.sourceName, UserRole.IMPLEMENTOR)) +
+                    pr.requested_reviewers.mapNotNull { reviewer -> mapDocumentUser(reviewer, config.sourceName, UserRole.WATCHER) }
+
+
+    private fun mapDocumentUser(githubUser: GithubUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
+            bvUsersConfigProvider.getUserAlias(githubUser?.login, sourceName)
+                    ?.let { alias -> BVDocumentUser(alias, userRole) }
+
     private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
         "open" -> BVDocumentStatus.PROGRESS
-        "closed" -> BVDocumentStatus.BACKLOG
+        "closed" -> BVDocumentStatus.DONE
         else -> null
     }
 

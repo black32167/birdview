@@ -1,6 +1,7 @@
 package org.birdview.analysis
 
 import org.birdview.model.BVDocumentStatus
+import org.birdview.model.UserRole
 import java.util.*
 
 data class BVDocument (
@@ -11,6 +12,7 @@ data class BVDocument (
         val updated: Date? = null,
         val created: Date? = null,
         val httpUrl: String,
+        var users: List<BVDocumentUser> = listOf(),
         val subDocuments: MutableList<BVDocument> = mutableListOf(),
         val groupIds: Set<BVDocumentId> = emptySet(),
         val refsIds: Set<String> = emptySet(),
@@ -28,6 +30,11 @@ data class BVDocument (
     fun getLastUpdated(): Date? =
             subDocuments.mapNotNull { it.updated }.min()
 }
+
+data class BVDocumentUser(
+        val userName: String,
+        val role: UserRole
+)
 
 class BVDocumentOperation (
         val description: String,

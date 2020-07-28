@@ -10,7 +10,7 @@ import picocli.CommandLine
 fun main(vararg args:String) {
     AnnotationConfigApplicationContext(BirdviewConfiguration::class.java).use {ctx->
         val taskService =  ctx.getBean(BVTaskService::class.java)
-        val reportWebService =  ctx.getBean(ReportWebService::class.java)
+        val reportWebService = ctx.getBean(ReportWebService::class.java)
         CommandLine(BirdviewCommand())
                 .addSubcommand(TaskListCommand(taskService))
                 .addSubcommand(WebServerCommand(reportWebService))

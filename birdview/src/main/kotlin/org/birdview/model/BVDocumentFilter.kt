@@ -15,6 +15,7 @@ enum class UserRole {
     IMPLEMENTOR,
     WATCHER
 }
+
 data class UserFilter(
         val userAlias: String?,
         val role: UserRole

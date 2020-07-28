@@ -3,12 +3,16 @@ package org.birdview.source.jira
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
+import org.birdview.analysis.BVDocumentUser
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
+import org.birdview.source.jira.model.JiraUser
 import org.birdview.utils.BVFilters
 import javax.inject.Named
 
@@ -16,7 +20,8 @@ import javax.inject.Named
 open class JiraTaskService(
         private val jiraClientProvider: JiraClientProvider,
         sourcesConfigProvider: BVSourcesConfigProvider,
-        private val jqlBuilder: JqlBuilder
+        private val jqlBuilder: JqlBuilder,
+        private val bvUsersConfigProvider: BVUsersConfigProvider
 ): BVTaskSource {
     companion object {
         const val JIRA_KEY_TYPE = "jiraKey"
@@ -45,7 +50,6 @@ open class JiraTaskService(
     override fun canHandleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
 
     override fun loadByIds(keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
-        var loadedDocs = mutableListOf<BVDocument>()
         jiraConfigs.forEach { config ->
             var client = jiraClientProvider.getJiraClient(config)
             client.findIssues(
@@ -68,9 +72,20 @@ open class JiraTaskService(
                 groupIds = extractGroupIds(issue, config.sourceName),
                 status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                 operations = extractOperations(issue, config),
-                key = issue.key
+                key = issue.key,
+                users = extractUsers(issue, config)
         )
     }
+
+    private fun extractUsers(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentUser> =
+        listOfNotNull(
+                mapDocumentUser(issue.fields.assignee, config.sourceName, UserRole.IMPLEMENTOR),
+                mapDocumentUser(issue.fields.creator, config.sourceName, UserRole.CREATOR)
+        )
+
+    private fun mapDocumentUser(jiraUser: JiraUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
+        bvUsersConfigProvider.getUserAlias(jiraUser?.emailAddress, sourceName)
+                ?.let { alias -> BVDocumentUser(alias, userRole) }
 
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
         issue.changelog
