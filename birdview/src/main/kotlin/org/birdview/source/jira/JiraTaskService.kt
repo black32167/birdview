@@ -61,20 +61,24 @@ open class JiraTaskService(
 
     private fun mapDocument(issue: JiraIssue, config: BVJiraConfig): BVDocument {
         val description = issue.fields.description ?: ""
-        return BVDocument(
-                ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
-                title = issue.fields.summary,
-                updated = dateTimeFormat.parse(issue.fields.updated),
-                created = dateTimeFormat.parse(issue.fields.created),
-                httpUrl = "${config.baseUrl}/browse/${issue.key}",
-                body = description,
-                refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
-                groupIds = extractGroupIds(issue, config.sourceName),
-                status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
-                operations = extractOperations(issue, config),
-                key = issue.key,
-                users = extractUsers(issue, config)
-        )
+        try {
+            return BVDocument(
+                    ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
+                    title = issue.fields.summary,
+                    updated = dateTimeFormat.parse(issue.fields.updated),
+                    created = dateTimeFormat.parse(issue.fields.created),
+                    httpUrl = "${config.baseUrl}/browse/${issue.key}",
+                    body = description,
+                    refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
+                    groupIds = extractGroupIds(issue, config.sourceName),
+                    status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
+                    operations = extractOperations(issue, config),
+                    key = issue.key,
+                    users = extractUsers(issue, config)
+            )
+        } catch (e:Exception) {
+            throw RuntimeException("Could not parse issue $issue", e)
+        }
     }
 
     private fun extractUsers(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentUser> =

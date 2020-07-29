@@ -1,44 +1,44 @@
 package org.birdview.source.jira.model
 
-class JiraIssuesFilterResponse (
-        val issues: Array<JiraIssue>,
+data class JiraIssuesFilterResponse (
+        val issues: List<JiraIssue>,
         val startAt: Int,
         val total: Int,
         val maxResults: Int
 )
 
-class JiraIssue (
+data class JiraIssue (
     val key: String,
     val self: String,
     val fields : JiraIssueFields,
     val changelog: JiraChangelog?
 )
 
-class JiraWatcher(
+data class JiraWatcher(
         val self: String
 )
 
-class JiraChangelog (
+data class JiraChangelog (
     val histories: List<JiraChangelogItem>
 )
 
-class JiraChangelogItem (
+data class JiraChangelogItem (
         val author: JiraUser,
         val items: List<JiraHistoryItem>,
         val created: String
 )
 
-class JiraUser (
+data class JiraUser (
         val self: String?,
         val displayName: String?,
         val emailAddress: String?
 )
 
-class JiraHistoryItem (
+data class JiraHistoryItem (
     val field: String
 )
 
-class JiraIssueFields (
+data class JiraIssueFields (
     val updated: String,
     val created: String,
     val summary: String,
@@ -52,13 +52,13 @@ class JiraIssueFields (
     val assignee: JiraUser?
 )
 
-class JiraIssueStatus(val name:String)
+data class JiraIssueStatus(val name:String)
 
-class JiraParentIssue (
+data class JiraParentIssue (
     val key: String,
     val fields: JiraParentIssueFields
 )
 
-class JiraParentIssueFields (
+data class JiraParentIssueFields (
     val summary: String
 )

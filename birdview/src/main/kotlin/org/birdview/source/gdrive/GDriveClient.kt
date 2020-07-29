@@ -53,7 +53,7 @@ class GDriveClient(
             .queryParam("supportsAllDrives", true)
             .queryParam("pageSize", filesPerPage)
             .queryParam("orderBy", "modifiedTime desc")
-            .queryParam("fields", "files(id,name,modifiedTime,webViewLink),nextPageToken")
+            .queryParam("fields", "files(id,name,modifiedTime,webViewLink,owners,lastModifyingUser,sharingUser),nextPageToken")
             .queryParam("q", query)
 
     private fun mapFilesPage(response: Response): ItemsPage<GDriveFile, String> =

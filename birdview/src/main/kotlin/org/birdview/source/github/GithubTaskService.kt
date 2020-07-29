@@ -79,10 +79,8 @@ open class GithubTaskService(
                     listOfNotNull(mapDocumentUser(pr.assignee, config.sourceName, UserRole.IMPLEMENTOR)) +
                     pr.requested_reviewers.mapNotNull { reviewer -> mapDocumentUser(reviewer, config.sourceName, UserRole.WATCHER) }
 
-
     private fun mapDocumentUser(githubUser: GithubUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            bvUsersConfigProvider.getUserAlias(githubUser?.login, sourceName)
-                    ?.let { alias -> BVDocumentUser(alias, userRole) }
+            bvUsersConfigProvider.getUser(githubUser?.login, sourceName, userRole)
 
     private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
         "open" -> BVDocumentStatus.PROGRESS

@@ -90,13 +90,17 @@ open class BVTaskService(
             }
         }
 
-        var documentStatuses = getDocStatuses(filter.reportType)
-        if (!documentStatuses.contains(doc.status)) {
+        var inferredDocStatus = inferDocStatus(doc)
+        val targetDocumentStatuses = getTargetDocStatuses(filter.reportType)
+        if (!targetDocumentStatuses.contains(inferredDocStatus)) {
             return false
         }
 
+        if (!targetDocumentStatuses.contains(doc.status)) {
+            return false
+        }
 
-        var hasFilteredUser = doc.users.any{ docUser -> filter.userFilters.any { userFilter ->
+        val hasFilteredUser = doc.users.any{ docUser -> filter.userFilters.any { userFilter ->
             var filteringUser = userFilter.userAlias ?: bvUsersConfigProvider.getDefaultUserAlias()
             filteringUser == docUser.userName && userFilter.role == docUser.role
         }}
@@ -107,7 +111,19 @@ open class BVTaskService(
         return true
     }
 
-    private fun getDocStatuses(reportType: ReportType) = when (reportType) {
+    private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
+        var parentStatuses = doc.refsIds
+                .map { key -> getDocByStringKey(key)?.status }
+        if(parentStatuses.all { it == BVDocumentStatus.DONE }) {
+            return BVDocumentStatus.DONE
+        }
+        return doc.status
+    }
+
+    private fun getDocByStringKey(key: String): BVDocument? =
+            docsMap.values.find { doc->doc.ids.any { it.id == key } }
+
+    private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
         ReportType.LAST_DAY, ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
         ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
     }
@@ -135,7 +151,7 @@ open class BVTaskService(
     }
 
     private fun loadDocs(missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
-            val type2Ids:Map<String, List<String>> = missedDocsIds
+        val type2Ids:Map<String, List<String>> = missedDocsIds
                 .fold(mutableMapOf<String, MutableList<String>>()) { acc, id ->
                     getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc

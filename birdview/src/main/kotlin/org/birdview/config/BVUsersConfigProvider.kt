@@ -1,5 +1,7 @@
 package org.birdview.config
 
+import org.birdview.analysis.BVDocumentUser
+import org.birdview.model.UserRole
 import org.birdview.utils.JsonDeserializer
 import org.springframework.cache.annotation.Cacheable
 import javax.inject.Named
@@ -38,6 +40,10 @@ open class BVUsersConfigProvider(
         e.printStackTrace()
         arrayOf()
     }
+
+    fun getUser(sourceUserName: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
+            getUserAlias(sourceUserName, sourceName)
+                    ?.let { alias -> BVDocumentUser(alias, userRole) }
 
 
 }
