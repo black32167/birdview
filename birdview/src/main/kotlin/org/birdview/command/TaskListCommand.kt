@@ -12,9 +12,11 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Callable
+import javax.inject.Named
 
 @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
         description = ["Lists tasks."])
+@Named
 class TaskListCommand(
         private val taskService: BVTaskService
 ) : Callable<Int> {

@@ -3,9 +3,11 @@ package org.birdview.command
 import org.birdview.web.ReportWebService
 import picocli.CommandLine
 import java.util.concurrent.Callable
+import javax.inject.Named
 
 @CommandLine.Command(name = "web", mixinStandardHelpOptions = true,
         description = ["Runs web server."])
+@Named
 class WebServerCommand(
         private val reportWebService: ReportWebService
 ) : Callable<Int> {
