@@ -50,13 +50,45 @@
 <script src="js/jquery-3.5.1.min.js"></script>
 <script src="js/jquery.treetable.js"></script>
 <script>
+    function renderTree() {
+        $("#reportTable").treetable({ expandable: true })
+    }
+    function createTable(rootElement, docs, parentId, level) {
+        docs.forEach( doc => {
+            var row = $('<tr>').attr('data-tt-id', doc.id)
+            if(parent) {
+                row.attr('data-tt-parent-id', parentId)
+            }
+
+            // Title
+            var titleCol = $('<td>').text(doc.title)
+            if(doc.subDocuments.length == 0) {
+                titleCol.addClass('title_leaf')
+            } else {
+                titleCol.addClass('title')
+            }
+            row.append(titleCol)
+
+            rootElement.append(row)
+
+            // Rendering subdocuments:
+            createTable(rootElement, doc.subDocuments, doc.id, level+1)
+        })
+    }
     function refresh() {
-        window.location.replace(window.location.pathname + "?refresh")
+        $.ajax("${baseURL}/rest/report?report=planned")
+            .done(function( docs ) {
+                var docsTable = $('<table>').attr('id', 'reportTable')
+                createTable(docsTable, docs, null, 0)
+                $('#reportTable').replaceWith(docsTable)
+                renderTree()
+            });
+        // window.location.replace(window.location.pathname + "?refresh")
         return false
     }
     $(function() {
         console.log( "document loaded!" )
-        $("#reportTable").treetable({ expandable: true })
+        renderTree()
     })
 </script>
 </head>
