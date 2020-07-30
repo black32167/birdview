@@ -13,7 +13,7 @@ class GithubQueryBuilder(
 ) {
     fun getFilterQueries(user: String?, updatedPeriod: TimeIntervalFilter, githubConfig: BVGithubConfig): String =
                 listOfNotNull(
-                        "type:pr",
+                        "type:pr state:closed ",
                         userClause(user, githubConfig),
                         getUpdateAfterClause(updatedPeriod.after),
                         getUpdateBeforeClause(updatedPeriod.before)

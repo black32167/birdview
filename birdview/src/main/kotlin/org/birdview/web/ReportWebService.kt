@@ -5,13 +5,17 @@ import org.birdview.BVTaskService
 import org.birdview.model.*
 import org.glassfish.grizzly.http.server.*
 import org.slf4j.LoggerFactory
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import java.io.OutputStreamWriter
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Named
 
+
 @Named
+@RestController
 class ReportWebService(
         private val taskService: BVTaskService) {
     class ReportLink(val reportUrl:String, val reportName:String)
@@ -20,9 +24,15 @@ class ReportWebService(
     private val freemarkerConfig = Configuration(Configuration.VERSION_2_3_29).apply {
         setClassForTemplateLoading(this::class.java, "/")
     }
+
+    @RequestMapping("/")
+    fun index(): ReportLink? {
+        return ReportLink("Greetings from Spring Boot!", "Report name")
+    }
     fun runWebServer(port: Int) {
         val baseUrl = "http://localhost:${port}/app"
         println("Open $baseUrl")
+     //   GrizzlyHttpServerFactory.createHttpServer(URI.create("http://localhost:8083/rest"), resource)
         HttpServer.createSimpleServer(null, port)
                 .apply {
                     serverConfiguration.addHttpHandler(CLStaticHttpHandler(ReportWebService::class.java.classLoader, "/web/"))
@@ -87,7 +97,8 @@ class ReportWebService(
                         reportType = reportType,
                         grouping = false,
                         updatedPeriod = TimeIntervalFilter(after = today.minusDays(minusDays)),
-                        userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
+                        userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
+                                UserFilter( userAlias = user, role = UserRole.CREATOR)),
                         sourceType = sourceType)
             }
             ReportType.PLANNED -> BVDocumentFilter(

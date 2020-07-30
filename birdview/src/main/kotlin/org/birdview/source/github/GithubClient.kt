@@ -82,8 +82,10 @@ class GithubClient(
             response
                     .also (ResponseValidationUtils::validate)
                     .let { resp ->
+                        var githubIssues = resp.readEntity(GithubSearchIssuesResponse::class.java).items.asList()
+                        //log.info("retrieved github issues:{}", githubIssues.map { "${it.pull_request?.html_url}" })
                         ItemsPage (
-                                resp.readEntity(GithubSearchIssuesResponse::class.java).items.asList(),
+                                githubIssues,
                                 resp.links.firstOrNull { "next" == it.rel } ?.uri ?.toString())
                     }
 

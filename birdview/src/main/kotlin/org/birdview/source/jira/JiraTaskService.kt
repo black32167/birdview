@@ -13,7 +13,9 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraUser
+import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
+import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
@@ -26,7 +28,8 @@ open class JiraTaskService(
     companion object {
         const val JIRA_KEY_TYPE = "jiraKey"
     }
-    private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private val log = LoggerFactory.getLogger(JiraTaskService::class.java)
+    private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
     private val jiraConfigs: List<BVJiraConfig> = sourcesConfigProvider.getConfigsOfType(BVJiraConfig::class.java)
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
@@ -65,8 +68,8 @@ open class JiraTaskService(
             return BVDocument(
                     ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
                     title = issue.fields.summary,
-                    updated = dateTimeFormat.parse(issue.fields.updated),
-                    created = dateTimeFormat.parse(issue.fields.created),
+                    updated = parseDate(issue.fields.updated),
+                    created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
                     body = description,
                     refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
@@ -80,6 +83,9 @@ open class JiraTaskService(
             throw RuntimeException("Could not parse issue $issue", e)
         }
     }
+
+    private fun parseDate(dateTimeString:String?) =
+            BVDateTimeUtils.parse(dateTimeString, JIRA_DATETIME_PATTERN)
 
     private fun extractUsers(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentUser> =
         listOfNotNull(
@@ -103,7 +109,7 @@ open class JiraTaskService(
                 BVDocumentOperation(
                         author = changelogItem.author.emailAddress ?: "???",
                         description = historyItem.field,
-                        created = dateTimeFormat.parse(changelogItem.created)
+                        created = parseDate(changelogItem.created)
                 )
             }
 

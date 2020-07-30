@@ -5,12 +5,11 @@ import org.birdview.analysis.BVDocument
 import org.birdview.model.*
 import org.birdview.utils.BVColorUtils
 import org.birdview.utils.BVColorUtils.bold
+import org.birdview.utils.BVDateTimeUtils
 import picocli.CommandLine
-import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import java.util.concurrent.Callable
 import javax.inject.Named
 
@@ -20,8 +19,6 @@ import javax.inject.Named
 class TaskListCommand(
         private val taskService: BVTaskService
 ) : Callable<Int> {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd")
-            .also { it.timeZone = TimeZone.getTimeZone("UTC") }
 
     @CommandLine.Option(names = ["-r", "--reportType"], description = ["worked|planned"])
     var reportType = ReportType.WORKED
@@ -94,7 +91,7 @@ class TaskListCommand(
     }
 
     fun describe(task: BVDocument)
-            = "${dateFormat.format(task.updated)} - " +
+            = "${BVDateTimeUtils.format(task.updated, "yyyy-MM-dd")} - " +
             "${task.status} - " +
             "${BVColorUtils.red(task.title)} : " +
             task.httpUrl +

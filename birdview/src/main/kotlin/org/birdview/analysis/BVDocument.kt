@@ -39,7 +39,7 @@ data class BVDocumentUser(
 class BVDocumentOperation (
         val description: String,
         val author: String,
-        val created: Date
+        val created: Date?
 )
 
 data class BVDocumentId(

@@ -12,9 +12,9 @@ import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
+import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
-import java.util.*
 import javax.inject.Named
 
 @Named
@@ -27,8 +27,8 @@ open class GDriveTaskService(
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
     companion object {
         val GDRIVE_FILE_TYPE = "gDriveFile"
+        private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
-    private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         try {
@@ -70,5 +70,5 @@ open class GDriveTaskService(
     private fun mapDocumentUser(user: GDriveUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             bvUsersConfigProvider.getUser(user?.emailAddress, sourceName, userRole)
 
-    private fun parseDate(dateString: String): Date = dateTimeFormat.parse(dateString)
+    private fun parseDate(dateString: String) = BVDateTimeUtils.parse(dateString, GDRIVE_DATETIME_PATTERN)
 }

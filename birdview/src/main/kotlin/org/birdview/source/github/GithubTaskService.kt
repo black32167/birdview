@@ -13,8 +13,8 @@ import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
+import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
-import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -120,12 +120,9 @@ open class GithubTaskService(
                     created = parseDate(comment.created_at)
             )
 
-    private fun parseDate(date:String):Date = try {
-        java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(date)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Date()
-    }
+    private fun parseDate(date:String) =
+            BVDateTimeUtils.parse(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+
     override fun getType() = "github"
 
     private fun getPr(issue: GithubIssue, githubClient:GithubClient): GithubPullRequest? = try {

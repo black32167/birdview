@@ -1,6 +1,5 @@
 package org.birdview
 
-import org.apache.commons.logging.LogFactory
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVUsersConfigProvider
@@ -10,6 +9,7 @@ import org.birdview.model.ReportType
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.utils.BVConcurrentUtils
+import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -21,7 +21,7 @@ open class BVTaskService(
         private var sources: List<BVTaskSource>,
         private val bvUsersConfigProvider: BVUsersConfigProvider
 )  {
-    private val log = LogFactory.getLog(BVTaskService::class.java)
+    private val log = LoggerFactory.getLogger(BVTaskService::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
     // id -> doc
     private val docsMap = ConcurrentHashMap<BVDocumentId, BVDocument>()
@@ -77,15 +77,17 @@ open class BVTaskService(
     }
 
     private fun filterDocument(doc:BVDocument, filter: BVDocumentFilter) : Boolean {
-        val docCreated = doc.created?.toInstant()?.atZone(ZoneId.of("UTC"))
+        val docUpdated = doc.updated?.toInstant()?.atZone(ZoneId.of("UTC"))
         if (filter.updatedPeriod.after != null) {
-            if(docCreated == null || filter.updatedPeriod.after > docCreated) {
+            if(docUpdated == null || filter.updatedPeriod.after > docUpdated) {
+                log.trace("Filtering out doc #{} (updatedPeriod.after)", doc.title)
                 return false
             }
         }
 
         if (filter.updatedPeriod.before != null) {
-            if(docCreated == null || filter.updatedPeriod.before <= docCreated) {
+            if(docUpdated == null || filter.updatedPeriod.before <= docUpdated) {
+                log.trace("Filtering out doc #{} (updatedPeriod.before)", doc.title)
                 return false
             }
         }
@@ -93,10 +95,12 @@ open class BVTaskService(
         var inferredDocStatus = inferDocStatus(doc)
         val targetDocumentStatuses = getTargetDocStatuses(filter.reportType)
         if (!targetDocumentStatuses.contains(inferredDocStatus)) {
+            log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
             return false
         }
 
         if (!targetDocumentStatuses.contains(doc.status)) {
+            log.trace("Filtering out doc #{} (doc.status)", doc.title)
             return false
         }
 
@@ -105,9 +109,11 @@ open class BVTaskService(
             filteringUser == docUser.userName && userFilter.role == docUser.role
         }}
         if(!hasFilteredUser) {
+            log.trace("Filtering out doc #{} (hasFilteredUser)", doc.title)
             return false
         }
 
+        log.trace("Including doc #{}", doc.title)
         return true
     }
 

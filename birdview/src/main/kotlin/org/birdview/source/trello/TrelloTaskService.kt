@@ -8,8 +8,8 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.trello.model.TrelloCard
+import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
-import java.util.*
 import javax.inject.Named
 
 @Named
@@ -23,9 +23,8 @@ open class TrelloTaskService(
         private const val TRELLO_CARD_SHORTLINK_TYPE = "trelloCardShortLink"
         const val TRELLO_BOARD_TYPE = "trelloBoardId"
         private const val TRELLO_LABEL_TYPE = "trelloLabel"
+        private const val TRELLO_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
-    //private val dateTimeFormat = DateTimeFormatter.ISO_DATE_TIME//java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")2020-04-29T04:12:34.125Z
-    private val dateTimeFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
             sourcesConfigProvider.getConfigsOfType(BVTrelloConfig::class.java)
@@ -81,5 +80,5 @@ open class TrelloTaskService(
             setOf(BVDocumentId(card.idBoard, TRELLO_BOARD_TYPE, sourceName)) +
                     card.labels.map { BVDocumentId(it.id, TRELLO_LABEL_TYPE, sourceName) }
 
-    private fun parseDate(dateString: String):Date = dateTimeFormat.parse(dateString)//Date.parse(dateString, dateTimeFormat)
+    private fun parseDate(dateString: String) = BVDateTimeUtils.parse(dateString, TRELLO_DATETIME_PATTERN)
 }
