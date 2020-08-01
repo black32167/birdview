@@ -1,19 +1,4 @@
-<#macro brief docs>
-<#if docs?has_content>
-<ul>
-<#list docs as doc>
-    <li>
-        ${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)
-    </li>
-    <@brief doc.subDocuments />
-</#list>
-</ul>
-</#if>
-</#macro>
-
-
-
-<!-- -------------------------------------------------------------- -->
+<!DOCTYPE html>
 <html>
 <head>
 <link rel="stylesheet" href="css/report.css"></link>
@@ -25,7 +10,6 @@
 <script src="js/birdview.js"></script>
 <script>
     baseURL = "${baseURL}"
-    renderTree()
     $(function() {
         console.log( "document loaded!" )
         refresh()
@@ -59,6 +43,12 @@
         <option value="${user}">${user}</option>
         </#list>
     </select>
+    |
+    <label for="representation">Representation:</label>
+    <select id="representation" onchange="refresh()">
+        <option value="tree">Tree</option>
+        <option value="list">List</option>
+    </select>
 
     <span class="menu_right">
     <a href="#" onclick="update()" class="refresh">Update</a>
@@ -71,6 +61,9 @@
 <!-- #import reportPath as report -->
 <table id="reportTable">
 </table>
+
+<div id="reportList">
+</div>
 
 </body>
 </html>

@@ -1,8 +1,8 @@
 
-function renderTree() {
-    $("#reportTable").treetable({ expandable: true })
+function applyTree(treeElement) {
+    $(treeElement).treetable({ expandable: true })
 }
-function createTable(rootElement, docs, parentId, level) {
+function renderTable(rootElement, docs, parentId, level) {
     docs.forEach( doc => {
         var row = $('<tr>').attr('data-tt-id', doc.id)
         if(parent) {
@@ -30,12 +30,43 @@ function createTable(rootElement, docs, parentId, level) {
         rootElement.append(row)
 
         // Rendering subdocuments:
-        createTable(rootElement, doc.subDocuments, doc.id, level+1)
+        renderTable(rootElement, doc.subDocuments, doc.id, level+1)
     })
+}
+function renderList(rootElement, docs) {
+    if(docs.length == 0) {
+        return
+    }
+    var ul = $('<ul>')
+    docs.forEach(doc => {
+        var li = $('<li>')
+            .html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
+        ul.append(li)
+
+        // Rendering subdocuments:
+        renderList(ul, doc.subDocuments)
+    })
+    rootElement.append(ul)
 }
 function update() {
     window.location.replace(window.location.pathname + "?refresh")
     return false
+}
+function renderReport(docs) {
+    var representationType = $('#representation').val()
+
+    var tableContainer = $('<table id="reportTable">')
+    $('#reportTable').replaceWith(tableContainer)
+    var listContainer =  $('#reportList').empty()
+    switch (representationType) {
+        case "tree":
+            renderTable(tableContainer, docs, null, 0)
+            applyTree(tableContainer)
+            break
+        case "list":
+            renderList(listContainer, docs)
+            break
+    }
 }
 function refresh() {
     var reportType = $('#reportType').val()
@@ -49,10 +80,7 @@ function refresh() {
         `&user=${user}` +
         `&userRole=${userRole}`)
         .done(function( docs ) {
-            var docsTable = $('<table>').attr('id', 'reportTable')
-            createTable(docsTable, docs, null, 0)
-            $('#reportTable').replaceWith(docsTable)
-            renderTree()
+            renderReport(docs)
         });
     // window.location.replace(window.location.pathname + "?refresh")
     return false
