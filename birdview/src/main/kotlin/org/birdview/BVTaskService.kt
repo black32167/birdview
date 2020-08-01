@@ -130,7 +130,7 @@ open class BVTaskService(
             docsMap.values.find { doc->doc.ids.any { it.id == key } }
 
     private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
-        ReportType.LAST_DAY, ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
+        ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
         ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
     }
 

@@ -1,6 +1,7 @@
 package org.birdview.web
 
 import org.birdview.analysis.BVDocument
+import org.birdview.utils.BVDateTimeUtils
 import java.util.*
 
 object BVDocumentViewFactory {
@@ -15,7 +16,7 @@ object BVDocumentViewFactory {
                             ?: "???",
                     status = doc.status ?.let { it.name } ?: "???",
                     title = doc.title,
-                    updated = doc.updated,
+                    updated = BVDateTimeUtils.format(doc.updated, "dd-MM-yyyy"),
                     key = doc.key
             )
 

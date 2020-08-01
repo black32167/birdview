@@ -45,7 +45,8 @@ open class BVUsersConfigProvider(
             getUserAlias(sourceUserName, sourceName)
                     ?.let { alias -> BVDocumentUser(alias, userRole) }
 
-
+    fun listUsers() = getConfig()
+            .map { it.alias }
 }
 
 class BVUserSourcesConfig(

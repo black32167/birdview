@@ -1,19 +1,20 @@
 package org.birdview.web
 
 import org.birdview.BVTaskService
+import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import java.time.DayOfWeek
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 @Controller
 class BVWebPageController(
-        private val taskService: BVTaskService
+        private val taskService: BVTaskService,
+        private  val usersConfigProvider: BVUsersConfigProvider
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
     @GetMapping("/")
@@ -36,9 +37,16 @@ class BVWebPageController(
                 "docs" to docs,
                 "baseURL" to baseUrl,
                 "reportPath" to "report-${tsRequest.reportType}.ftl",
-                "format" to getFormat(tsRequest.reportType)))
+                "format" to getFormat(tsRequest.reportType),
+                "reportTypes" to ReportType.values(),
+                "userRoles" to UserRole.values(),
+                "users" to listUsers()
+        ))
         return "report"
     }
+
+    private fun listUsers() =
+            usersConfigProvider.listUsers()
 
     private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
         return "${baseUrl}?report=${reportType.name.toLowerCase()}" +
@@ -54,23 +62,9 @@ class BVWebPageController(
         val reportType = report
                 ?.toUpperCase()
                 ?.let { ReportType.valueOf(it) }
-                ?: ReportType.LAST_DAY
+                ?: ReportType.WORKED
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         return when(reportType) {
-            ReportType.LAST_DAY -> {
-                val minusDays:Long = when(today.dayOfWeek) {
-                    DayOfWeek.MONDAY -> 3L
-                    DayOfWeek.SUNDAY -> 2L
-                    else -> 1L
-                }
-                BVDocumentFilter(
-                        reportType = reportType,
-                        grouping = false,
-                        updatedPeriod = TimeIntervalFilter(after = today.minusDays(minusDays)),
-                        userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
-                                UserFilter( userAlias = user, role = UserRole.CREATOR)),
-                        sourceType = sourceType)
-            }
             ReportType.PLANNED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
@@ -86,8 +80,8 @@ class BVWebPageController(
         }
     }
 
-    private fun getFormat(reportType: ReportType): String = when(reportType) {
+    private fun getFormat(reportType: ReportType): String = "long"/*when(reportType) {
         ReportType.LAST_DAY -> "brief"
         else -> "long"
-    }
+    }*/
 }

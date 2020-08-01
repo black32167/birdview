@@ -5,7 +5,6 @@ import org.birdview.model.*
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.time.DayOfWeek
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -27,28 +26,38 @@ class BVRestController(
         return docs
     }
 
+    class DocumentRequest(
+            val user: String?,
+            val reportType: ReportType,
+            val daysBack: Long,
+            val sourceType: String?,
+            val userRole: UserRole = UserRole.CREATOR
+    )
+    @RequestMapping("/documents")
+    fun documents(
+            documentRequest: DocumentRequest
+    ): List<BVDocumentView> {
+        val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
+        val user = documentRequest.user
+        val tsRequest = BVDocumentFilter(
+                reportType = documentRequest.reportType,
+                grouping = true,
+                updatedPeriod = TimeIntervalFilter(after = today.minusDays(documentRequest.daysBack)),
+                userFilters = listOf(UserFilter( userAlias = user, role = documentRequest.userRole)),
+                sourceType = documentRequest.sourceType)
+        val docs = taskService.getDocuments(tsRequest)
+                .map(BVDocumentViewFactory::create)
+        return docs
+    }
+
     private fun buildTSRequest(user: String?, report: String?) : BVDocumentFilter {
         val sourceType = null
         val reportType = report
                 ?.toUpperCase()
                 ?.let { ReportType.valueOf(it) }
-                ?: ReportType.LAST_DAY
+                ?: ReportType.WORKED
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         return when(reportType) {
-            ReportType.LAST_DAY -> {
-                val minusDays:Long = when(today.dayOfWeek) {
-                    DayOfWeek.MONDAY -> 3L
-                    DayOfWeek.SUNDAY -> 2L
-                    else -> 1L
-                }
-                BVDocumentFilter(
-                        reportType = reportType,
-                        grouping = false,
-                        updatedPeriod = TimeIntervalFilter(after = today.minusDays(minusDays)),
-                        userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
-                                UserFilter( userAlias = user, role = UserRole.CREATOR)),
-                        sourceType = sourceType)
-            }
             ReportType.PLANNED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
