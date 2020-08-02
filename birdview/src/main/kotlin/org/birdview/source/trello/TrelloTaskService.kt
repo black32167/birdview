@@ -27,7 +27,7 @@ open class TrelloTaskService(
     }
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
-            sourcesConfigProvider.getConfigsOfType(BVTrelloConfig::class.java)
+                sourcesConfigProvider.getConfigsOfType(BVTrelloConfig::class.java)
                     .forEach { config-> getTasks(user, updatedPeriod, config, chunkConsumer) }
 
     private fun getTasks(

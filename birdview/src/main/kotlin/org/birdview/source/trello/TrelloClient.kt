@@ -26,7 +26,7 @@ class TrelloClient(private val trelloConfig: BVTrelloConfig,
     }
 
     private fun searchTrelloCards(query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
-        log.info("Loading trello issues next page: {}", page)
+        log.info("Loading trello issues page {} for query {}", page, query)
         var cards = searchTrelloCards(query, page)
                 .let { mapCardsList(it) }
         return if(cards.isEmpty()) {
