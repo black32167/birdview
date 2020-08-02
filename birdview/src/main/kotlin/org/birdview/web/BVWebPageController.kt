@@ -26,8 +26,7 @@ class BVWebPageController(
     ): String? {
         val baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
         val tsRequest = buildTSRequest(user, report)
-        val docs = taskService.getDocuments(tsRequest)
-                .map(BVDocumentViewFactory::create)
+
         model.asMap().putAll(mapOf(
                 "reportLinks" to ReportType.values()
                         .map {
@@ -36,7 +35,6 @@ class BVWebPageController(
                                     reportName = it.name.toLowerCase().capitalize())
                         },
                 "user" to tsRequest.userFilters.firstOrNull(),
-                "docs" to docs,
                 "baseURL" to baseUrl,
                 "reportPath" to "report-${tsRequest.reportType}.ftl",
                 "format" to getFormat(tsRequest.reportType),
