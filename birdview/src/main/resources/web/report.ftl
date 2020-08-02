@@ -73,5 +73,9 @@
 <div id="reportList">
 </div>
 
+<div id="overlay">
+Loading...
+</div>
+
 </body>
 </html>

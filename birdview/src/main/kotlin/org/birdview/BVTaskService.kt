@@ -12,8 +12,10 @@ import org.birdview.utils.BVConcurrentUtils
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import javax.inject.Named
 
 @Named
@@ -49,31 +51,34 @@ open class BVTaskService(
 
     private fun loadAsync(user: String?) {
         usersRetrieved.computeIfAbsent(user ?: "") {
-            loadDocuments(user)
+            loadDocuments(user).forEach{
+                it.get()
+            }
             true
         }
     }
 
-    open fun loadDocuments(user: String?) {
+    open fun loadDocuments(user: String?):List<Future<*>> =
         sources
-                .forEach { source ->
-                    executor.submit {
+                .map { source ->
+                    val subtaskFutures = mutableListOf<Future<*>>()
+                    CompletableFuture.runAsync(Runnable {
                         source.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
                             docChunk.forEach { doc ->
                                 doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                             }
 
-                            executor.submit {
+                            subtaskFutures.add(executor.submit {
                                 loadReferredDocs(docChunk) { docChunk ->
                                     docChunk.forEach { doc ->
                                         doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                                     }
                                 }
-                            }
+                            })
                         }
-                    }
+                        subtaskFutures.forEach { it.get() }
+                    }, executor)
                 }
-    }
 
     // @CacheEvict(value = ["bv"], allEntries = true)
     open fun invalidateCache() {

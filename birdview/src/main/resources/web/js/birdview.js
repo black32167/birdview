@@ -65,8 +65,19 @@ function renderReport(docs) {
             break
     }
 }
+function showOverlay(show) {
+  if(show) {
+    $("#overlay").show()
+  } else {
+    $("#overlay").hide()
+  }
+}
 function reindex() {
+    showOverlay(true)
     $.post(`${baseURL}/rest/documents/reindex`)
+    .done(function(){
+        showOverlay(false)
+    })
     refresh()
     //window.location.replace(window.location.pathname + "?refresh")
     return false
@@ -78,6 +89,7 @@ function refresh() {
     var user = $('#user').val()
     var source = $('#source').val()
 
+    showOverlay(true)
     $.ajax(`${baseURL}/rest/documents` +
         `?reportType=${reportType}` +
         `&daysBack=${daysBack}` +
@@ -86,6 +98,7 @@ function refresh() {
         `&userRole=${userRole}`)
         .done(function( docs ) {
             renderReport(docs)
+            showOverlay(false)
         });
     // window.location.replace(window.location.pathname + "?refresh")
     return false
