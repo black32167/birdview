@@ -57,9 +57,10 @@ open class GithubTaskService(
 
     private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {
         val description = pr.body ?: ""
+        val title = BVFilters.removeIdsFromText(pr.title)
         return BVDocument(
                 ids = setOf(BVDocumentId(id = pr.id, type = GITHUB_ID, sourceName = githubConfig.sourceName)),
-                title = BVFilters.removeIdsFromText(pr.title),
+                title = title,
                 body = description,
                 updated = parseDate(pr.updated_at),
                 created = parseDate(pr.created_at),
