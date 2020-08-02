@@ -2,9 +2,7 @@ package org.birdview.web
 
 import org.birdview.BVTaskService
 import org.birdview.model.*
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -15,7 +13,7 @@ class BVRestController(
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
 
-    @RequestMapping("/report")
+    @GetMapping("/report")
     fun report(
             @RequestParam(value = "user", required = false) user: String?,
             @RequestParam(value = "report", required = false) report: String?
@@ -33,7 +31,7 @@ class BVRestController(
             val sourceType: String?,
             val userRole: UserRole = UserRole.CREATOR
     )
-    @RequestMapping("/documents")
+    @GetMapping("/documents")
     fun documents(
             documentRequest: DocumentRequest
     ): List<BVDocumentView> {
@@ -48,6 +46,11 @@ class BVRestController(
         val docs = taskService.getDocuments(tsRequest)
                 .map(BVDocumentViewFactory::create)
         return docs
+    }
+
+    @PostMapping("/documents/reindex")
+    fun reindexDocuments() {
+        taskService.invalidateCache()
     }
 
     private fun buildTSRequest(user: String?, report: String?) : BVDocumentFilter {

@@ -48,10 +48,7 @@ function renderList(rootElement, docs) {
     })
     rootElement.append(ul)
 }
-function update() {
-    window.location.replace(window.location.pathname + "?refresh")
-    return false
-}
+
 function renderReport(docs) {
     var representationType = $('#representation').val()
 
@@ -67,6 +64,12 @@ function renderReport(docs) {
             renderList(listContainer, docs)
             break
     }
+}
+function reindex() {
+    $.post(`${baseURL}/rest/documents/reindex`)
+    refresh()
+    //window.location.replace(window.location.pathname + "?refresh")
+    return false
 }
 function refresh() {
     var reportType = $('#reportType').val()

@@ -20,17 +20,17 @@ import javax.inject.Named
 open class BVTaskService(
         private var sources: List<BVTaskSource>,
         private val bvUsersConfigProvider: BVUsersConfigProvider
-)  {
+) {
     private val log = LoggerFactory.getLogger(BVTaskService::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
     // id -> doc
     private val docsMap = ConcurrentHashMap<BVDocumentId, BVDocument>()
     private val usersRetrieved = ConcurrentHashMap<String, Boolean>()
 
-  //  @Cacheable("bv")
+    //  @Cacheable("bv")
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
-        filter.userFilters.map {it.userAlias}.distinct().forEach { user ->
-          loadAsync(user)
+        filter.userFilters.map { it.userAlias }.distinct().forEach { user ->
+            loadAsync(user)
         }
 
         val filteredDocs = docsMap
@@ -43,7 +43,7 @@ open class BVTaskService(
         return linkDocs(allDocs)
     }
 
-    private fun loadAsync(user:String?) {
+    private fun loadAsync(user: String?) {
         usersRetrieved.computeIfAbsent(user ?: "") {
             loadDocuments(user)
             true
@@ -52,17 +52,18 @@ open class BVTaskService(
 
     open fun loadDocuments(user: String?) {
         sources
-             //   .filter { filterSource(it, request) }
-             //   .filter { filterSource(it, "trello") } //!!!
                 .forEach { source ->
                     executor.submit {
-                        source.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk->
+                        source.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
                             docChunk.forEach { doc ->
-                                doc.ids.firstOrNull()?.also{ id -> docsMap[id] = doc }
+                                doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                             }
-                            loadReferredDocs(docChunk) { docChunk ->
-                                docChunk.forEach { doc ->
-                                    doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
+
+                            executor.submit {
+                                loadReferredDocs(docChunk) { docChunk ->
+                                    docChunk.forEach { doc ->
+                                        doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
+                                    }
                                 }
                             }
                         }
@@ -70,23 +71,23 @@ open class BVTaskService(
                 }
     }
 
-   // @CacheEvict(value = ["bv"], allEntries = true)
+    // @CacheEvict(value = ["bv"], allEntries = true)
     open fun invalidateCache() {
-       docsMap.clear()
-       usersRetrieved.clear()
+        docsMap.clear()
+        usersRetrieved.clear()
     }
 
-    private fun filterDocument(doc:BVDocument, filter: BVDocumentFilter) : Boolean {
+    private fun filterDocument(doc: BVDocument, filter: BVDocumentFilter): Boolean {
         val docUpdated = doc.updated?.toInstant()?.atZone(ZoneId.of("UTC"))
         if (filter.updatedPeriod.after != null) {
-            if(docUpdated == null || filter.updatedPeriod.after > docUpdated) {
+            if (docUpdated == null || filter.updatedPeriod.after > docUpdated) {
                 log.trace("Filtering out doc #{} (updatedPeriod.after)", doc.title)
                 return false
             }
         }
 
         if (filter.updatedPeriod.before != null) {
-            if(docUpdated == null || filter.updatedPeriod.before <= docUpdated) {
+            if (docUpdated == null || filter.updatedPeriod.before <= docUpdated) {
                 log.trace("Filtering out doc #{} (updatedPeriod.before)", doc.title)
                 return false
             }
@@ -104,11 +105,13 @@ open class BVTaskService(
             return false
         }
 
-        val hasFilteredUser = doc.users.any{ docUser -> filter.userFilters.any { userFilter ->
-            var filteringUser = userFilter.userAlias ?: bvUsersConfigProvider.getDefaultUserAlias()
-            filteringUser == docUser.userName && userFilter.role == docUser.role
-        }}
-        if(!hasFilteredUser) {
+        val hasFilteredUser = doc.users.any { docUser ->
+            filter.userFilters.any { userFilter ->
+                var filteringUser = userFilter.userAlias ?: bvUsersConfigProvider.getDefaultUserAlias()
+                filteringUser == docUser.userName && userFilter.role == docUser.role
+            }
+        }
+        if (!hasFilteredUser) {
             log.trace("Filtering out doc #{} (hasFilteredUser)", doc.title)
             return false
         }
@@ -120,14 +123,14 @@ open class BVTaskService(
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
         var parentStatuses = doc.refsIds
                 .map { key -> getDocByStringKey(key)?.status }
-        if(parentStatuses.all { it == BVDocumentStatus.DONE }) {
+        if (parentStatuses.all { it == BVDocumentStatus.DONE }) {
             return BVDocumentStatus.DONE
         }
         return doc.status
     }
 
     private fun getDocByStringKey(key: String): BVDocument? =
-            docsMap.values.find { doc->doc.ids.any { it.id == key } }
+            docsMap.values.find { doc -> doc.ids.any { it.id == key } }
 
     private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
         ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
@@ -136,7 +139,7 @@ open class BVTaskService(
 
     private fun removeParents(allDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit): List<BVDocument> {
         val references = allDocs.flatMap { doc -> doc.refsIds + doc.groupIds.map { it.id } }.toSet()
-        return allDocs.filter { doc -> !doc.ids.asSequence().map { it.id }.any { id-> references.contains(id) } }
+        return allDocs.filter { doc -> !doc.ids.asSequence().map { it.id }.any { id -> references.contains(id) } }
     }
 
     // TODO: non-optimal
@@ -157,7 +160,7 @@ open class BVTaskService(
     }
 
     private fun loadDocs(missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val type2Ids:Map<String, List<String>> = missedDocsIds
+        val type2Ids: Map<String, List<String>> = missedDocsIds
                 .fold(mutableMapOf<String, MutableList<String>>()) { acc, id ->
                     getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
@@ -166,33 +169,35 @@ open class BVTaskService(
                 .filter { source -> type2Ids.contains(source.getType()) }
                 .forEach { source ->
                     type2Ids[source.getType()]
-                        ?.also { ids -> try {
-                            source.loadByIds(ids, chunkConsumer)
-                        } catch (e: Exception) {
-                            log.error("", e)
-                        } }
+                            ?.also { ids ->
+                                try {
+                                    source.loadByIds(ids, chunkConsumer)
+                                } catch (e: Exception) {
+                                    log.error("", e)
+                                }
+                            }
                 }
     }
 
     private fun getSourceTypes(id: String): String? =
-        sources.find{ it.canHandleId(id) } ?.getType()
+            sources.find { it.canHandleId(id) }?.getType()
 
-    private fun linkDocs(_docs: List<BVDocument>):List<BVDocument> {
+    private fun linkDocs(_docs: List<BVDocument>): List<BVDocument> {
         //FIXME (subDocuments)
         val docs = _docs.map { it.copy(subDocuments = mutableListOf()) }.toMutableList()
 
         val groupId2Group = docs
                 .flatMap { doc -> doc.ids.map { id -> id to doc } }
-                .groupBy ({ entry -> entry.first.id }, { entry -> entry.second })
+                .groupBy({ entry -> entry.first.id }, { entry -> entry.second })
 
         val collectionsIterator = docs.iterator()
         while (collectionsIterator.hasNext()) {
             collectionsIterator.next()
-                    .also { doc:BVDocument ->
-                        val parentDocs:List<BVDocument> = (doc.refsIds + doc.groupIds.map { it.id })
+                    .also { doc: BVDocument ->
+                        val parentDocs: List<BVDocument> = (doc.refsIds + doc.groupIds.map { it.id })
                                 .flatMap { refId -> (groupId2Group[refId] ?: emptyList<BVDocument>()) }
                         if (parentDocs.isNotEmpty()) {
-                            parentDocs.forEach{ it.subDocuments.add(doc) }
+                            parentDocs.forEach { it.subDocuments.add(doc) }
                             collectionsIterator.remove()
                         }
                     }

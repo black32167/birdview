@@ -51,7 +51,7 @@
     </select>
 
     <span class="menu_right">
-    <a href="#" onclick="update()" class="refresh">Update</a>
+    <a href="#" onclick="reindex()" class="refresh">Update</a>
     |
     ${.now?date}
     </span>
