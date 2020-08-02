@@ -49,6 +49,14 @@
         <option value="tree">Tree</option>
         <option value="list">List</option>
     </select>
+    |
+    <label for="source">Source:</label>
+    <select id="source" onchange="refresh()">
+        <option value="">All</option>
+        <#list sources as source>
+        <option value="${source}">${source}</option>
+        </#list>
+    </select>
 
     <span class="menu_right">
     <a href="#" onclick="reindex()" class="refresh">Update</a>

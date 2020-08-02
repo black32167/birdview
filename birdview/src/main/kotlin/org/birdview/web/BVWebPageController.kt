@@ -1,6 +1,7 @@
 package org.birdview.web
 
 import org.birdview.BVTaskService
+import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
 import org.springframework.stereotype.Controller
@@ -14,7 +15,8 @@ import java.time.temporal.ChronoUnit
 @Controller
 class BVWebPageController(
         private val taskService: BVTaskService,
-        private  val usersConfigProvider: BVUsersConfigProvider
+        private val usersConfigProvider: BVUsersConfigProvider,
+        private val sourcesConfigProvider: BVSourcesConfigProvider
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
     @GetMapping("/")
@@ -40,6 +42,7 @@ class BVWebPageController(
                 "format" to getFormat(tsRequest.reportType),
                 "reportTypes" to ReportType.values(),
                 "userRoles" to UserRole.values(),
+                "sources" to sourcesConfigProvider.listSourceNames(),
                 "users" to listUsers()
         ))
         return "report"

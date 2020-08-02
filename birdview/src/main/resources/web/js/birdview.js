@@ -76,11 +76,13 @@ function refresh() {
     var daysBack = $('#daysBack').val()
     var userRole = $('#userRole').val()
     var user = $('#user').val()
+    var source = $('#source').val()
 
     $.ajax(`${baseURL}/rest/documents` +
         `?reportType=${reportType}` +
         `&daysBack=${daysBack}` +
         `&user=${user}` +
+        `&sourceType=${source}` +
         `&userRole=${userRole}`)
         .done(function( docs ) {
             renderReport(docs)

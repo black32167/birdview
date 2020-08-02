@@ -24,6 +24,9 @@ class BVSourcesConfigProvider(
 
     fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
         getSourceConfigs().find { it.sourceName == sourceName }
+
+    fun listSourceNames(): List<String> =
+        getSourceConfigs().map { it.sourceName }
 }
 
 @JsonTypeInfo(

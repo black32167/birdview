@@ -38,6 +38,10 @@ open class BVTaskService(
                 .filter { doc -> filterDocument(doc, filter) }
                 .toMutableList()
 
+        if (filter.sourceType != "") {
+            return filteredDocs
+        }
+
         val allDocs = filteredDocs + getReferencedDocs(filteredDocs)
 
         return linkDocs(allDocs)
@@ -78,6 +82,10 @@ open class BVTaskService(
     }
 
     private fun filterDocument(doc: BVDocument, filter: BVDocumentFilter): Boolean {
+        if(filter.sourceType != "" && filter.sourceType?.let { filterSource ->doc.ids.any { it.sourceName == filterSource }} == false) {
+            return false
+        }
+
         val docUpdated = doc.updated?.toInstant()?.atZone(ZoneId.of("UTC"))
         if (filter.updatedPeriod.after != null) {
             if (docUpdated == null || filter.updatedPeriod.after > docUpdated) {
