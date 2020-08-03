@@ -136,7 +136,7 @@ open class BVTaskService(
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
         var parentStatuses = doc.refsIds
                 .map { key -> getDocByStringKey(key)?.status }
-        if (parentStatuses.all { it == BVDocumentStatus.DONE }) {
+        if (parentStatuses.isNotEmpty() && parentStatuses.all { it == BVDocumentStatus.DONE }) {
             return BVDocumentStatus.DONE
         }
         return doc.status
