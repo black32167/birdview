@@ -100,16 +100,17 @@ open class JiraTaskService(
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
         issue.changelog
                 ?.histories
-                ?.flatMap (this::toOperation)
+                ?.flatMap { toOperation(it, config.sourceName) }
                 ?.filter { it.author.equals(config.user) }
                 ?: emptyList()
 
-    private fun toOperation(changelogItem: JiraChangelogItem): List<BVDocumentOperation> =
+    private fun toOperation(changelogItem: JiraChangelogItem, sourceName: String): List<BVDocumentOperation> =
             changelogItem.items.map { historyItem ->
                 BVDocumentOperation(
                         author = changelogItem.author.emailAddress ?: "???",
                         description = historyItem.field,
-                        created = parseDate(changelogItem.created)
+                        created = parseDate(changelogItem.created),
+                        sourceName = sourceName
                 )
             }
 

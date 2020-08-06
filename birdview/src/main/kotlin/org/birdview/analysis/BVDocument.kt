@@ -11,6 +11,7 @@ data class BVDocument (
         val body: String = "",
         val updated: Date? = null,
         val created: Date? = null,
+        val closed: Date? = null,
         val httpUrl: String,
         var users: List<BVDocumentUser> = listOf(),
         val subDocuments: MutableList<BVDocument> = mutableListOf(),
@@ -39,7 +40,8 @@ data class BVDocumentUser(
 class BVDocumentOperation (
         val description: String,
         val author: String,
-        val created: Date?
+        val created: Date?,
+        val sourceName: String
 )
 
 data class BVDocumentId(

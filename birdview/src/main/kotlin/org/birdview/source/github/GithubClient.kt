@@ -20,11 +20,7 @@ class GithubClient(
         getTarget(pullRequest.comments_url)
                 ?.request()
                 ?.get()
-                ?.also {
-                    if(it.status != 200) {
-                        throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
-                    }
-                }
+                ?.also (ResponseValidationUtils::validate)
                 ?.readEntity(Array<GithubIssueComment>::class.java)
                 ?.asList()
                 ?: emptyList()
@@ -33,11 +29,7 @@ class GithubClient(
             getTarget(pullRequest.review_comments_url)
                     ?.request()
                     ?.get()
-                    ?.also {
-                        if(it.status != 200) {
-                            throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
-                        }
-                    }
+                    ?.also (ResponseValidationUtils::validate)
                     ?.readEntity(Array<GithubReviewComment>::class.java)
                     ?.asList()
                     ?: emptyList()
@@ -46,12 +38,7 @@ class GithubClient(
             getTarget(issue.events_url)
                     ?.request()
                     ?.get()
-                    ?.also {
-  //                      println(it.readEntity(String::class.java))
-                        if(it.status != 200) {
-                            throw java.lang.RuntimeException("Status:${it.status}, message=${it.readEntity(String::class.java)}")
-                        }
-                    }
+                    ?.also (ResponseValidationUtils::validate)
                     ?.readEntity(Array<GithubIssueEvent>::class.java)
                     ?.asList()
                     ?: emptyList()

@@ -3,15 +3,13 @@ package org.birdview
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVUsersConfigProvider
-import org.birdview.model.BVDocumentFilter
-import org.birdview.model.BVDocumentStatus
-import org.birdview.model.ReportType
-import org.birdview.model.TimeIntervalFilter
+import org.birdview.model.*
 import org.birdview.source.BVTaskSource
 import org.birdview.utils.BVConcurrentUtils
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.chrono.ChronoZonedDateTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -91,7 +89,7 @@ open class BVTaskService(
             return false
         }
 
-        val docUpdated = doc.updated?.toInstant()?.atZone(ZoneId.of("UTC"))
+        val docUpdated = inferDocUpdated(doc, filter.userFilters)
         if (filter.updatedPeriod.after != null) {
             if (docUpdated == null || filter.updatedPeriod.after > docUpdated) {
                 log.trace("Filtering out doc #{} (updatedPeriod.after)", doc.title)
@@ -131,6 +129,15 @@ open class BVTaskService(
 
         log.trace("Including doc #{}", doc.title)
         return true
+    }
+
+    private fun inferDocUpdated(doc: BVDocument, userFilters: List<UserFilter>): ChronoZonedDateTime<*>? {
+        val date = if(doc.closed != null && doc.closed < doc.updated) {
+            doc.closed //doc.closed
+        } else {
+            doc.updated
+        }
+        return date?.toInstant()?.atZone(ZoneId.of("UTC"))
     }
 
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {

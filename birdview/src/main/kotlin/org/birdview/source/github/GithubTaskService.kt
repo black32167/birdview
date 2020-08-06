@@ -15,6 +15,7 @@ import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -58,22 +59,32 @@ open class GithubTaskService(
     private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {
         val description = pr.body ?: ""
         val title = BVFilters.removeIdsFromText(pr.title)
+        val operations = extractOperations(pr, issue, client, sourceName = githubConfig.sourceName)
+        val status = mapStatus(pr.state)
         return BVDocument(
                 ids = setOf(BVDocumentId(id = pr.id, type = GITHUB_ID, sourceName = githubConfig.sourceName)),
                 title = title,
                 body = description,
                 updated = parseDate(pr.updated_at),
                 created = parseDate(pr.created_at),
+                closed = extractClosed(operations, status),
                 httpUrl = pr.html_url,
                 refsIds = BVFilters.filterIdsFromText("${description} ${pr.title}") +
                         BVFilters.filterIdsFromText(pr.head.ref),
                 groupIds = setOf(),
-                status = mapStatus(pr.state),
-                operations = extractOperations(pr, issue, client, githubConfig),
+                status = status,
+                operations = operations,
                 key = pr.html_url.replace(".*/".toRegex(), "#"),
                 users = extractUsers(pr, githubConfig)
         )
     }
+
+    private fun extractClosed(operations: List<BVDocumentOperation>, status: BVDocumentStatus?): Date? =
+            if (status == BVDocumentStatus.DONE) {
+                operations.find { operation -> operation.description == "merged" } ?.created
+            } else {
+                null
+            }
 
     private fun extractUsers(pr: GithubPullRequest, config: BVGithubConfig): List<BVDocumentUser> =
             listOf(UserRole.CREATOR, UserRole.IMPLEMENTOR).mapNotNull { mapDocumentUser(pr.user, config.sourceName, it) } +
@@ -89,36 +100,38 @@ open class GithubTaskService(
         else -> null
     }
 
-    private fun extractOperations(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): List<BVDocumentOperation> {
+    private fun extractOperations(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, sourceName: String): List<BVDocumentOperation> {
         val issueEventsFuture = executor.submit(Callable { client.getIssueEvents(issue) })
         val issueCommentsFuture = executor.submit(Callable { client.getIssueComments(pr)} )
         val reviewComments = client.getReviewComments(pr)
-        return (reviewComments.map { toOperation(it) } +
-                issueEventsFuture.get().map { toOperation(it) } +
-                issueCommentsFuture.get().map { toOperation(it) })
-              //!!!  .filter { it.author ==  githubConfig.user }
+        return (reviewComments.map { toOperation(it, sourceName) } +
+                issueEventsFuture.get().map { toOperation(it, sourceName) } +
+                issueCommentsFuture.get().map { toOperation(it, sourceName) })
                 .sortedByDescending { it.created }
     }
 
-    private fun toOperation(event: GithubIssueEvent) =
+    private fun toOperation(event: GithubIssueEvent, sourceName: String) =
             BVDocumentOperation(
                     description = event.event,
                     author = event.actor.login,
-                    created = parseDate(event.created_at)
+                    created = parseDate(event.created_at),
+                    sourceName = sourceName
             )
 
-    private fun toOperation(comment: GithubReviewComment) =
+    private fun toOperation(comment: GithubReviewComment, sourceName: String) =
             BVDocumentOperation(
                     description = "reviewed",
                     author = comment.user.login,
-                    created = parseDate(comment.created_at)
+                    created = parseDate(comment.created_at),
+                    sourceName = sourceName
             )
 
-    private fun toOperation(comment: GithubIssueComment) =
+    private fun toOperation(comment: GithubIssueComment, sourceName: String) =
             BVDocumentOperation(
                     description = "commented",
                     author = comment.user.login,
-                    created = parseDate(comment.created_at)
+                    created = parseDate(comment.created_at),
+                    sourceName = sourceName
             )
 
     private fun parseDate(date:String) =
@@ -133,5 +146,4 @@ open class GithubTaskService(
         e.printStackTrace()
         null
     }
-
 }
