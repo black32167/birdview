@@ -1,6 +1,13 @@
+body {
+    font-size: 15pt;
+}
+#tableContainer {
+    font-size: 18pt;
+}
 .menu {
     background: cyan;
     height: 1.5em;
+    font-size: 15pt;
 }
 .date {
     color: gray;

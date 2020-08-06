@@ -67,8 +67,10 @@
 <hr>
 
 <!-- #import reportPath as report -->
+<div id="tableContainer">
 <table id="reportTable">
 </table>
+</div>
 
 <div id="reportList">
 </div>
