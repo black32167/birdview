@@ -72,6 +72,11 @@ function showOverlay(show) {
     $("#overlay").hide()
   }
 }
+function authenticate(url) {
+  if(url != "") {
+    window.location.replace(url)
+  }
+}
 function reindex() {
     showOverlay(true)
     $.post(`${baseURL}/rest/documents/reindex`)

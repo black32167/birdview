@@ -7,21 +7,23 @@ import org.birdview.source.gdrive.model.GDriveFileListResponse
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
+import org.birdview.web.BVOAuthController
 import org.slf4j.LoggerFactory
 import javax.ws.rs.client.WebTarget
 import javax.ws.rs.core.Response
 
 class GDriveClient(
-        private val accessTokenProvider: GApiAccessTokenProvider,
+        private val oauthController: BVOAuthController,
         private val config: BVGDriveConfig
 ) {
-    companion object {
-        private val SCOPE_DRIVE = "https://www.googleapis.com/auth/drive"
-    }
 
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val filesPerPage = 50
-    private val targetFactoryV3 = WebTargetFactory("https://www.googleapis.com/drive/v3") { authCodeProvider(SCOPE_DRIVE) }
+
+    private val targetFactoryV3 =
+            WebTargetFactory("https://www.googleapis.com/drive/v3") {
+                authCodeProvider()
+            }
 
     fun getFiles(query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
         if (query == null) {
@@ -65,8 +67,9 @@ class GDriveClient(
                                 filesResponse.files,
                                 filesResponse.nextPageToken)
                     }
-    private fun authCodeProvider(scope:String) =
-            accessTokenProvider.getToken(config, scope)
+
+    private fun authCodeProvider() =
+            oauthController.getToken(config)
             ?.let(::BearerAuth)
             ?: throw RuntimeException("Failed retrieving Google API access token")
 

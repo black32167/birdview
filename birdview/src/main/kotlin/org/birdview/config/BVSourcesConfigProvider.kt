@@ -44,6 +44,16 @@ abstract class BVAbstractSourceConfig (
         val sourceName: String
 )
 
+abstract class BVOAuthSourceConfig (
+        sourceType: String,
+        sourceName: String,
+        val clientId: String,
+        val clientSecret: String,
+        val tokenExchangeUrl: String,
+        val scope: String)
+    : BVAbstractSourceConfig(sourceType, sourceName) {
+}
+
 class BVJiraConfig (
         sourceName: String = "jira",
         val baseUrl: String,
@@ -67,9 +77,13 @@ class BVGithubConfig (
 
 class BVGDriveConfig (
         sourceName: String = "gdrive",
-        val clientId: String,
-        val clientSecret: String
-): BVAbstractSourceConfig("gdrive", sourceName) {
-    val authorizationCodeListingPort = 8082
-    val redirectUri = "http://localhost:${authorizationCodeListingPort}"
-}
+        clientId: String,
+        clientSecret: String
+): BVOAuthSourceConfig(
+        sourceType = "gdrive",
+        sourceName = sourceName,
+        clientId = clientId,
+        clientSecret = clientSecret,
+        tokenExchangeUrl = "https://oauth2.googleapis.com/token",
+        scope = "https://www.googleapis.com/auth/drive"
+)

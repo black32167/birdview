@@ -1,6 +1,6 @@
 package org.birdview.web
 
-import org.birdview.BVTaskService
+import org.birdview.config.BVOAuthSourceConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
@@ -14,17 +14,19 @@ import java.time.temporal.ChronoUnit
 
 @Controller
 class BVWebPageController(
-        private val taskService: BVTaskService,
+        private val oauthController: BVOAuthController,
         private val usersConfigProvider: BVUsersConfigProvider,
         private val sourcesConfigProvider: BVSourcesConfigProvider
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
+    class OAuthCodeLink(val source: String, val authCodeUrl:String)
+
     @GetMapping("/")
-    fun hello(model: Model,
+    fun index(model: Model,
               @RequestParam(value = "user", required = false) user: String?,
               @RequestParam(value = "report", required = false) report: String?
     ): String? {
-        val baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
+        val baseUrl = getBaseUrl()
         val tsRequest = buildTSRequest(user, report)
 
         model.asMap().putAll(mapOf(
@@ -41,10 +43,18 @@ class BVWebPageController(
                 "reportTypes" to ReportType.values(),
                 "userRoles" to UserRole.values(),
                 "sources" to sourcesConfigProvider.listSourceNames(),
+                "oauthRequests" to listOauthUrls(),
                 "users" to listUsers()
         ))
         return "report"
     }
+
+    private fun listOauthUrls(): List<OAuthCodeLink> = sourcesConfigProvider.getConfigsOfType(BVOAuthSourceConfig::class.java)
+            .filter { oAuthConfig -> !oauthController.hasToken(oAuthConfig) }
+            .map { oAuthConfig ->
+                val tokenUrl = oauthController.getAuthTokenUrl(oAuthConfig)
+                OAuthCodeLink(source = oAuthConfig.sourceName, authCodeUrl = tokenUrl)
+            }
 
     private fun listUsers() =
             usersConfigProvider.listUsers()
@@ -56,7 +66,6 @@ class BVWebPageController(
                         ?.userAlias
                         ?.let { "&user=${it}" } ?: "")
     }
-
 
     private fun buildTSRequest(user: String?, report: String?) : BVDocumentFilter {
         val sourceType = null
@@ -85,4 +94,8 @@ class BVWebPageController(
         ReportType.LAST_DAY -> "brief"
         else -> "long"
     }*/
+
+    private fun getBaseUrl() =
+            ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
+
 }

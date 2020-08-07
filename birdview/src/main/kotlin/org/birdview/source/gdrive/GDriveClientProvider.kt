@@ -1,14 +1,13 @@
 package org.birdview.source.gdrive
 
 import org.birdview.config.BVGDriveConfig
-import org.birdview.config.BVUsersConfigProvider
+import org.birdview.web.BVOAuthController
 import javax.inject.Named
 
 @Named
 class GDriveClientProvider(
-        private val userConfigProvider: BVUsersConfigProvider,
-        private val accessTokenProvider: GApiAccessTokenProvider
+        private val oauthController: BVOAuthController
 ) {
     fun getGoogleApiClient(config: BVGDriveConfig)
-            = GDriveClient(accessTokenProvider, config)
+            = GDriveClient(oauthController, config)
 }

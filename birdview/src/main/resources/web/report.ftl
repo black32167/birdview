@@ -58,6 +58,16 @@
         </#list>
     </select>
 
+    <#if oauthRequests?has_content>
+    |
+    <select id="oAuthUrl" onchange="authenticate(this.value)">
+        <option value="">Select...</option>
+        <#list oauthRequests as oauthRequest>
+        <option value="${oauthRequest.authCodeUrl}">${oauthRequest.source}</option>
+        </#list>
+    </select>
+    </#if>
+
     <span class="menu_right">
     <a href="#" onclick="reindex()" class="refresh">Update</a>
     |
