@@ -4,6 +4,7 @@ import org.birdview.config.BVOAuthSourceConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
+import org.birdview.source.BVTaskSource
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,10 +17,18 @@ import java.time.temporal.ChronoUnit
 class BVWebPageController(
         private val oauthController: BVOAuthController,
         private val usersConfigProvider: BVUsersConfigProvider,
-        private val sourcesConfigProvider: BVSourcesConfigProvider
+        private val sourcesConfigProvider: BVSourcesConfigProvider,
+        sources: List<BVTaskSource>
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
     class OAuthCodeLink(val source: String, val authCodeUrl:String)
+    class SourceSettingView(
+            val name: String,
+            val authenticated: Boolean,
+            val type: String,
+            val authUrl: String? = null)
+
+    private val sourcesTypesMap = sources.associateBy { it.getType() }
 
     @GetMapping("/")
     fun index(model: Model,
@@ -48,6 +57,26 @@ class BVWebPageController(
         ))
         return "report"
     }
+
+    @GetMapping("/settings")
+    fun index(model: Model): String? {
+        model.asMap().putAll(mapOf(
+                "sources" to sourcesConfigProvider.listSourceNames()
+                        .mapNotNull (this::mapSourceSetting)
+        ))
+        return "settings"
+    }
+
+    private fun mapSourceSetting(sourceName: String): SourceSettingView? =
+        sourcesConfigProvider.getConfigByName(sourceName)
+                ?.let { sourceConfig -> sourcesTypesMap[sourceConfig.sourceType]
+                        ?.let { sourceHandler ->
+                            SourceSettingView(
+                                    name = sourceConfig.sourceName,
+                                    authenticated = sourceHandler.isAuthenticated(sourceConfig.sourceName),
+                                    type = sourceConfig.sourceType,
+                                    authUrl = (sourceConfig as? BVOAuthSourceConfig) ?.let (oauthController::getAuthTokenUrl)
+                            ) } }
 
     private fun listOauthUrls(): List<OAuthCodeLink> = sourcesConfigProvider.getConfigsOfType(BVOAuthSourceConfig::class.java)
             .filter { oAuthConfig -> !oauthController.hasToken(oAuthConfig) }

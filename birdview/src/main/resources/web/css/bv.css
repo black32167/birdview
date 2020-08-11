@@ -36,3 +36,8 @@ body {
   height: 100%;
   font-weight: bold;
 }
+
+.center {
+    margin:auto;
+    display: table;
+}

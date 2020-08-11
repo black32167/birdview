@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="css/report.css"></link>
+<link rel="stylesheet" href="css/bv.css"></link>
 <link rel="stylesheet" href="css/jquery.treetable.css"></link>
 <link rel="stylesheet" href="css/jquery.treetable.theme.default.css"></link>
 
@@ -27,7 +27,7 @@
         </#list>
     </select>
     |
-    <label for="userRole">User role:</label>
+    <label for="userRole">Role:</label>
     <select id="userRole" onchange="refresh()">
         <#list userRoles as userRole>
         <option value="${userRole}">${userRole}</option>
@@ -57,16 +57,8 @@
         <option value="${source}">${source}</option>
         </#list>
     </select>
-
-    <#if oauthRequests?has_content>
     |
-    <select id="oAuthUrl" onchange="authenticate(this.value)">
-        <option value="">Select...</option>
-        <#list oauthRequests as oauthRequest>
-        <option value="${oauthRequest.authCodeUrl}">${oauthRequest.source}</option>
-        </#list>
-    </select>
-    </#if>
+    <a href="settings">Settings...</a>
 
     <span class="menu_right">
     <a href="#" onclick="reindex()" class="refresh">Update</a>
