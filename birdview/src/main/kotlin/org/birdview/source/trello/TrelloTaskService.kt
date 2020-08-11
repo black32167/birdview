@@ -71,6 +71,9 @@ open class TrelloTaskService(
 
     override fun getType() = "trello"
 
+    override fun isAuthenticated(sourceName: String): Boolean =
+            sourcesConfigProvider.getConfigByName(sourceName, BVTrelloConfig::class.java) != null
+
     private fun extractIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
             setOf(
                     BVDocumentId( id = card.id, type = TRELLO_CARD_ID_TYPE, sourceName = sourceName),

@@ -9,4 +9,5 @@ interface BVTaskSource {
     fun canHandleId(id: String): Boolean = false
     fun loadByIds(list: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
     }
+    fun isAuthenticated(sourceName: String): Boolean
 }

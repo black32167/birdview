@@ -10,4 +10,7 @@ class GDriveClientProvider(
 ) {
     fun getGoogleApiClient(config: BVGDriveConfig)
             = GDriveClient(oauthController, config)
+
+    fun isAuthenticated(config: BVGDriveConfig)
+            = oauthController.hasToken(config)
 }

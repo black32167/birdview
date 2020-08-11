@@ -139,6 +139,9 @@ open class GithubTaskService(
 
     override fun getType() = "github"
 
+    override fun isAuthenticated(sourceName: String): Boolean =
+            sourcesConfigProvider.getConfigByName(sourceName, BVGithubConfig::class.java) != null
+
     private fun getPr(issue: GithubIssue, githubClient:GithubClient): GithubPullRequest? = try {
         issue.pull_request?.url
                 ?.let { url -> githubClient.getPullRequest(url) }

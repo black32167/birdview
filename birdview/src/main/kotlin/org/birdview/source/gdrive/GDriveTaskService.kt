@@ -46,6 +46,11 @@ open class GDriveTaskService(
 
     override fun getType() = "gdrive"
 
+    override fun isAuthenticated(sourceName: String): Boolean =
+        bvConfigProvider.getConfigByName(sourceName, BVGDriveConfig::class.java)
+                ?.let { config -> clientProvider.isAuthenticated(config) }
+                ?: false
+
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) = try {
         BVDocument(
                 ids = setOf(BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)),

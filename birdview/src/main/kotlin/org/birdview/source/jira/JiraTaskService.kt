@@ -21,7 +21,7 @@ import javax.inject.Named
 @Named
 open class JiraTaskService(
         private val jiraClientProvider: JiraClientProvider,
-        sourcesConfigProvider: BVSourcesConfigProvider,
+        private val sourcesConfigProvider: BVSourcesConfigProvider,
         private val jqlBuilder: JqlBuilder,
         private val bvUsersConfigProvider: BVUsersConfigProvider
 ): BVTaskSource {
@@ -115,6 +115,9 @@ open class JiraTaskService(
             }
 
     override fun getType() = "jira"
+
+    override fun isAuthenticated(sourceName: String): Boolean =
+            sourcesConfigProvider.getConfigByName(sourceName, BVJiraConfig::class.java) != null
 
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +
