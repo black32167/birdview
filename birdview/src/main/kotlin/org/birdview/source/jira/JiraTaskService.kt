@@ -10,6 +10,7 @@ import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
+import org.birdview.source.SourceType
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraUser
@@ -114,7 +115,7 @@ open class JiraTaskService(
                 )
             }
 
-    override fun getType() = "jira"
+    override fun getType() = SourceType.JIRA
 
     override fun isAuthenticated(sourceName: String): Boolean =
             sourcesConfigProvider.getConfigByName(sourceName, BVJiraConfig::class.java) != null

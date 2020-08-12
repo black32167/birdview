@@ -11,6 +11,7 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
+import org.birdview.source.SourceType
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
@@ -29,7 +30,7 @@ open class GithubTaskService(
         private val bvUsersConfigProvider: BVUsersConfigProvider
 ): BVTaskSource {
     companion object {
-        val GITHUB_ID = "githubId"
+        const val GITHUB_ID = "githubId"
     }
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
@@ -137,7 +138,7 @@ open class GithubTaskService(
     private fun parseDate(date:String) =
             BVDateTimeUtils.parse(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
-    override fun getType() = "github"
+    override fun getType() = SourceType.GITHUB
 
     override fun isAuthenticated(sourceName: String): Boolean =
             sourcesConfigProvider.getConfigByName(sourceName, BVGithubConfig::class.java) != null

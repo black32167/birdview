@@ -9,26 +9,28 @@
 <body>
     <div class="menu">
        <a href="/">< Home</a>
+       |
+       <a href="settings/add-source">Add source</a>
     </div>
 
     <div>
     <div class="center">
     <table>
+    <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th></th>
+    </tr>
     <#list sources as source>
         <tr>
         <td>
-            ${source.name}
+            <a href="${source.authenticationLink}">${source.name}</a>
         </td>
         <td>
-            <#if source.authenticated>
-                Yes
-            <#else>
-                <#if source.type == "gdrive">
-                    <a href="${source.authUrl}">Authorize...</a>
-                <#else>
-                    No
-                </#if>
-            </#if>
+            ${source.type}
+        </td>
+        <td>
+            <a href="settings/delete?sourceName=${source.name}">X</a>
         </td>
         </tr>
     </#list>

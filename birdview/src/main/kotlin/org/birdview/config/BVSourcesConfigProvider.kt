@@ -2,7 +2,10 @@ package org.birdview.config
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import org.birdview.source.SourceType
 import org.birdview.utils.JsonDeserializer
+import java.nio.file.Files
+import java.util.stream.Collectors
 import javax.inject.Named
 
 @Named
@@ -19,8 +22,12 @@ class BVSourcesConfigProvider(
     fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T? =
             getConfigsOfType(configClass).firstOrNull()
 
-    private fun getSourceConfigs(): Array<BVAbstractSourceConfig>
-            = jsonDeserializer.deserialize(bvRuntimeConfig.sourcesConfigFileName)
+    private fun getSourceConfigs(): List<BVAbstractSourceConfig> = bvRuntimeConfig.sourcesConfigsFolder
+            .takeIf { Files.isDirectory(it) }
+            ?.let (Files::list)
+            ?.collect(Collectors.toList())
+            ?.map(jsonDeserializer::deserialize)
+            ?: emptyList()
 
     fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
         getSourceConfigs().find { it.sourceName == sourceName }
@@ -30,6 +37,17 @@ class BVSourcesConfigProvider(
 
     fun listSourceNames(): List<String> =
         getSourceConfigs().map { it.sourceName }
+
+    fun save(config: BVAbstractSourceConfig) {
+        bvRuntimeConfig.sourcesConfigsFolder.also { folder->
+            Files.createDirectories(folder)
+            jsonDeserializer.serialize(folder.resolve(config.sourceName), config)
+        }
+    }
+
+    fun delete(sourceName: String) {
+        Files.delete(bvRuntimeConfig.sourcesConfigsFolder.resolve(sourceName))
+    }
 }
 
 @JsonTypeInfo(
@@ -43,12 +61,12 @@ class BVSourcesConfigProvider(
     JsonSubTypes.Type(value = BVGDriveConfig::class, name = "gdrive")
 )
 abstract class BVAbstractSourceConfig (
-        val sourceType: String,
+        val sourceType: SourceType,
         val sourceName: String
 )
 
 abstract class BVOAuthSourceConfig (
-        sourceType: String,
+        sourceType: SourceType,
         sourceName: String,
         val clientId: String,
         val clientSecret: String,
@@ -62,28 +80,28 @@ class BVJiraConfig (
         val baseUrl: String,
         val user: String,
         val token: String
-): BVAbstractSourceConfig("jira", sourceName)
+): BVAbstractSourceConfig (SourceType.JIRA, sourceName)
 
 class BVTrelloConfig (
         sourceName: String = "trello",
-        val baseUrl: String,
+        val baseUrl: String = "https://api.trello.com",
         val key: String,
         val token: String
-): BVAbstractSourceConfig("trello", sourceName)
+): BVAbstractSourceConfig (SourceType.TRELLO, sourceName)
 
 class BVGithubConfig (
         sourceName: String = "github",
-        val baseUrl: String,
+        val baseUrl: String = "https://api.github.com",
         val user: String,
         val token: String
-): BVAbstractSourceConfig("github", sourceName)
+): BVAbstractSourceConfig (SourceType.GITHUB, sourceName)
 
 class BVGDriveConfig (
         sourceName: String = "gdrive",
         clientId: String,
         clientSecret: String
 ): BVOAuthSourceConfig(
-        sourceType = "gdrive",
+        sourceType = SourceType.GDRIVE,
         sourceName = sourceName,
         clientId = clientId,
         clientSecret = clientSecret,

@@ -10,6 +10,7 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
+import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
 import org.birdview.utils.BVDateTimeUtils
@@ -44,7 +45,7 @@ open class GDriveTaskService(
         }
     }
 
-    override fun getType() = "gdrive"
+    override fun getType() = SourceType.GDRIVE
 
     override fun isAuthenticated(sourceName: String): Boolean =
         bvConfigProvider.getConfigByName(sourceName, BVGDriveConfig::class.java)

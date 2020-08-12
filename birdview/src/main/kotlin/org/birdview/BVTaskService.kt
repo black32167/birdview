@@ -5,6 +5,7 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
 import org.birdview.source.BVTaskSource
+import org.birdview.source.SourceType
 import org.birdview.utils.BVConcurrentUtils
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
@@ -180,8 +181,8 @@ open class BVTaskService(
     }
 
     private fun loadDocs(missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val type2Ids: Map<String, List<String>> = missedDocsIds
-                .fold(mutableMapOf<String, MutableList<String>>()) { acc, id ->
+        val type2Ids: Map<SourceType, List<String>> = missedDocsIds
+                .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
                     getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
                 }
@@ -199,7 +200,7 @@ open class BVTaskService(
                 }
     }
 
-    private fun getSourceTypes(id: String): String? =
+    private fun getSourceTypes(id: String): SourceType? =
             sources.find { it.canHandleId(id) }?.getType()
 
     private fun linkDocs(_docs: List<BVDocument>): List<BVDocument> {

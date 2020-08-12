@@ -7,6 +7,7 @@ import org.birdview.config.BVTrelloConfig
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
+import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -69,7 +70,7 @@ open class TrelloTaskService(
         else -> null
     }
 
-    override fun getType() = "trello"
+    override fun getType() = SourceType.TRELLO
 
     override fun isAuthenticated(sourceName: String): Boolean =
             sourcesConfigProvider.getConfigByName(sourceName, BVTrelloConfig::class.java) != null
