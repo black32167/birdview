@@ -52,9 +52,6 @@ $(function(){
             <label for="sourceName">Source alias:</label>
             <input type="text" name="sourceName" value="gdrive">
             <br>
-            <label for="baseUrl">Base URL:</label>
-            <input type="text" name="baseUrl">
-            <br>
             <label for="key">Client Id:</label>
             <input type="text" name="key">
             <br>
