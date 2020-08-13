@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.birdview.source.SourceType
 import org.birdview.utils.JsonDeserializer
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors
 import javax.inject.Named
 
@@ -25,6 +26,7 @@ class BVSourcesConfigProvider(
     private fun getSourceConfigs(): List<BVAbstractSourceConfig> = bvRuntimeConfig.sourcesConfigsFolder
             .takeIf { Files.isDirectory(it) }
             ?.let (Files::list)
+            ?.filter { !it.toString().toLowerCase().endsWith(".bak") }
             ?.collect(Collectors.toList())
             ?.map(jsonDeserializer::deserialize)
             ?: emptyList()
@@ -42,6 +44,13 @@ class BVSourcesConfigProvider(
         bvRuntimeConfig.sourcesConfigsFolder.also { folder->
             Files.createDirectories(folder)
             jsonDeserializer.serialize(folder.resolve(config.sourceName), config)
+        }
+    }
+
+    fun update(config: BVAbstractSourceConfig) {
+        bvRuntimeConfig.sourcesConfigsFolder.resolve(config.sourceName).also { file ->
+            Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
+            jsonDeserializer.serialize(file, config)
         }
     }
 
