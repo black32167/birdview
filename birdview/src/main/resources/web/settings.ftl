@@ -24,7 +24,7 @@
     <#list sources as source>
         <tr>
         <td>
-            <a href="${source.authenticationLink}">${source.name}</a>
+            <a href="settings/${source.type?lower_case}/edit-source?sourceName=${source.name}">${source.name}</a>
         </td>
         <td>
             ${source.type}

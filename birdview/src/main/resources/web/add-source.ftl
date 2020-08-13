@@ -32,8 +32,7 @@ $(function(){
         </#list>
         </select>
 
-        <form id="jira-form" action="/settings/add-source-post" method="POST">
-            <input type="hidden" name="sourceType" value="JIRA">
+        <form id="jira-form" action="/settings/jira/add-source" method="POST">
             <label for="sourceName">Source alias:</label>
             <input type="text" name="sourceName" value="jira">
             <br>
@@ -49,8 +48,7 @@ $(function(){
             <input type="submit">
         </form>
 
-        <form id="gdrive-form" action="/settings/add-source-post" method="POST">
-            <input type="hidden" name="sourceType" value="GDRIVE">
+        <form id="gdrive-form" action="/settings/gdrive/add-source" method="POST">
             <label for="sourceName">Source alias:</label>
             <input type="text" name="sourceName" value="gdrive">
             <br>
@@ -66,8 +64,7 @@ $(function(){
             <input type="submit">
         </form>
 
-        <form id="github-form" action="/settings/add-source-post" method="POST">
-            <input type="hidden" name="sourceType" value="GITHUB">
+        <form id="github-form" action="/settings/github/add-source" method="POST">
             <label for="sourceName">Source alias:</label>
             <input type="text" name="sourceName" value="github">
             <br>
@@ -80,8 +77,7 @@ $(function(){
             <input type="submit">
         </form>
 
-        <form id="trello-form" action="/settings/add-source-post" method="POST">
-            <input type="hidden" name="sourceType" value="TRELLO">
+        <form id="trello-form" action="/settings/trello/add-source" method="POST">
             <label for="sourceName">Source alias:</label>
             <input type="text" name="sourceName" value="trello">
             <br>
