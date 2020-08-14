@@ -31,7 +31,8 @@ open class JiraTaskService(
     }
     private val log = LoggerFactory.getLogger(JiraTaskService::class.java)
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-    private val jiraConfigs: List<BVJiraConfig> = sourcesConfigProvider.getConfigsOfType(BVJiraConfig::class.java)
+    private val jiraConfigs: List<BVJiraConfig>
+            get() = sourcesConfigProvider.getConfigsOfType(BVJiraConfig::class.java)
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         jiraConfigs.forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }

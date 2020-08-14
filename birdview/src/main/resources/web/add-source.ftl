@@ -39,7 +39,7 @@ $(function(){
             <label for="baseUrl">Base URL:</label>
             <input type="text" name="baseUrl">
             <br>
-            <label for="key">Key:</label>
+            <label for="key">Email:</label>
             <input type="text" name="key">
             <br>
             <label for="secret">Token:</label>

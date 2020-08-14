@@ -51,7 +51,11 @@ open class BVTaskService(
     private fun loadAsync(user: String?) {
         usersRetrieved.computeIfAbsent(user ?: "") {
             loadDocuments(user).forEach{
-                it.get()
+                try {
+                    it.get()
+                } catch (e: java.lang.Exception) {
+                    log.error("", e)
+                }
             }
             true
         }

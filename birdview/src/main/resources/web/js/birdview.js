@@ -80,10 +80,11 @@ function authenticate(url) {
 function reindex() {
     showOverlay(true)
     $.post(`${baseURL}/rest/documents/reindex`)
-    .done(function(){
+    .always(function(){
         showOverlay(false)
+        refresh()
     })
-    refresh()
+
     //window.location.replace(window.location.pathname + "?refresh")
     return false
 }
@@ -102,9 +103,11 @@ function refresh() {
         `&sourceType=${source}` +
         `&userRole=${userRole}`)
         .done(function( docs ) {
-            renderReport(docs)
+             renderReport(docs)
+         })
+        .always(function() {
             showOverlay(false)
-        });
+        })
     // window.location.replace(window.location.pathname + "?refresh")
     return false
 }
