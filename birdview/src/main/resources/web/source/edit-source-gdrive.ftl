@@ -2,8 +2,7 @@
 <html>
 
 <head>
-<link rel="stylesheet" href="/css/bv.css"></link>
-<script src="/js/jquery-3.5.1.min.js"></script>
+<#include "/head.ftl">
 
 </head>
 
@@ -14,7 +13,7 @@
 
     <div>
     <div class="center">
-        <form id="jira-form" action="/settings/github/update-source" method="POST">
+        <form id="jira-form" action="/settings/gdrive/update-source" method="POST">
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             Source alias:${source.sourceName}
             <br>
