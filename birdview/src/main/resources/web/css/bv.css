@@ -53,3 +53,10 @@ table.settings, .settings th, .settings td {
 .settings th {
     background: cyan;
 }
+td.sign {
+    text-align: right;
+    font-weight: bold;
+}
+.buttons {
+    text-align:right;
+}

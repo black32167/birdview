@@ -16,12 +16,14 @@
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>
             <tr>
-                <td>Source alias:</td>
+                <td class="sign">Source alias:</td>
                 <td>${source.sourceName}</td>
             </tr>
             <#include "edit-source-${source.sourceName}.ftl">
             </table>
-            <input type="submit" value="Update">
+            <div class="buttons">
+                <input type="submit" value="Update">
+            </div>
         </form>
     </div>
     <div>

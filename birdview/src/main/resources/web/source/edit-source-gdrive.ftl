@@ -1,5 +1,8 @@
-<label for="key">Client Id:</label>
-<input type="text" name="key" value="${source.key}" >
-<br>
-<label for="secret">Client Secret:</label>
-<input type="text" name="secret" value="${source.secret}" >
+<tr>
+    <td class="sign">Client Id:</td>
+    <td><input type="text" name="key" value="${source.key}" ></td>
+</tr>
+<tr>
+    <td class="sign">Client Secret:</td>
+    <td><input type="text" name="secret" value="${source.secret}" ></td>
+</tr>

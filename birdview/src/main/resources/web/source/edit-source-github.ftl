@@ -1,5 +1,8 @@
-<label for="key">User:</label>
-<input type="text" name="key" value="${source.key}" >
-<br>
-<label for="secret">Token:</label>
-<input type="text" name="secret" value="${source.secret}" >
+<tr>
+    <td class="sign">User:</td>
+    <td><input type="text" name="key" value="${source.key}" ></td>
+</tr>
+<tr>
+    <td class="sign">Token:</td>
+    <td><input type="text" name="secret" value="${source.secret}" ></td>
+</tr>
