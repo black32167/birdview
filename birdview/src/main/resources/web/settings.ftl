@@ -15,7 +15,7 @@
 
     <div>
     <div class="center">
-    <table>
+    <table class="settings">
     <tr>
         <th>Name</th>
         <th>Type</th>

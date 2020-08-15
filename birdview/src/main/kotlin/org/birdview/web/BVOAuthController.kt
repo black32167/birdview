@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import org.springframework.web.servlet.view.RedirectView
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import javax.ws.rs.client.Entity
@@ -34,13 +34,13 @@ class BVOAuthController(
             @RequestParam(value = "code", required = false) code: String?,
             @RequestParam(value = "error", required = false) maybeError: String?,
             @RequestParam(value = "scope", required = false) scope: String?
-    ): RedirectView {
+    ): ModelAndView {
         when {
             maybeError != null -> log.error("OAuth authentication error for source ${source}:${maybeError}")
             code != null -> getAndSaveRefreshToken(source = source, authCode = code)
             else -> log.error("OAuth authentication error for source ${source}:no code provided!")
         }
-        return RedirectView(getBaseUrl())
+        return ModelAndView("redirect:/settings")
     }
 
     fun getToken(config: BVOAuthSourceConfig): String? =
@@ -78,15 +78,21 @@ class BVOAuthController(
                     .param("grant_type", "refresh_token")
                     .param("refresh_token", refreshToken))
 
-    private fun loadLocalRefreshToken(source: String):String? {
-        var refreshTokenFile = getRefreshTokenFileName(source)
-        return if (Files.exists(refreshTokenFile))
-            Files.readAllLines(refreshTokenFile).firstOrNull()
-        else null
-    }
+    private fun loadLocalRefreshToken(source: String):String? =
+        getRefreshTokenFileName(source)
+                .takeIf { refreshTokenFile -> Files.exists(refreshTokenFile) }
+                ?.let { refreshTokenFile -> Files.readAllLines(refreshTokenFile).firstOrNull() }
 
     fun getRedirectUrl(source: String) =
-        "${ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()}/oauth/code?source=${source}"
+        "${getBaseUrl()}/oauth/code?source=${source}"
+
+    fun getAuthTokenUrl(oAuthConfig: BVOAuthSourceConfig): String {
+        return "https://accounts.google.com/o/oauth2/v2/auth" +
+                "?client_id=${oAuthConfig.clientId}" +
+                "&response_type=code" +
+                "&redirect_uri=${getRedirectUrl(oAuthConfig.sourceName)}" +
+                "&scope=${oAuthConfig.scope}"
+    }
 
     private fun getAndSaveRefreshToken(source: String, authCode:String) {
         val config = sourceConfigProvider.getConfigByName(source) as BVOAuthSourceConfig
@@ -113,15 +119,6 @@ class BVOAuthController(
 
     private fun getRefreshTokenFileName(source: String) =
             bvRuntimeConfig.oauthTokenDir.resolve("${source}.token")
-
-    fun getAuthTokenUrl(oAuthConfig: BVOAuthSourceConfig): String {
-        val redirectUrl = "${getBaseUrl()}/oauth/code?source=${oAuthConfig.sourceName}"
-        return "https://accounts.google.com/o/oauth2/v2/auth" +
-                "?client_id=${oAuthConfig.clientId}" +
-                "&response_type=code" +
-                "&redirect_uri=${redirectUrl}" +
-                "&scope=${oAuthConfig.scope}"
-    }
 
     private fun getBaseUrl() =
             ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()

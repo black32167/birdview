@@ -2,11 +2,12 @@ package org.birdview.web.source
 
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
+import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
-@RequestMapping("/settings/trello")
+@RequestMapping("${BVWebPaths.SETTINGS}/trello")
 class TrelloSourceWebController(
         sourcesConfigProvider: BVSourcesConfigProvider
 ): AbstractSourceWebController<BVTrelloConfig, TrelloSourceWebController.TrelloSourceFormData>(sourcesConfigProvider) {

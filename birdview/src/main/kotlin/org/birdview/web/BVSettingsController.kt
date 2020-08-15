@@ -12,7 +12,7 @@ import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @Controller
-@RequestMapping("/settings")
+@RequestMapping(BVWebPaths.SETTINGS)
 class BVSettingsController(
         private val sourcesConfigProvider: BVSourcesConfigProvider,
         private val sources: List<BVTaskSource>
@@ -41,19 +41,17 @@ class BVSettingsController(
     fun deleteSource(model: Model, @RequestParam("sourceName") sourceName: String): ModelAndView {
         sourcesConfigProvider.delete(sourceName)
 
-        return ModelAndView("redirect:/settings");
+        return ModelAndView("redirect:${BVWebPaths.SETTINGS}");
     }
 
     private fun mapSourceSetting(sourceName: String): SourceSettingView? =
             sourcesConfigProvider.getConfigByName(sourceName)
-                    ?.let { sourceConfig -> sourcesTypesMap[sourceConfig.sourceType]
-                            ?.let { sourceHandler ->
-                                SourceSettingView(
-                                        name = sourceConfig.sourceName,
-                                        type = sourceConfig.sourceType
-                                )
-                            } }
-
+                    ?.let { sourceConfig ->
+                        SourceSettingView(
+                                name = sourceConfig.sourceName,
+                                type = sourceConfig.sourceType
+                        )
+                    }
 
     private fun getBaseUrl() =
             ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()

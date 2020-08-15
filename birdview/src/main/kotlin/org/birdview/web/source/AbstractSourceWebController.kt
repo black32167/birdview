@@ -2,6 +2,7 @@ package org.birdview.web.source
 
 import org.birdview.config.BVAbstractSourceConfig
 import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.web.BVWebPaths
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
@@ -18,27 +19,31 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
         val config = getConfig(sourceName)!!
         model.addAttribute("source", mapForm(config))
 
-        return "source/edit-source-${config.sourceType.name.toLowerCase()}"
+        return "source/edit-source"//-${config.sourceType.name.toLowerCase()}"
     }
 
     @PostMapping("/add-source")
-    fun addSource1(model: Model, @ModelAttribute sourceFormData: F): ModelAndView {
-        saveConfig(mapConfig(sourceFormData))
-        return ModelAndView("redirect:/settings");
+    fun addSource(model: Model, @ModelAttribute sourceFormData: F): Any {
+        val config = mapConfig(sourceFormData)
+        saveConfig(config)
+        return getRedirectAfterSaveView(config)
     }
 
     @PostMapping("/update-source")
-    fun updateSource1(model: Model, @ModelAttribute sourceFormData: F): ModelAndView {
-        updateConfig(mapConfig(sourceFormData))
-        return ModelAndView("redirect:/settings");
+    fun updateSource(model: Model, @ModelAttribute sourceFormData: F): Any {
+        val config = mapConfig(sourceFormData)
+        updateConfig(config)
+        return getRedirectAfterSaveView(config)
     }
 
+    protected open fun getRedirectAfterSaveView(config:T): Any =
+            ModelAndView("redirect:${BVWebPaths.SETTINGS}")
 
-    protected fun saveConfig(config:T) {
+    private fun saveConfig(config:T) {
         sourcesConfigProvider.save(config)
     }
 
-    protected fun updateConfig(config:T) {
+    private fun updateConfig(config:T) {
         sourcesConfigProvider.update(config)
     }
 
