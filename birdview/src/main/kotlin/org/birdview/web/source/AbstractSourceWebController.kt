@@ -13,13 +13,16 @@ import org.springframework.web.servlet.ModelAndView
 abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
         private val sourcesConfigProvider: BVSourcesConfigProvider
 ) {
+    abstract class AbstractSourceFormData(
+            val sourceName:String
+    )
 
     @GetMapping("/edit-source")
     fun editSourceView1(model: Model, @RequestParam("sourceName") sourceName: String): String {
         val config = getConfig(sourceName)!!
         model.addAttribute("source", mapForm(config))
 
-        return "source/edit-source"//-${config.sourceType.name.toLowerCase()}"
+        return "source/edit-source"
     }
 
     @PostMapping("/add-source")

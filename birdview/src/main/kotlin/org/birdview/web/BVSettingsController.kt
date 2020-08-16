@@ -34,7 +34,7 @@ class BVSettingsController(
     fun addSource(model: Model): String {
         model.addAttribute("sourceTypes", sources.map { it.getType().name.toLowerCase() })
 
-        return "add-source"
+        return "source/add-source"
     }
 
     @GetMapping("/delete")

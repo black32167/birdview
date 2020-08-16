@@ -12,11 +12,11 @@ class JiraSourceWebController(
         sourcesConfigProvider: BVSourcesConfigProvider
 ): AbstractSourceWebController<BVJiraConfig, JiraSourceWebController.JiraSourceFormData>(sourcesConfigProvider) {
     class JiraSourceFormData(
-            val sourceName:String,
+            sourceName:String,
             val key: String?,
             val secret: String?,
             val baseUrl: String?
-    )
+    ): AbstractSourceFormData(sourceName)
 
     override fun getConfigClass() = BVJiraConfig::class.java
 

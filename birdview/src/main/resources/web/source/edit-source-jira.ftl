@@ -1,6 +1,7 @@
+
 <tr>
     <td class="sign">Base URL:</td>
-    <td>${source.baseUrl}</td>
+    <td><input type="text" name="baseUrl" value="${source.baseUrl}" ></td>
 </tr>
 <tr>
     <td class="sign">Email:</td>
