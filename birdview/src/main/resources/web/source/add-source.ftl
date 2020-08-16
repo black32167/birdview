@@ -60,10 +60,10 @@ $(function(){
                 </tr>
                 <tr>
                     <td class="sign">Token:</td>
-                    <td><input type="text" name="secret">
-                    <a class="helpline" href="https://id.atlassian.com/manage/api-tokens">
-                     Generate...
-                    </a></td>
+                    <td>
+                        <input type="text" name="secret"><br>
+                        <a class="helpline" href="https://id.atlassian.com/manage/api-tokens">Generate token...</a>
+                    </td>
                 </tr>
         </@addForm>
 
@@ -76,7 +76,12 @@ $(function(){
                 <td><input type="text" name="key"></td>
             </tr><tr>
                 <td class="sign">Client Secret:</td>
-                <td><input type="text" name="secret"></td>
+                <td>
+                    <input type="text" name="secret">
+                    <div class="helpline">
+                    <a href="https://console.developers.google.com/projectcreate">Register</a> and <a href="https://console.developers.google.com/">Generate</a>
+                    </div>
+                </td>
             </tr>
         </@addForm>
 
@@ -89,7 +94,10 @@ $(function(){
                 <td><input type="text" name="key"></td>
             </tr><tr>
                 <td class="sign">Token:</td>
-                <td><input type="text" name="secret"></td>
+                <td>
+                    <input type="text" name="secret"><br>
+                    <a class="helpline" href="https://github.com/settings/tokens">Generate token...</a>
+                </td>
             </tr>
         </@addForm>
 
@@ -102,7 +110,10 @@ $(function(){
                 <td><input type="text" name="key"></td>
             </tr><tr>
                 <td class="sign">Token:</td>
-                <td><input type="text" name="secret"></td>
+                <td>
+                    <input type="text" name="secret"><br>
+                    <a class="helpline" href="https://trello.com/app-key">Generate token...</a>
+                </td>
             </tr>
         </@addForm>
     </div>
