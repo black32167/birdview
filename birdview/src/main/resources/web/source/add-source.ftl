@@ -1,12 +1,16 @@
 <#macro addForm sourceType>
-<form id="${sourceType}-form" action="/settings/${sourceType}/add-source" method="POST">
+<form id="${sourceType}-form" source="${sourceType}" action="/settings/${sourceType}/add-source" method="POST">
     <table>
     <#nested>
     </table>
     <div class="buttons">
         <input type="submit" value="Create">
     </div>
+    <div id="token-help-${sourceType}" class="token-help">
+        <img src="/img/get-token-${sourceType}.png"/>
+    </div>
 </form>
+
 </#macro>
 
 <!DOCTYPE html>
@@ -16,6 +20,10 @@
 <link rel="stylesheet" href="/css/bv.css"></link>
 <script src="/js/jquery-3.5.1.min.js"></script>
 <script>
+function showHelp(sourceType) {
+  var divId = 'token-help-' + sourceType
+  $('#' + divId).show()
+}
 function hideAll() {
   $('form').hide()
 }
@@ -25,6 +33,24 @@ function showForm(sourceType) {
 }
 $(function(){
     hideAll()
+
+    $('form').each( (i, form) => {
+        console.log($(form).attr('id'))
+        var source = $(form).attr('source')
+        var link = $(form).find('.helpline')
+        link.on('mouseenter', (e) => {
+            var image = $('#token-help-' + source)
+            image.parent().css({position: 'relative'});
+            image.css({top:e.clientY+10, left:e.clientX+10})
+
+            image.show()
+        })
+        link.on('mouseleave', (e) => {
+            var image = $('#token-help-' + source)
+            image.hide()
+        })
+    })
+
 })
 </script>
 </head>
@@ -78,7 +104,7 @@ $(function(){
                 <td class="sign">Client Secret:</td>
                 <td>
                     <input type="text" name="secret">
-                    <div class="helpline">
+                    <div class="helpline" >
                     <a href="https://console.developers.google.com/projectcreate">Register</a> and <a href="https://console.developers.google.com/">Generate</a>
                     </div>
                 </td>

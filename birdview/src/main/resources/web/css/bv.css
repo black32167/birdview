@@ -70,3 +70,7 @@ td.sign {
 .helpline {
   font-size: 12pt;
 }
+.token-help {
+    display: none;
+    position:fixed;
+}
