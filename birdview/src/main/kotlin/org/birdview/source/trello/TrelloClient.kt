@@ -70,6 +70,7 @@ class TrelloClient(private val trelloConfig: BVTrelloConfig,
     private fun searchTrelloCards(query: String, cardsPage: Int) = getTarget().path("search")
             .queryParam("query", query)
             .queryParam("partial", true)
+        //    .queryParam("card_fields", "idMembers,dateLastActivity,dateLastView,desc,descData,idOrganization,invitations,invited,labelNames,memberships,name,pinned,powerUps,prefs,shortLink,shortUrl,starred,subscribed,url")
             .queryParam("cards_limit", cardsPerPage)
             .queryParam("cards_page", cardsPage)
             .request()

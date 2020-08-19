@@ -31,8 +31,8 @@ class BVSourcesConfigProvider(
             ?.mapNotNull(jsonDeserializer::deserialize)
             ?: emptyList()
 
-    fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
-        getSourceConfigs().find { it.sourceName == sourceName }
+    fun getConfigByName(sourceName: String): BVAbstractSourceConfig =
+        getSourceConfigs().find { it.sourceName == sourceName }!!
 
     fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =
             getConfigByName(sourceName) as? T

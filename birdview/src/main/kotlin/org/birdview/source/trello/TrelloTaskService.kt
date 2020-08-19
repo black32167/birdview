@@ -2,10 +2,12 @@ package org.birdview.source.trello
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.analysis.BVDocumentUser
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVTrelloConfig
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
@@ -54,7 +56,9 @@ open class TrelloTaskService(
                         refsIds = BVFilters.filterIdsFromText("${card.desc} ${card.name}"),
                         groupIds = extractGroupIds(card, trelloConfig.sourceName),
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
-                        key = "#${card.id}"
+                        key = "#${card.id}",
+                        // TODO: load user by id to infer user name!
+                        users = extractUsers(card, trelloConfig.sourceName)
                 )
             }
 
@@ -62,12 +66,18 @@ open class TrelloTaskService(
         }
     }
 
+    private fun extractUsers(card: TrelloCard, sourceName: String): List<BVDocumentUser> =
+            card.idMembers.flatMap { listOf(
+                    BVDocumentUser(userName = it, role = UserRole.IMPLEMENTOR, sourceName = sourceName),
+                    BVDocumentUser(userName = it, role = UserRole.WATCHER, sourceName = sourceName)
+            )}
+
     private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
         "Done" -> BVDocumentStatus.DONE
         "Progress", "In Progress", "In Review", "Blocked" -> BVDocumentStatus.PROGRESS
         "To Do", "Planned" -> BVDocumentStatus.PLANNED
         "Backlog" -> BVDocumentStatus.BACKLOG
-        else -> null
+        else -> BVDocumentStatus.BACKLOG
     }
 
     override fun getType() = SourceType.TRELLO

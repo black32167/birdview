@@ -6,7 +6,6 @@ import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentUser
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -26,8 +25,7 @@ import javax.inject.Named
 open class GithubTaskService(
         private val sourcesConfigProvider: BVSourcesConfigProvider,
         private val githubClientProvider: GithubClientProvider,
-        private val githubQueryBuilder: GithubQueryBuilder,
-        private val bvUsersConfigProvider: BVUsersConfigProvider
+        private val githubQueryBuilder: GithubQueryBuilder
 ): BVTaskSource {
     companion object {
         const val GITHUB_ID = "githubId"
@@ -93,7 +91,8 @@ open class GithubTaskService(
                     pr.requested_reviewers.mapNotNull { reviewer -> mapDocumentUser(reviewer, config.sourceName, UserRole.WATCHER) }
 
     private fun mapDocumentUser(githubUser: GithubUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            bvUsersConfigProvider.getUser(githubUser?.login, sourceName, userRole)
+            githubUser ?.login
+                    ?.let { login -> BVDocumentUser(userName = login, sourceName = sourceName, role = userRole) }
 
     private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
         "open" -> BVDocumentStatus.PROGRESS

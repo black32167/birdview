@@ -90,7 +90,7 @@ open class BVTaskService(
     }
 
     private fun filterDocument(doc: BVDocument, filter: BVDocumentFilter): Boolean {
-        if(filter.sourceType != "" && filter.sourceType?.let { filterSource ->doc.ids.any { it.sourceName == filterSource }} == false) {
+        if(filter.sourceType != "" && filter.sourceType?.let { filterSource -> doc.ids.any { it.sourceName == filterSource }} == false) {
             return false
         }
 
@@ -123,7 +123,7 @@ open class BVTaskService(
 
         val hasFilteredUser = doc.users.any { docUser ->
             filter.userFilters.any { userFilter ->
-                var filteringUser = userFilter.userAlias ?: bvUsersConfigProvider.getDefaultUserAlias()
+                var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, docUser.sourceName)
                 filteringUser == docUser.userName && userFilter.role == docUser.role
             }
         }

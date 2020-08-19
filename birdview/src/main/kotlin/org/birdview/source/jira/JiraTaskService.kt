@@ -6,7 +6,6 @@ import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentUser
 import org.birdview.config.BVJiraConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
@@ -23,8 +22,7 @@ import javax.inject.Named
 open class JiraTaskService(
         private val jiraClientProvider: JiraClientProvider,
         private val sourcesConfigProvider: BVSourcesConfigProvider,
-        private val jqlBuilder: JqlBuilder,
-        private val bvUsersConfigProvider: BVUsersConfigProvider
+        private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
     companion object {
         const val JIRA_KEY_TYPE = "jiraKey"
@@ -96,8 +94,9 @@ open class JiraTaskService(
         )
 
     private fun mapDocumentUser(jiraUser: JiraUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-        bvUsersConfigProvider.getUserAlias(jiraUser?.emailAddress, sourceName)
-                ?.let { alias -> BVDocumentUser(alias, userRole) }
+            jiraUser?.emailAddress
+                    ?.let { emailAddress -> BVDocumentUser(emailAddress, userRole, sourceName) }
+
 
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
         issue.changelog

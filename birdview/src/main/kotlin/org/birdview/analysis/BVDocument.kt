@@ -34,7 +34,8 @@ data class BVDocument (
 
 data class BVDocumentUser(
         val userName: String,
-        val role: UserRole
+        val role: UserRole,
+        val sourceName: String
 )
 
 class BVDocumentOperation (

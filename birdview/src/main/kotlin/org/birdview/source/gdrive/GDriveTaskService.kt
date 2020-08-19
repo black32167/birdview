@@ -5,7 +5,6 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -22,8 +21,7 @@ import javax.inject.Named
 open class GDriveTaskService(
         private val clientProvider: GDriveClientProvider,
         private val bvConfigProvider: BVSourcesConfigProvider,
-        private val gDriveQueryBuilder: GDriveQueryBuilder,
-        private val bvUsersConfigProvider: BVUsersConfigProvider
+        private val gDriveQueryBuilder: GDriveQueryBuilder
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
     companion object {
@@ -74,7 +72,8 @@ open class GDriveTaskService(
             } + listOfNotNull(mapDocumentUser(file.sharingUser, config.sourceName, UserRole.IMPLEMENTOR))
 
     private fun mapDocumentUser(user: GDriveUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            bvUsersConfigProvider.getUser(user?.emailAddress, sourceName, userRole)
+            user ?.emailAddress
+                    ?.let { email -> BVDocumentUser(userName = email, role = userRole, sourceName = sourceName) }
 
     private fun parseDate(dateString: String) = BVDateTimeUtils.parse(dateString, GDRIVE_DATETIME_PATTERN)
 }

@@ -1,7 +1,5 @@
 package org.birdview.config
 
-import org.birdview.analysis.BVDocumentUser
-import org.birdview.model.UserRole
 import org.birdview.utils.JsonDeserializer
 import org.springframework.cache.annotation.Cacheable
 import java.nio.file.Files
@@ -13,30 +11,23 @@ open class BVUsersConfigProvider(
         private val jsonDeserializer: JsonDeserializer,
         private val bvSourcesConfigProvider: BVSourcesConfigProvider
 ) {
+//
+//    fun getDefaultUserAlias(): String =
+//            getConfig()
+//                    .find { it.default }
+//                    ?.alias
+//                    ?: throw IllegalStateException("Cannot find default user configuration")
 
-    fun getDefaultUserAlias(): String =
-            getConfig()
-                    .find { it.default }
-                    ?.alias
-                    ?: throw IllegalStateException("Cannot find default user configuration")
-
-    fun getUserName(userAlias: String, sourceName: String): String =
-            getConfig()
-                    .find { it.alias == userAlias }
-                    ?.sources
-                    ?.find { it.sourceName == sourceName }
-                    ?.sourceUserName
-                    ?: throw RuntimeException("Cannot find user for alias '${userAlias}' and source '${sourceName}'")
-
-    fun getUserAlias(sourceUser: String?, sourceName: String): String? =
-            if ("" == sourceUser) {
-                bvSourcesConfigProvider.getConfigByName(sourceName)?.user
+    fun getUserName(userAlias: String?, sourceName: String): String =
+            if (userAlias.isNullOrBlank()) {
+                bvSourcesConfigProvider.getConfigByName(sourceName).user
             } else {
                 getConfig()
-                        .find { config ->
-                            config.sources.any { source -> source.sourceUserName == sourceUser }
-                        }
-                        ?.alias
+                        .find { it.alias == userAlias }
+                        ?.sources
+                        ?.find { it.sourceName == sourceName }
+                        ?.sourceUserName
+                        ?: throw RuntimeException("Cannot find user for alias '${userAlias}' and source '${sourceName}'")
             }
 
     @Cacheable
@@ -46,9 +37,6 @@ open class BVUsersConfigProvider(
                     ?.let (jsonDeserializer::deserialize)
                     ?: emptyArray()
 
-    fun getUser(sourceUserName: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            getUserAlias(sourceUserName, sourceName)
-                    ?.let { alias -> BVDocumentUser(alias, userRole) }
 
     fun listUsers() = getConfig()
             .map { it.alias }

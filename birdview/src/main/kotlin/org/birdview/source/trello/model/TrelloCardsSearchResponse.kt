@@ -13,7 +13,8 @@ class TrelloCard (
         val url: String,
         val labels: Array<TrelloCardLabel>,
         val idList: String,
-        val shortLink: String
+        val shortLink: String,
+        val idMembers: Array<String>
 )
 
 class TrelloCardLabel(
