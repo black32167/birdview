@@ -38,7 +38,9 @@
     <input id="daysBack" type="number" value="1" onchange="refresh()"></input>
     |
     <label for="user">User:</label>
+
     <select id="user" onchange="refresh()">
+        <option value="">Select...</option>
         <#list users as user>
         <option value="${user}">${user}</option>
         </#list>

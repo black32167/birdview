@@ -11,10 +11,13 @@ class JsonDeserializer {
     private val objectMapper = ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .registerModule(KotlinModule())
-    fun <T> deserialize(jsonFile: Path, targetClass: Class<T>): T =
-            objectMapper.readValue(jsonFile.toFile(), targetClass)
+    fun <T> deserialize(jsonFile: Path, targetClass: Class<T>): T? = try {
+        objectMapper.readValue(jsonFile.toFile(), targetClass)
+    } catch (e: Exception) {
+        null
+    }
     fun serialize(jsonFile: Path, payload: Any) =
             objectMapper.writeValue(jsonFile.toFile(), payload)
-    inline fun <reified T> deserialize(jsonFile: Path): T =
+    inline fun <reified T> deserialize(jsonFile: Path): T? =
             deserialize(jsonFile, T::class.java)
 }

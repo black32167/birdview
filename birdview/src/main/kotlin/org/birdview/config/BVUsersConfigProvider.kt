@@ -4,12 +4,14 @@ import org.birdview.analysis.BVDocumentUser
 import org.birdview.model.UserRole
 import org.birdview.utils.JsonDeserializer
 import org.springframework.cache.annotation.Cacheable
+import java.nio.file.Files
 import javax.inject.Named
 
 @Named
 open class BVUsersConfigProvider(
         private val bvRuntimeConfig: BVRuntimeConfig,
-        private val jsonDeserializer: JsonDeserializer
+        private val jsonDeserializer: JsonDeserializer,
+        private val bvSourcesConfigProvider: BVSourcesConfigProvider
 ) {
 
     fun getDefaultUserAlias(): String =
@@ -27,19 +29,22 @@ open class BVUsersConfigProvider(
                     ?: throw RuntimeException("Cannot find user for alias '${userAlias}' and source '${sourceName}'")
 
     fun getUserAlias(sourceUser: String?, sourceName: String): String? =
-            getConfig()
-                    .find { config ->
-                        config.sources.any { source->source.sourceUserName == sourceUser }
-                    }
-                    ?.alias
+            if ("" == sourceUser) {
+                bvSourcesConfigProvider.getConfigByName(sourceName)?.user
+            } else {
+                getConfig()
+                        .find { config ->
+                            config.sources.any { source -> source.sourceUserName == sourceUser }
+                        }
+                        ?.alias
+            }
 
     @Cacheable
-    private fun getConfig(): Array<BVUserSourcesConfig> = try {
-        jsonDeserializer.deserialize(bvRuntimeConfig.usersConfigFileName)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        arrayOf()
-    }
+    private fun getConfig(): Array<BVUserSourcesConfig> =
+            bvRuntimeConfig.usersConfigFileName
+                    .takeIf { Files.exists(it) }
+                    ?.let (jsonDeserializer::deserialize)
+                    ?: emptyArray()
 
     fun getUser(sourceUserName: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             getUserAlias(sourceUserName, sourceName)

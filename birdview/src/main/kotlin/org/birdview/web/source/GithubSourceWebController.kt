@@ -12,22 +12,22 @@ class GithubSourceWebController(
         sourcesConfigProvider: BVSourcesConfigProvider
 ): AbstractSourceWebController<BVGithubConfig, GithubSourceWebController.GithubSourceFormData>(sourcesConfigProvider) {
     class GithubSourceFormData(
-            val sourceName:String,
-            val key: String?,
+            sourceName:String,
+            user: String,
             val secret: String?
-    )
+    ): AbstractSourceFormData (sourceName = sourceName, user = user)
 
     override fun getConfigClass() = BVGithubConfig::class.java
 
     override fun mapConfig(sourceFormData: GithubSourceFormData) =
             BVGithubConfig (
                     sourceName = sourceFormData.sourceName,
-                    user = sourceFormData.key!!,
+                    user = sourceFormData.user!!,
                     token = sourceFormData.secret!!)
 
     override fun mapForm(config: BVGithubConfig) =
             GithubSourceFormData(
                     sourceName = config.sourceName,
-                    key = config.user,
-                    secret = config.token)
+                    secret = config.token,
+                    user = config.user)
 }

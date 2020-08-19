@@ -14,7 +14,8 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
         private val sourcesConfigProvider: BVSourcesConfigProvider
 ) {
     abstract class AbstractSourceFormData(
-            val sourceName:String
+            val sourceName:String,
+            val user: String
     )
 
     @GetMapping("/edit-source")

@@ -13,24 +13,24 @@ class JiraSourceWebController(
 ): AbstractSourceWebController<BVJiraConfig, JiraSourceWebController.JiraSourceFormData>(sourcesConfigProvider) {
     class JiraSourceFormData(
             sourceName:String,
-            val key: String?,
+            user: String,
             val secret: String?,
             val baseUrl: String?
-    ): AbstractSourceFormData(sourceName)
+    ): AbstractSourceFormData (sourceName = sourceName, user = user)
 
     override fun getConfigClass() = BVJiraConfig::class.java
 
     override fun mapConfig(sourceFormData: JiraSourceFormData) =
             BVJiraConfig (
                     sourceName = sourceFormData.sourceName,
-                    user = sourceFormData.key!!,
+                    user = sourceFormData.user!!,
                     token = sourceFormData.secret!!,
                     baseUrl = sourceFormData.baseUrl!!)
 
     override fun mapForm(config: BVJiraConfig) =
             JiraSourceFormData(
                 sourceName = config.sourceName,
-                key = config.user,
                 baseUrl = config.baseUrl,
-                secret = config.token)
+                secret = config.token,
+                user = config.user)
 }

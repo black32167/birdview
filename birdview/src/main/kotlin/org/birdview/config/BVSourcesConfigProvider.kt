@@ -28,7 +28,7 @@ class BVSourcesConfigProvider(
             ?.let (Files::list)
             ?.filter { !it.toString().toLowerCase().endsWith(".bak") }
             ?.collect(Collectors.toList())
-            ?.map(jsonDeserializer::deserialize)
+            ?.mapNotNull(jsonDeserializer::deserialize)
             ?: emptyList()
 
     fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
@@ -71,47 +71,52 @@ class BVSourcesConfigProvider(
 )
 abstract class BVAbstractSourceConfig (
         val sourceType: SourceType,
-        val sourceName: String
+        val sourceName: String,
+        val user: String
 )
 
 abstract class BVOAuthSourceConfig (
         sourceType: SourceType,
         sourceName: String,
+        user: String,
         val clientId: String,
         val clientSecret: String,
         val tokenExchangeUrl: String,
         val scope: String)
-    : BVAbstractSourceConfig(sourceType, sourceName) {
+    : BVAbstractSourceConfig(sourceType, sourceName, user) {
 }
 
 class BVJiraConfig (
         sourceName: String = "jira",
         val baseUrl: String,
-        val user: String,
+        user: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.JIRA, sourceName)
+): BVAbstractSourceConfig (SourceType.JIRA, sourceName, user)
 
 class BVTrelloConfig (
         sourceName: String = "trello",
+        user: String,
         val baseUrl: String = "https://api.trello.com",
         val key: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.TRELLO, sourceName)
+): BVAbstractSourceConfig (SourceType.TRELLO, sourceName, user)
 
 class BVGithubConfig (
         sourceName: String = "github",
         val baseUrl: String = "https://api.github.com",
-        val user: String,
+        user: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.GITHUB, sourceName)
+): BVAbstractSourceConfig (SourceType.GITHUB, sourceName, user)
 
 class BVGDriveConfig (
         sourceName: String = "gdrive",
         clientId: String,
-        clientSecret: String
+        clientSecret: String,
+        user: String
 ): BVOAuthSourceConfig(
         sourceType = SourceType.GDRIVE,
         sourceName = sourceName,
+        user = user,
         clientId = clientId,
         clientSecret = clientSecret,
         tokenExchangeUrl = "https://oauth2.googleapis.com/token",

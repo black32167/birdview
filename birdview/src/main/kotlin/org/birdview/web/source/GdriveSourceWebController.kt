@@ -15,10 +15,11 @@ class GdriveSourceWebController(
         private val oauthController: BVOAuthController
 ): AbstractSourceWebController<BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(sourcesConfigProvider) {
     class GdriveSourceFormData(
-            val sourceName: String,
+            sourceName: String,
+            user: String,
             val key: String?,
             val secret: String?
-    )
+    ): AbstractSourceFormData (sourceName = sourceName, user = user)
 
     override fun getRedirectAfterSaveView(config: BVGDriveConfig) =
             RedirectView(oauthController.getAuthTokenUrl(config))
@@ -29,11 +30,14 @@ class GdriveSourceWebController(
             BVGDriveConfig (
                     sourceName = sourceFormData.sourceName,
                     clientId = sourceFormData.key!!,
-                    clientSecret = sourceFormData.secret!!)
+                    clientSecret = sourceFormData.secret!!,
+                    user = sourceFormData.user
+            )
 
     override fun mapForm(config: BVGDriveConfig) =
             GdriveSourceFormData (
                     sourceName = config.sourceName,
                     key = config.clientId,
-                    secret = config.clientSecret)
+                    secret = config.clientSecret,
+                    user = config.user)
 }

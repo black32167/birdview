@@ -12,10 +12,11 @@ class TrelloSourceWebController(
         sourcesConfigProvider: BVSourcesConfigProvider
 ): AbstractSourceWebController<BVTrelloConfig, TrelloSourceWebController.TrelloSourceFormData>(sourcesConfigProvider) {
     class TrelloSourceFormData(
-            val sourceName: String,
+            sourceName: String,
+            user: String,
             val key: String?,
             val secret: String?
-    )
+    ): AbstractSourceFormData (sourceName = sourceName, user = user)
 
     override fun getConfigClass() = BVTrelloConfig::class.java
 
@@ -23,10 +24,13 @@ class TrelloSourceWebController(
             BVTrelloConfig(
                     sourceName = sourceFormData.sourceName,
                     key = sourceFormData.key!!,
-                    token = sourceFormData.secret!!)
+                    token = sourceFormData.secret!!,
+                    user = sourceFormData.user)
 
     override fun mapForm(config: BVTrelloConfig) = TrelloSourceFormData(
             sourceName = config.sourceName,
             key = config.key,
-            secret = config.token)
+            secret = config.token,
+            user = config.user
+    )
 }
