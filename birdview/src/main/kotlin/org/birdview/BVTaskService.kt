@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.chrono.ChronoZonedDateTime
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -137,13 +138,28 @@ open class BVTaskService(
     }
 
     private fun inferDocUpdated(doc: BVDocument, userFilters: List<UserFilter>): ChronoZonedDateTime<*>? {
-        val date = if(doc.closed != null && doc.closed < doc.updated) {
-            doc.closed //doc.closed
-        } else {
-            doc.updated
-        }
+        val date = getLastOperationDate(doc, userFilters)
+                ?: getDocDate(doc)
+
         return date?.toInstant()?.atZone(ZoneId.of("UTC"))
     }
+
+    private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? =
+            userFilters
+                    .filter { it.role == UserRole.IMPLEMENTOR }
+                    .mapNotNull { userFilter ->
+                        doc.operations.firstOrNull() { operation ->
+                            var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
+                            filteringUser == operation.author
+                        }?.created
+                    }.max()
+
+    private fun getDocDate(doc: BVDocument): Date? =
+            if(doc.closed != null && doc.closed < doc.updated) {
+                doc.closed //doc.closed
+            } else {
+                doc.updated
+            }
 
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
         var parentStatuses = doc.refsIds
