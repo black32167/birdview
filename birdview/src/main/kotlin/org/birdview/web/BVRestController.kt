@@ -2,6 +2,7 @@ package org.birdview.web
 
 import org.birdview.BVTaskService
 import org.birdview.model.*
+import org.birdview.web.source.BVDocumentView
 import org.springframework.web.bind.annotation.*
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
