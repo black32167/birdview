@@ -144,15 +144,17 @@ open class BVTaskService(
         return date?.toInstant()?.atZone(ZoneId.of("UTC"))
     }
 
-    private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? =
-            userFilters
-                    .filter { it.role == UserRole.IMPLEMENTOR }
-                    .mapNotNull { userFilter ->
-                        doc.operations.firstOrNull() { operation ->
-                            var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
-                            filteringUser == operation.author
-                        }?.created
-                    }.max()
+    private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? {
+        val operations = doc.operations.filter { it.created == null }.sortedByDescending { it.created }
+        return userFilters
+                .filter { it.role == UserRole.IMPLEMENTOR }
+                .mapNotNull { userFilter ->
+                    operations.firstOrNull() { operation ->
+                        var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
+                        filteringUser == operation.author
+                    }?.created
+                }.max()
+    }
 
     private fun getDocDate(doc: BVDocument): Date? =
             if(doc.closed != null && doc.closed < doc.updated) {
