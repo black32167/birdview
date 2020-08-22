@@ -74,3 +74,14 @@ td.sign {
     display: none;
     position:fixed;
 }
+th {
+    background: lightgray;
+    text-align: left;
+    padding: 5px;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}
+td {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}

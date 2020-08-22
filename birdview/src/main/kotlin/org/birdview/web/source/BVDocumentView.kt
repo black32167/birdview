@@ -8,5 +8,6 @@ class BVDocumentView (
         val httpUrl: String,
         val status: String,
         val sourceName: String,
-        val key: String
+        val key: String,
+        val lastUpdater: String?
 )

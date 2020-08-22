@@ -18,7 +18,8 @@ object BVDocumentViewFactory {
                     status = doc.status ?.let { it.name } ?: "???",
                     title = doc.title,
                     updated = BVDateTimeUtils.format(doc.updated, "dd-MM-yyyy"),
-                    key = doc.key
+                    key = doc.key,
+                    lastUpdater = doc.operations.firstOrNull()?.author
             )
 
 }

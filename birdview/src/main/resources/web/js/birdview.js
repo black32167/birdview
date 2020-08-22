@@ -27,6 +27,10 @@ function renderTable(rootElement, docs, parentId, level) {
         var updatedCol = $('<td>').text(doc.updated)
         row.append(updatedCol)
 
+        // Last updater
+        var lastUpdaterCol = $('<td>').text(doc.lastUpdater)
+        row.append(lastUpdaterCol)
+
         rootElement.append(row)
 
         // Rendering subdocuments:
@@ -52,16 +56,27 @@ function renderList(rootElement, docs) {
 function renderReport(docs) {
     var representationType = $('#representation').val()
 
-    var tableContainer = $('<table id="reportTable">')
-    $('#reportTable').replaceWith(tableContainer)
-    var listContainer =  $('#reportList').empty()
+    var reportContainer = $('#reportContainer')
+    reportContainer.empty()
     switch (representationType) {
         case "tree":
+            var tableContainer = $('<table id="reportTable">')
+            var headerRow = $('<tr>')
+                    .append('<th>Title</th>')
+                    .append('<th>Source</th>')
+                    .append('<th>Status</th>')
+                    .append('<th>Updated</th>')
+                    .append('<th>Updater</th>')
+
+            tableContainer.append(headerRow)
+
             renderTable(tableContainer, docs, null, 0)
             applyTree(tableContainer)
+            reportContainer.append(tableContainer)
             break
         case "list":
-            renderList(listContainer, docs)
+            renderList(reportContainer, docs)
+            //reportContainer.append(listContainer)
             break
     }
 }
