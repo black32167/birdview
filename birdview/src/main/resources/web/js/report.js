@@ -60,7 +60,7 @@ function renderReport(docs) {
     reportContainer.empty()
     switch (representationType) {
         case "tree":
-            var tableContainer = $('<table id="reportTable">')
+            var tableContainer = $('<table class="list" id="reportTable">')
             var headerRow = $('<tr>')
                     .append('<th>Title</th>')
                     .append('<th>Source</th>')

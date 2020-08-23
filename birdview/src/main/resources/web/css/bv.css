@@ -1,5 +1,6 @@
-body {
+html, body {
     font-size: 15pt;
+    height: 100%;
 }
 #tableContainer {
     font-size: 18pt;
@@ -9,6 +10,16 @@ body {
     height: 1.5em;
     font-size: 15pt;
     margin-bottom: 10px;
+}
+.menu-left {
+    background: cyan;
+}
+.menu-item {
+    text-align: center;
+}
+#reportContainer {
+    margin: auto;
+    width: 100%;
 }
 .date {
     color: gray;
@@ -43,12 +54,13 @@ body {
 }
 table.treetable {
     border: 0px;
+    margin: 0px;
 }
 table.settings, .settings th, .settings td {
     border: 1px solid gray;
 }
 
-form table {
+form table, table.settings {
     border: 1px solid gray;
     margin: 10px;
     padding: 10px;
@@ -74,14 +86,26 @@ td.sign {
     display: none;
     position:fixed;
 }
+table.layout td {
+    border: 0px;
+}
+td {
+    vertical-align: top;
+}
 th {
     background: lightgray;
     text-align: left;
+}
+.list th {
     padding: 5px;
     border-left: 1px solid black;
     border-right: 1px solid black;
 }
-td {
+.list td {
     border-left: 1px solid black;
     border-right: 1px solid black;
+    padding: 5px;
+}
+input[type=number] {
+    width: 30pt
 }
