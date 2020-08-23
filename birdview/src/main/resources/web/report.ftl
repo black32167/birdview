@@ -7,7 +7,7 @@
 
 <script src="js/jquery-3.5.1.min.js"></script>
 <script src="js/jquery.treetable.js"></script>
-<script src="js/birdview.js"></script>
+<script src="js/report.js"></script>
 <script>
     baseURL = "${baseURL}"
     $(function() {
