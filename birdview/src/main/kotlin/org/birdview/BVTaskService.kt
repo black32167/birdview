@@ -145,7 +145,7 @@ open class BVTaskService(
     }
 
     private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? {
-        val operations = doc.operations.filter { it.created == null }.sortedByDescending { it.created }
+        val operations = doc.operations.filter { it.created != null }.sortedByDescending { it.created }
         return userFilters
                 .filter { it.role == UserRole.IMPLEMENTOR }
                 .mapNotNull { userFilter ->

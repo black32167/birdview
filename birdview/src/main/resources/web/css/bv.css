@@ -56,9 +56,10 @@ table.treetable {
     border: 0px;
     margin: 0px;
 }
-table.settings, .settings th, .settings td {
+
+/*table.settings, .settings th, .settings td {
     border: 1px solid gray;
-}
+}*/
 
 form table, table.settings {
     border: 1px solid gray;
@@ -86,7 +87,10 @@ td.sign {
     display: none;
     position:fixed;
 }
-table.layout td {
+/*table.layout td {
+    border: 0px;
+}*/
+td {
     border: 0px;
 }
 td {
