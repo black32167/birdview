@@ -7,10 +7,14 @@ object BVFilters {
 
     private val idPatterns = listOf(JIRA_KEY_REGEX, UUID1, ALPHANUMERIC_ID)
 
-    fun filterIdsFromText(text: String): Set<String> {
-        return idPatterns
-                .flatMap { pattern -> pattern.findAll (text).map { it.value }.toList() }
-                .toSet()
+    fun filterIdsFromText(vararg texts: String): Set<String> {
+        return texts.asSequence()
+                .map { text -> idPatterns
+                        .flatMap { pattern -> pattern.findAll (text).map { it.value }.toList() }
+                        .toSet()
+                }
+                .firstOrNull { it.isNotEmpty() }
+                ?: emptySet()
     }
 
     fun removeIdsFromText(text: String): String {

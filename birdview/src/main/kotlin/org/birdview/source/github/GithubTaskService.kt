@@ -1,9 +1,6 @@
 package org.birdview.source.github
 
-import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
-import org.birdview.analysis.BVDocumentOperation
-import org.birdview.analysis.BVDocumentUser
+import org.birdview.analysis.*
 import org.birdview.config.BVGithubConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.model.BVDocumentStatus
@@ -68,13 +65,13 @@ open class GithubTaskService(
                 created = parseDate(pr.created_at),
                 closed = extractClosed(operations, status),
                 httpUrl = pr.html_url,
-                refsIds = BVFilters.filterIdsFromText("${description} ${pr.title}") +
+                refsIds = BVFilters.filterIdsFromText(pr.title, description) +
                         BVFilters.filterIdsFromText(pr.head.ref),
                 groupIds = setOf(),
                 status = status,
                 operations = operations,
                 key = pr.html_url.replace(".*/".toRegex(), "#"),
-                users = extractUsers(pr, githubConfig)
+                users = extractUsers(pr, githubConfig, operations)
         )
     }
 
@@ -85,14 +82,25 @@ open class GithubTaskService(
                 null
             }
 
-    private fun extractUsers(pr: GithubPullRequest, config: BVGithubConfig): List<BVDocumentUser> =
-            listOf(UserRole.CREATOR, UserRole.IMPLEMENTOR).mapNotNull { mapDocumentUser(pr.user, config.sourceName, it) } +
+    private fun extractUsers(pr: GithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
+            (listOf(UserRole.CREATOR, UserRole.IMPLEMENTOR).mapNotNull { mapDocumentUser(pr.user, config.sourceName, it) } +
                     listOfNotNull(mapDocumentUser(pr.assignee, config.sourceName, UserRole.IMPLEMENTOR)) +
-                    pr.requested_reviewers.mapNotNull { reviewer -> mapDocumentUser(reviewer, config.sourceName, UserRole.WATCHER) }
+                    pr.requested_reviewers.mapNotNull { reviewer -> mapDocumentUser(reviewer, config.sourceName, UserRole.WATCHER) } +
+                    operations.mapNotNull { operation -> mapDocumentUser(operation.author, config.sourceName, mapUserRole(operation.type)) })
+                    .distinct()
+
+    private fun mapUserRole(type: BVDocumentOperationType): UserRole =
+            when (type) {
+                BVDocumentOperationType.COLLABORATE -> UserRole.IMPLEMENTOR
+                BVDocumentOperationType.COMMENT -> UserRole.WATCHER
+            }
 
     private fun mapDocumentUser(githubUser: GithubUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             githubUser ?.login
                     ?.let { login -> BVDocumentUser(userName = login, sourceName = sourceName, role = userRole) }
+
+    private fun mapDocumentUser(user: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
+            user ?.let { user -> BVDocumentUser(userName = user, sourceName = sourceName, role = userRole) }
 
     private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
         "open" -> BVDocumentStatus.PROGRESS
@@ -101,14 +109,29 @@ open class GithubTaskService(
     }
 
     private fun extractOperations(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, sourceName: String): List<BVDocumentOperation> {
+        var commitsFuture = executor.submit(Callable { client.getPrCommits(pr) })
         val issueEventsFuture = executor.submit(Callable { client.getIssueEvents(issue) })
         val issueCommentsFuture = executor.submit(Callable { client.getIssueComments(pr)} )
         val reviewComments = client.getReviewComments(pr)
+
         return (reviewComments.map { toOperation(it, sourceName) } +
                 issueEventsFuture.get().map { toOperation(it, sourceName) } +
-                issueCommentsFuture.get().map { toOperation(it, sourceName) })
+                issueCommentsFuture.get().map { toOperation(it, sourceName) }) +
+                commitsFuture.get().mapNotNull { toOperation(it, sourceName) }
                 .sortedByDescending { it.created }
     }
+
+    private fun toOperation(commitContainer: GithubPrCommitContainer, sourceName: String) =
+            commitContainer.author?.login?.let { login->
+                BVDocumentOperation(
+                        description = "commit",
+                        author = login,
+                        created = parseDate(commitContainer.commit.author.date),
+                        sourceName = sourceName,
+                        type = BVDocumentOperationType.COLLABORATE
+                )
+            }
+
 
     private fun toOperation(event: GithubIssueEvent, sourceName: String) =
             BVDocumentOperation(

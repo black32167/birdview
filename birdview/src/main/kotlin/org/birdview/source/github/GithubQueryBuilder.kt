@@ -19,15 +19,17 @@ class GithubQueryBuilder(
                         getUpdateBeforeClause(updatedPeriod.before)
                 ).joinToString(" ")
 
-
     private fun getUpdateAfterClause(after: ZonedDateTime?):String? =
             after?.let { "updated:>=${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" }
 
     private fun getUpdateBeforeClause(before: ZonedDateTime?):String? =
             before?.let { "updated:<${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" }
 
-    private fun userClause(userAlias: String?, githubConfig: BVGithubConfig): String? =
-            "author:${getGithubUser(userAlias, githubConfig)}"
+    private fun userClause(userAlias: String?, githubConfig: BVGithubConfig): String? {
+        var user = getGithubUser(userAlias, githubConfig)
+        return "involves:${user}"
+    }
+
 
     private fun getGithubUser(userAlias: String?, githubConfig: BVGithubConfig): String? =
             if (userAlias == null) "@me"

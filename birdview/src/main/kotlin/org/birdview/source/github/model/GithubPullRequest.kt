@@ -12,6 +12,7 @@ class GithubPullRequest (
         val body: String?,
         val review_comments_url: String,
         val comments_url: String,
+        val commits_url: String,
         val assignee: GithubUser?,
         val user: GithubUser?,
         val requested_reviewers: List<GithubUser>

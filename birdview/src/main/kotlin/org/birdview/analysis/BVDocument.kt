@@ -38,11 +38,16 @@ data class BVDocumentUser(
         val sourceName: String
 )
 
+enum class BVDocumentOperationType {
+    COMMENT, COLLABORATE
+}
+
 class BVDocumentOperation (
         val description: String,
         val author: String,
         val created: Date?,
-        val sourceName: String
+        val sourceName: String,
+        val type: BVDocumentOperationType = BVDocumentOperationType.COMMENT
 )
 
 data class BVDocumentId(

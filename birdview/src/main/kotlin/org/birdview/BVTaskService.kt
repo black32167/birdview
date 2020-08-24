@@ -2,6 +2,8 @@ package org.birdview
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.analysis.BVDocumentOperation
+import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
 import org.birdview.source.BVTaskSource
@@ -144,17 +146,26 @@ open class BVTaskService(
         return date?.toInstant()?.atZone(ZoneId.of("UTC"))
     }
 
-    private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? {
-        val operations = doc.operations.filter { it.created != null }.sortedByDescending { it.created }
-        return userFilters
-                .filter { it.role == UserRole.IMPLEMENTOR }
-                .mapNotNull { userFilter ->
-                    operations.firstOrNull() { operation ->
-                        var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
-                        filteringUser == operation.author
-                    }?.created
-                }.max()
+    private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? =
+        userFilters
+                .mapNotNull { getLastOperation(doc, it) ?.created }
+                .max()
+
+    private fun getLastOperation(doc: BVDocument, userFilter: UserFilter): BVDocumentOperation? {
+        if (userFilter.role != UserRole.IMPLEMENTOR) {
+            return null
+        }
+        return doc.operations.firstOrNull { operation ->
+            var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
+            filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
+        }
     }
+
+    private fun mapOperationTypeToRole(type: BVDocumentOperationType): Set<UserRole> =
+        when (type) {
+            BVDocumentOperationType.COMMENT -> setOf(UserRole.WATCHER)
+            BVDocumentOperationType.COLLABORATE -> setOf(UserRole.IMPLEMENTOR)
+        }
 
     private fun getDocDate(doc: BVDocument): Date? =
             if(doc.closed != null && doc.closed < doc.updated) {

@@ -82,7 +82,20 @@ class GithubClient(
             getTarget(prUrl)
                     ?.request()
                     ?.get()
+                    ?.also (ResponseValidationUtils::validate)
                     ?.readEntity(GithubPullRequest::class.java)
+
+    fun getPrCommits(pr: GithubPullRequest): List<GithubPrCommitContainer> =
+        getTarget(pr.commits_url)
+                ?.request()
+                ?.get()
+                ?.also (ResponseValidationUtils::validate)
+//                ?.also {
+//                    println(it.readEntity(String::class.java))
+//                }
+                ?.readEntity(Array<GithubPrCommitContainer>::class.java)
+                ?.asList()
+                ?: emptyList()
 
     private fun getTarget() = getConfig()
         ?.let { config-> getTarget(config.baseUrl) }
@@ -91,4 +104,6 @@ class GithubClient(
         ?.let { config-> WebTargetFactory(url) {
             BasicAuth(config.user, config.token)
         }.getTarget("") }
+
+
 }
