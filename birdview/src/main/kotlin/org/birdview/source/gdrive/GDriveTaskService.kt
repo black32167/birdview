@@ -54,7 +54,7 @@ open class GDriveTaskService(
         BVDocument(
                 ids = setOf(BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)),
                 refsIds = BVFilters.filterIdsFromText(file.name),
-                title = file.name,
+                title = BVFilters.removeIdsFromText(file.name),
                 updated = parseDate(file.modifiedTime),
                 httpUrl = file.webViewLink,
                 status = BVDocumentStatus.PROGRESS,
