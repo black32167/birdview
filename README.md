@@ -17,6 +17,7 @@ The following types of activity items are supported:
 $ docker run --rm -i -p 8888:8888 -v "${HOME}/.birdview":/config black32167/birdview
 ```
 Then open 'http://localhost:8888/' in your browser. 
+![Report screen](img/report.png)
 
 ### Configuration
 To use the tool you need to configure access to sources of your features using '[settings](http://localhost:8888/settings)' link
