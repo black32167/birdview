@@ -9,6 +9,7 @@ import org.birdview.model.*
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.utils.BVConcurrentUtils
+import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -22,8 +23,8 @@ import javax.inject.Named
 
 @Named
 open class BVTaskService(
-        private var sources: List<BVTaskSource>,
-        private val bvUsersConfigProvider: BVUsersConfigProvider
+        open var sources: List<BVTaskSource>,
+        open val bvUsersConfigProvider: BVUsersConfigProvider
 ) {
     private val log = LoggerFactory.getLogger(BVTaskService::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
@@ -37,18 +38,26 @@ open class BVTaskService(
             loadAsync(user)
         }
 
-        val filteredDocs = docsMap
-                .values
-                .filter { doc -> filterDocument(doc, filter) }
-                .toMutableList()
+            val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
+                docsMap
+                        .values
+                        .filter { doc ->
 
-        if (filter.sourceType != "") {
-            return filteredDocs
-        }
+                            filterDocument(doc, filter)
 
-        val allDocs = filteredDocs + getReferencedDocs(filteredDocs)
+                        }
+                        .toMutableList()
+            }
 
-        return linkDocs(allDocs)
+            if (filter.sourceType != "") {
+                return filteredDocs
+            }
+
+            val allDocs = filteredDocs + getReferencedDocs(filteredDocs)
+
+            return BVTimeUtil.logTime("Linking documents") {
+                linkDocs(allDocs)
+            }
     }
 
     private fun loadAsync(user: String?) {
@@ -69,20 +78,22 @@ open class BVTaskService(
                 .map { source ->
                     val subtaskFutures = mutableListOf<Future<*>>()
                     CompletableFuture.runAsync(Runnable {
-                        source.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
-                            docChunk.forEach { doc ->
-                                doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
-                            }
-
-                            subtaskFutures.add(executor.submit {
-                                loadReferredDocs(docChunk) { docChunk ->
-                                    docChunk.forEach { doc ->
-                                        doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
-                                    }
+                        BVTimeUtil.logTime("Loading data from ${source.getType()}") {
+                            source.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
+                                docChunk.forEach { doc ->
+                                    doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                                 }
-                            })
+
+                                subtaskFutures.add(executor.submit {
+                                    loadReferredDocs(docChunk) { docChunk ->
+                                        docChunk.forEach { doc ->
+                                            doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
+                                        }
+                                    }
+                                })
+                            }
+                            subtaskFutures.forEach { it.get() }
                         }
-                        subtaskFutures.forEach { it.get() }
                     }, executor)
                 }
 
@@ -92,7 +103,7 @@ open class BVTaskService(
         usersRetrieved.clear()
     }
 
-    private fun filterDocument(doc: BVDocument, filter: BVDocumentFilter): Boolean {
+    open fun filterDocument(doc: BVDocument, filter: BVDocumentFilter): Boolean {
         if(filter.sourceType != "" && filter.sourceType?.let { filterSource -> doc.ids.any { it.sourceName == filterSource }} == false) {
             return false
         }
@@ -139,14 +150,14 @@ open class BVTaskService(
         return true
     }
 
-    private fun inferDocUpdated(doc: BVDocument, userFilters: List<UserFilter>): ChronoZonedDateTime<*>? {
+    open fun inferDocUpdated(doc: BVDocument, userFilters: List<UserFilter>): ChronoZonedDateTime<*>? {
         val date = getLastOperationDate(doc, userFilters)
                 ?: getDocDate(doc)
 
         return date?.toInstant()?.atZone(ZoneId.of("UTC"))
     }
 
-    private fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? =
+    open fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? =
         userFilters
                 .mapNotNull { getLastOperation(doc, it) ?.created }
                 .max()
