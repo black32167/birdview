@@ -11,13 +11,6 @@ open class BVUsersConfigProvider(
         private val jsonDeserializer: JsonDeserializer,
         private val bvSourcesConfigProvider: BVSourcesConfigProvider
 ) {
-//
-//    fun getDefaultUserAlias(): String =
-//            getConfig()
-//                    .find { it.default }
-//                    ?.alias
-//                    ?: throw IllegalStateException("Cannot find default user configuration")
-
     fun getUserName(userAlias: String?, sourceName: String): String =
             if (userAlias.isNullOrBlank()) {
                 bvSourcesConfigProvider.getConfigByName(sourceName).user

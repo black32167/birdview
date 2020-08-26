@@ -20,6 +20,22 @@ data class BVDocument (
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList()
 ) {
+    val lastOperations: List<BVDocumentOperation> = getLastUsersOperations(operations)
+
+    private fun getLastUsersOperations(operations: List<BVDocumentOperation>): List<BVDocumentOperation> {
+        data class OperationUser (val user: String, val source: String)
+        val encounteredUsers = mutableSetOf<OperationUser>()
+        val lastUsersOperations = mutableListOf<BVDocumentOperation>()
+        for (operation in operations) {
+            val user = OperationUser(operation.author, operation.sourceName)
+            if (!encounteredUsers.contains(user)) {
+                encounteredUsers.add(user)
+                lastUsersOperations.add(operation)
+            }
+        }
+        return lastUsersOperations
+    }
+
     val inferredIds: MutableSet<BVDocumentId> = mutableSetOf<BVDocumentId>()
             .apply { addAll(ids) }
 

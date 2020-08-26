@@ -6,7 +6,7 @@ data class BVDocumentFilter(
         val reportType: ReportType,
         val grouping: Boolean,
         val updatedPeriod: TimeIntervalFilter,
-        val userFilters: List<UserFilter>,
+        val userFilter: UserFilter,
         val sourceType:String? = null
 )
 

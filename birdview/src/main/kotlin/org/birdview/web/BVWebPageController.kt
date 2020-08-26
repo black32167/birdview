@@ -36,7 +36,7 @@ class BVWebPageController(
                                     reportUrl = reportUrl(it, tsRequest, baseUrl),
                                     reportName = it.name.toLowerCase().capitalize())
                         },
-                "user" to tsRequest.userFilters.firstOrNull(),
+                "user" to tsRequest.userFilter,
                 "baseURL" to baseUrl,
                 "reportPath" to "report-${tsRequest.reportType}.ftl",
                 "format" to getFormat(tsRequest.reportType),
@@ -48,7 +48,6 @@ class BVWebPageController(
         ))
         return "report"
     }
-
 
     private fun listOauthUrls(): List<OAuthCodeLink> = sourcesConfigProvider.getConfigsOfType(BVOAuthSourceConfig::class.java)
             .filter { oAuthConfig -> !oauthController.hasToken(oAuthConfig) }
@@ -62,8 +61,7 @@ class BVWebPageController(
 
     private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
         return "${baseUrl}?report=${reportType.name.toLowerCase()}" +
-                (tsRequest.userFilters
-                        .firstOrNull { it.role == UserRole.IMPLEMENTOR }
+                (tsRequest.userFilter.takeIf { it.role == UserRole.IMPLEMENTOR }
                         ?.userAlias
                         ?.let { "&user=${it}" } ?: "")
     }
@@ -80,13 +78,13 @@ class BVWebPageController(
                     reportType = reportType,
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(),
-                    userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
+                    userFilter = UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
                     sourceType = sourceType)
             ReportType.WORKED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(after = today.minusDays(10)),
-                    userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
+                    userFilter = UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
                     sourceType = sourceType)
         }
     }

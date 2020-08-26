@@ -34,17 +34,13 @@ open class BVTaskService(
 
     //  @Cacheable("bv")
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
-        filter.userFilters.map { it.userAlias }.distinct().forEach { user ->
-            loadAsync(user)
-        }
+            loadAsync(filter.userFilter.userAlias)
 
             val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
                 docsMap
                         .values
                         .filter { doc ->
-
                             filterDocument(doc, filter)
-
                         }
                         .toMutableList()
             }
@@ -108,7 +104,7 @@ open class BVTaskService(
             return false
         }
 
-        val docUpdated = inferDocUpdated(doc, filter.userFilters)
+        val docUpdated = inferDocUpdated(doc, filter.userFilter)
         if (filter.updatedPeriod.after != null) {
             if (docUpdated == null || filter.updatedPeriod.after > docUpdated) {
                 log.trace("Filtering out doc #{} (updatedPeriod.after)", doc.title)
@@ -135,11 +131,10 @@ open class BVTaskService(
             return false
         }
 
+        var userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
-            filter.userFilters.any { userFilter ->
                 var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, docUser.sourceName)
                 filteringUser == docUser.userName && userFilter.role == docUser.role
-            }
         }
         if (!hasFilteredUser) {
             log.trace("Filtering out doc #{} (hasFilteredUser)", doc.title)
@@ -150,23 +145,21 @@ open class BVTaskService(
         return true
     }
 
-    open fun inferDocUpdated(doc: BVDocument, userFilters: List<UserFilter>): ChronoZonedDateTime<*>? {
-        val date = getLastOperationDate(doc, userFilters)
+    open fun inferDocUpdated(doc: BVDocument, userFilter: UserFilter): ChronoZonedDateTime<*>? {
+        val date = getLastOperationDate(doc, userFilter)
                 ?: getDocDate(doc)
 
         return date?.toInstant()?.atZone(ZoneId.of("UTC"))
     }
 
-    open fun getLastOperationDate(doc: BVDocument, userFilters: List<UserFilter>): Date? =
-        userFilters
-                .mapNotNull { getLastOperation(doc, it) ?.created }
-                .max()
+    open fun getLastOperationDate(doc: BVDocument, userFilter: UserFilter): Date? =
+            getLastOperation(doc, userFilter) ?.created
 
     private fun getLastOperation(doc: BVDocument, userFilter: UserFilter): BVDocumentOperation? {
         if (userFilter.role != UserRole.IMPLEMENTOR) {
             return null
         }
-        return doc.operations.firstOrNull { operation ->
+        return doc.lastOperations.firstOrNull { operation ->
             var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
             filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
         }
@@ -200,11 +193,6 @@ open class BVTaskService(
     private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
         ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
         ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
-    }
-
-    private fun removeParents(allDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit): List<BVDocument> {
-        val references = allDocs.flatMap { doc -> doc.refsIds + doc.groupIds.map { it.id } }.toSet()
-        return allDocs.filter { doc -> !doc.ids.asSequence().map { it.id }.any { id -> references.contains(id) } }
     }
 
     // TODO: non-optimal

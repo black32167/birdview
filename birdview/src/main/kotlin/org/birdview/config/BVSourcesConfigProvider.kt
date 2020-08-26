@@ -4,15 +4,17 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.birdview.source.SourceType
 import org.birdview.utils.JsonDeserializer
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors
 import javax.inject.Named
 
 @Named
-class BVSourcesConfigProvider(
-        private val bvRuntimeConfig: BVRuntimeConfig,
-        private val jsonDeserializer: JsonDeserializer
+open class BVSourcesConfigProvider(
+        open val bvRuntimeConfig: BVRuntimeConfig,
+        open val jsonDeserializer: JsonDeserializer
 ) {
     fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T> =
             getSourceConfigs()
@@ -31,7 +33,8 @@ class BVSourcesConfigProvider(
             ?.mapNotNull(jsonDeserializer::deserialize)
             ?: emptyList()
 
-    fun getConfigByName(sourceName: String): BVAbstractSourceConfig =
+    @Cacheable("sourcesConfig")
+    open fun getConfigByName(sourceName: String): BVAbstractSourceConfig =
         getSourceConfigs().find { it.sourceName == sourceName }!!
 
     fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =
@@ -40,21 +43,24 @@ class BVSourcesConfigProvider(
     fun listSourceNames(): List<String> =
         getSourceConfigs().map { it.sourceName }
 
-    fun save(config: BVAbstractSourceConfig) {
+    @CacheEvict("sourcesConfig")
+    open fun save(config: BVAbstractSourceConfig) {
         bvRuntimeConfig.sourcesConfigsFolder.also { folder->
             Files.createDirectories(folder)
             jsonDeserializer.serialize(folder.resolve(config.sourceName), config)
         }
     }
 
-    fun update(config: BVAbstractSourceConfig) {
+    @CacheEvict("sourcesConfig")
+    open fun update(config: BVAbstractSourceConfig) {
         bvRuntimeConfig.sourcesConfigsFolder.resolve(config.sourceName).also { file ->
             Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
             jsonDeserializer.serialize(file, config)
         }
     }
 
-    fun delete(sourceName: String) {
+    @CacheEvict("sourcesConfig")
+    open fun delete(sourceName: String) {
         Files.delete(bvRuntimeConfig.sourcesConfigsFolder.resolve(sourceName))
     }
 }

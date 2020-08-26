@@ -42,7 +42,7 @@ class BVRestController(
                 reportType = documentRequest.reportType,
                 grouping = true,
                 updatedPeriod = TimeIntervalFilter(after = today.minusDays(documentRequest.daysBack)),
-                userFilters = listOf(UserFilter( userAlias = user, role = documentRequest.userRole)),
+                userFilter = UserFilter( userAlias = user, role = documentRequest.userRole),
                 sourceType = documentRequest.sourceType)
         val docs = taskService.getDocuments(tsRequest)
                 .map(BVDocumentViewFactory::create)
@@ -66,13 +66,13 @@ class BVRestController(
                     reportType = reportType,
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(),
-                    userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
+                    userFilter = UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
                     sourceType = sourceType)
             ReportType.WORKED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(after = today.minusDays(10)),
-                    userFilters = listOf(UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR)),
+                    userFilter = UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
                     sourceType = sourceType)
         }
     }
