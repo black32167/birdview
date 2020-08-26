@@ -14,7 +14,7 @@ class GithubClient(
         private val githubConfig: BVGithubConfig
 ) {
     private val log = LoggerFactory.getLogger(GithubClient::class.java)
-    private val issuesPerPage = 50
+    private val issuesPerPage = 100
 
     fun getIssueComments(pullRequest: GithubPullRequest) =
         getTarget(pullRequest.comments_url)
