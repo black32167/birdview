@@ -35,6 +35,7 @@ open class BVTaskService(
     //  @Cacheable("bv")
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
             loadAsync(filter.userFilter.userAlias)
+            BVTimeUtil.printStats()
 
             val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
                 docsMap
