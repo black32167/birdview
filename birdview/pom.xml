@@ -14,6 +14,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
         </dependency>
@@ -91,6 +95,24 @@
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
         <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>com.expediagroup</groupId>
+                <artifactId>graphql-kotlin-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate-client</goal></goals>
+                        <configuration>
+                            <schemaFile>${project.basedir}/src/main/resources/github.graphql</schemaFile>
+                            <packageName>org.birdview.source.github.gql.client</packageName>
+                            <queryFileDirectory>${project.basedir}/src/gql/queries</queryFileDirectory>
+                            <queryFiles><file>${project.basedir}/src/gql/queries/search.gql</file></queryFiles>
+                        </configuration>
+
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
