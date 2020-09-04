@@ -102,17 +102,20 @@ class BVJiraConfig (
 class BVTrelloConfig (
         sourceName: String = "trello",
         user: String,
-        val baseUrl: String = "https://api.trello.com",
         val key: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.TRELLO, sourceName, user)
+): BVAbstractSourceConfig (SourceType.TRELLO, sourceName, user) {
+    val baseUrl = "https://api.trello.com"
+}
 
 class BVGithubConfig (
         sourceName: String = "github",
-        val baseUrl: String = "https://api.github.com",
         user: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.GITHUB, sourceName, user)
+): BVAbstractSourceConfig (SourceType.GITHUB, sourceName, user) {
+    val baseGqlUrl = "https://api.github.com/graphql"
+    val baseUrl = "https://api.github.com"
+}
 
 class BVGDriveConfig (
         sourceName: String = "gdrive",

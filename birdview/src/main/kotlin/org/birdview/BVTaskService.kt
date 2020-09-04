@@ -168,8 +168,8 @@ open class BVTaskService(
 
     private fun mapOperationTypeToRole(type: BVDocumentOperationType): Set<UserRole> =
         when (type) {
-            BVDocumentOperationType.COMMENT -> setOf(UserRole.WATCHER)
             BVDocumentOperationType.COLLABORATE -> setOf(UserRole.IMPLEMENTOR)
+            else -> setOf(UserRole.WATCHER)
         }
 
     private fun getDocDate(doc: BVDocument): Date? =

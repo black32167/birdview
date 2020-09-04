@@ -8,14 +8,14 @@ import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
-import org.birdview.source.github.model.*
+import org.birdview.source.github.GithubUtils.parseDate
+import org.birdview.source.github.gql.model.GqlGithubEvent
+import org.birdview.source.github.gql.model.GqlGithubPullRequest
+import org.birdview.source.github.gql.model.GqlGithubReviewUser
 import org.birdview.utils.BVConcurrentUtils
-import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import java.util.*
-import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
 import javax.inject.Named
 
 @Named
@@ -39,41 +39,38 @@ open class GithubTaskService(
             updatedPeriod: TimeIntervalFilter,
             githubConfig:BVGithubConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
-        val client = githubClientProvider.getGithubClient(githubConfig)
+
+        val gqlClient = githubClientProvider.getGithubGqlClient(githubConfig)
         val githubQuery = githubQueryBuilder.getFilterQueries(user, updatedPeriod, githubConfig)
-        client.findIssues(githubQuery) { issues->
-            val docs = issues.map { issue: GithubIssue ->
-                executor.submit(Callable {
-                    getPr(issue, client)
-                        ?.let { pr -> toBVDocument(pr, issue, client, githubConfig) }
-                })
-            }.mapNotNull(Future<BVDocument?>::get)
+        gqlClient.getPullRequests(githubQuery) { prs ->
+            val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
             chunkConsumer.invoke(docs)
         }
+
     }
 
-    private fun toBVDocument(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, githubConfig:BVGithubConfig): BVDocument {
-        val description = pr.body ?: ""
+    private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVGithubConfig): BVDocument {
+        val description = pr.bodyText ?: ""
         val title = BVFilters.removeIdsFromText(pr.title)
-        val operations = extractOperations(pr, issue, client, sourceName = githubConfig.sourceName)
+        val operations = extractOperations(pr, sourceName = githubConfig.sourceName)
         val status = mapStatus(pr.state)
         return BVDocument(
                 ids = setOf(BVDocumentId(id = pr.id, type = GITHUB_ID, sourceName = githubConfig.sourceName)),
                 title = title,
                 body = description,
-                updated = parseDate(pr.updated_at),
-                created = parseDate(pr.created_at),
+                updated = parseDate(pr.updatedAt),
+                created = parseDate(pr.createdAt),
                 closed = extractClosed(operations, status),
-                httpUrl = pr.html_url,
-                refsIds = BVFilters.filterIdsFromText(pr.title, description) +
-                        BVFilters.filterIdsFromText(pr.head.ref),
+                httpUrl = pr.url,
+                refsIds = BVFilters.filterIdsFromText(pr.title, description),
                 groupIds = setOf(),
                 status = status,
                 operations = operations,
-                key = pr.html_url.replace(".*/".toRegex(), "#"),
+                key = pr.url.replace(".*/".toRegex(), "#"),
                 users = extractUsers(pr, githubConfig, operations)
         )
     }
+
 
     private fun extractClosed(operations: List<BVDocumentOperation>, status: BVDocumentStatus?): Date? =
             if (status == BVDocumentStatus.DONE) {
@@ -82,94 +79,48 @@ open class GithubTaskService(
                 null
             }
 
-    private fun extractUsers(pr: GithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
-            (listOf(UserRole.CREATOR, UserRole.IMPLEMENTOR).mapNotNull { mapDocumentUser(pr.user, config.sourceName, it) } +
-                    listOfNotNull(mapDocumentUser(pr.assignee, config.sourceName, UserRole.IMPLEMENTOR)) +
-                    pr.requested_reviewers.mapNotNull { reviewer -> mapDocumentUser(reviewer, config.sourceName, UserRole.WATCHER) } +
-                    operations.mapNotNull { operation -> mapDocumentUser(operation.author, config.sourceName, mapUserRole(operation.type)) })
-                    .distinct()
+    private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> {
+        val creators = listOfNotNull(pr.author?.login)
+        val implementors = creators +
+                operations.filter { it.type == BVDocumentOperationType.COLLABORATE }.mapNotNull { it.author }
+        val watchers = pr.assignees.nodes.map { it.login } +
+                pr.reviewRequests.nodes.mapNotNull { (it.requestedReviewer as? GqlGithubReviewUser) ?.login }
 
-    private fun mapUserRole(type: BVDocumentOperationType): UserRole =
-            when (type) {
-                BVDocumentOperationType.COLLABORATE -> UserRole.IMPLEMENTOR
-                BVDocumentOperationType.COMMENT -> UserRole.WATCHER
-            }
-
-    private fun mapDocumentUser(githubUser: GithubUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            githubUser ?.login
-                    ?.let { login -> BVDocumentUser(userName = login, sourceName = sourceName, role = userRole) }
+        return creators.mapNotNull { mapDocumentUser(it, config.sourceName, UserRole.CREATOR) } +
+                implementors.mapNotNull{ mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR) } +
+                watchers.mapNotNull { mapDocumentUser(it, config.sourceName, UserRole.WATCHER) }
+    }
 
     private fun mapDocumentUser(user: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             user ?.let { user -> BVDocumentUser(userName = user, sourceName = sourceName, role = userRole) }
 
-    private fun mapStatus(state: String): BVDocumentStatus? = when (state) {
+    private fun mapStatus(state: String): BVDocumentStatus? = when (state.toLowerCase()) {
         "open" -> BVDocumentStatus.PROGRESS
-        "closed" -> BVDocumentStatus.DONE
-        else -> null
+        "closed", "merged" -> BVDocumentStatus.DONE
+        else -> throw IllegalArgumentException("unknown PR state:${state}")
     }
 
-    private fun extractOperations(pr: GithubPullRequest, issue: GithubIssue, client: GithubClient, sourceName: String): List<BVDocumentOperation> {
-        var commitsFuture = executor.submit(Callable { client.getPrCommits(pr) })
-        val issueEventsFuture = executor.submit(Callable { client.getIssueEvents(issue) })
-        val issueCommentsFuture = executor.submit(Callable { client.getIssueComments(pr)} )
-        val reviewComments = client.getReviewComments(pr)
+    private fun extractOperations(pr: GqlGithubPullRequest, sourceName: String): List<BVDocumentOperation> =
+        pr.timelineItems.nodes
+                .mapNotNull { toOperation(it as GqlGithubEvent, sourceName) }
+                .reversed()
 
-        return (reviewComments.map { toOperation(it, sourceName) } +
-                issueEventsFuture.get().map { toOperation(it, sourceName) } +
-                issueCommentsFuture.get().map { toOperation(it, sourceName) }) +
-                commitsFuture.get().mapNotNull { toOperation(it, sourceName) }
-                .sortedByDescending { it.created }
-    }
-
-    private fun toOperation(commitContainer: GithubPrCommitContainer, sourceName: String) =
-            commitContainer.author?.login?.let { login->
-                BVDocumentOperation(
-                        description = "commit",
-                        author = login,
-                        created = parseDate(commitContainer.commit.author.date),
-                        sourceName = sourceName,
-                        type = BVDocumentOperationType.COLLABORATE
-                )
-            }
-
-
-    private fun toOperation(event: GithubIssueEvent, sourceName: String) =
-            BVDocumentOperation(
-                    description = event.event,
-                    author = event.actor.login,
-                    created = parseDate(event.created_at),
-                    sourceName = sourceName
-            )
-
-    private fun toOperation(comment: GithubReviewComment, sourceName: String) =
-            BVDocumentOperation(
-                    description = "reviewed",
-                    author = comment.user.login,
-                    created = parseDate(comment.created_at),
-                    sourceName = sourceName
-            )
-
-    private fun toOperation(comment: GithubIssueComment, sourceName: String) =
-            BVDocumentOperation(
-                    description = "commented",
-                    author = comment.user.login,
-                    created = parseDate(comment.created_at),
-                    sourceName = sourceName
-            )
-
-    private fun parseDate(date:String) =
-            BVDateTimeUtils.parse(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private fun toOperation(event: GqlGithubEvent, sourceName: String): BVDocumentOperation? =
+            event
+                    .takeIf {  it.timestamp!= null && it.user != null }
+                    ?.let { event ->
+                        BVDocumentOperation(
+                                description = "commit",
+                                author = event.user!!,
+                                created = parseDate(event.timestamp!!),
+                                sourceName = sourceName,
+                                type = event.contributionType
+                        )
+                    }
 
     override fun getType() = SourceType.GITHUB
 
     override fun isAuthenticated(sourceName: String): Boolean =
             sourcesConfigProvider.getConfigByName(sourceName, BVGithubConfig::class.java) != null
 
-    private fun getPr(issue: GithubIssue, githubClient:GithubClient): GithubPullRequest? = try {
-        issue.pull_request?.url
-                ?.let { url -> githubClient.getPullRequest(url) }
-    } catch (e:Exception) {
-        e.printStackTrace()
-        null
-    }
 }

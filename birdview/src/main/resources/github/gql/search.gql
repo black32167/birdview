@@ -1,0 +1,71 @@
+{
+    search(query: "$query", type:ISSUE, last: 100, after: $cursor) {
+      edges {
+          cursor
+          node {
+            ... on PullRequest {
+                assignees (last: 10) {
+                  nodes {
+                    login
+                  }
+                }
+                reviewRequests (last: 10) {
+                    nodes {
+                        requestedReviewer {
+                            __typename
+                            ... on User {
+                              login
+                            }
+                        }
+                    }
+                }
+                body
+                bodyText
+                closed
+                closedAt
+                createdAt
+                id
+                isDraft
+                lastEditedAt
+                locked
+                mergeable
+                merged
+                mergedAt
+                state
+                title
+                updatedAt
+                url
+                timelineItems (last:10) {
+                    nodes {
+                        __typename
+                        ... on PullRequestCommit {
+                            commit {
+                                committer {
+                                  name
+                                  email
+                                  date
+                                }
+                                commitUrl
+                                committedDate
+                                id
+                                message
+                                messageBody
+                                pushedDate
+                                url
+                                zipballUrl
+                            }
+                            url
+                        }
+                        ... on IssueComment {
+                            author {
+                                login
+                            }
+                            publishedAt
+                        }
+                    }
+                }
+            }
+          }
+      }
+    }
+}
