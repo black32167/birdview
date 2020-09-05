@@ -101,7 +101,7 @@ open class GithubTaskService(
 
     private fun extractOperations(pr: GqlGithubPullRequest, sourceName: String): List<BVDocumentOperation> =
         pr.timelineItems.nodes
-                .mapNotNull { toOperation(it as GqlGithubEvent, sourceName) }
+                .mapNotNull { toOperation(it, sourceName) }
                 .reversed()
 
     private fun toOperation(event: GqlGithubEvent, sourceName: String): BVDocumentOperation? =

@@ -4,6 +4,9 @@
           cursor
           node {
             ... on PullRequest {
+                author {
+                    login
+                }
                 assignees (last: 10) {
                   nodes {
                     login
