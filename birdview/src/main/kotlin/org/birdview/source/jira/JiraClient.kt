@@ -1,12 +1,12 @@
 package org.birdview.source.jira
 
 import org.birdview.config.BVJiraConfig
-import org.birdview.source.ItemsIterable
 import org.birdview.source.ItemsPage
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
 import org.birdview.utils.BVConcurrentUtils
+import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
@@ -37,22 +37,15 @@ class JiraClient(
 
         var startAt:Int? = 0
         do {
-            val page = postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt!!))
-                    ?.let (this::mapIssuesPage)
-                    ?.also { page->
-                        chunkConsumer.invoke(page.items)
-                    }
-
+            val page = BVTimeUtil.logTime("jira-findIssues-page-$jql") {
+                postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt!!))
+                        ?.let(this::mapIssuesPage)
+                        ?.also { page ->
+                            chunkConsumer.invoke(page.items)
+                        }
+            }
             startAt = page?.continuation
         } while (startAt != null)
-        postIssuesSearch(jiraIssuesRequest)
-                .let { resp->
-                    ItemsIterable(mapIssuesPage (resp)) { startAt ->
-                        log.info("Loading jira issues next page starting at: {}", startAt)
-                        postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt))
-                                ?.let (this::mapIssuesPage)
-                    }
-                }
     }
 
     private fun postIssuesSearch(jiraIssuesRequest: JiraIssuesFilterRequest) =

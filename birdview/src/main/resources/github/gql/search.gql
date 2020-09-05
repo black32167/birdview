@@ -67,6 +67,18 @@
                             }
                             publishedAt
                         }
+                        ... on PullRequestReview {
+                            author {
+                                login
+                            }
+                            createdAt
+                        }
+                        ... on MergedEvent {
+                            actor {
+                                login
+                            }
+                            createdAt
+                        }
                     }
                 }
             }

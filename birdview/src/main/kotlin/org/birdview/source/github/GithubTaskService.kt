@@ -109,7 +109,7 @@ open class GithubTaskService(
                     .takeIf {  it.timestamp!= null && it.user != null }
                     ?.let { event ->
                         BVDocumentOperation(
-                                description = "commit",
+                                description = event.type,
                                 author = event.user!!,
                                 created = parseDate(event.timestamp!!),
                                 sourceName = sourceName,
