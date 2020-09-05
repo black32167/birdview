@@ -9,6 +9,8 @@ class GqlGithubPullRequest (
         val author: GqlGithubActor?,
         val updatedAt: String,
         val createdAt: String,
+        val baseRefName: String,
+        val headRefName: String,
         val reviewRequests: GqlGithubNodesCollection<GqlGithubReviewRequest>,
         val assignees: GqlGithubNodesCollection<GqlGithubUser>,
         val timelineItems: GqlGithubNodesCollection<GqlGithubEvent>

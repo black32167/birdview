@@ -46,7 +46,6 @@ open class GithubTaskService(
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
             chunkConsumer.invoke(docs)
         }
-
     }
 
     private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVGithubConfig): BVDocument {
@@ -62,7 +61,7 @@ open class GithubTaskService(
                 created = parseDate(pr.createdAt),
                 closed = extractClosed(operations, status),
                 httpUrl = pr.url,
-                refsIds = BVFilters.filterIdsFromText(pr.title, description),
+                refsIds = BVFilters.filterIdsFromText(pr.headRefName, pr.title, description),
                 groupIds = setOf(),
                 status = status,
                 operations = operations,

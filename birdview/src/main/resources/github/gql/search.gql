@@ -19,6 +19,8 @@
                         }
                     }
                 }
+                baseRefName
+                headRefName
                 body
                 bodyText
                 closed
