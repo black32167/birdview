@@ -12,5 +12,6 @@ class GqlGithubSearchContainer<T> (
 )
 
 class GqlGithubSearch<T> (
-        val edges: Array<GqlGithubEdge<T>>
+        val edges: Array<GqlGithubEdge<T>>,
+        val pageInfo: GqlGithubPageInfo
 )

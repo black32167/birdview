@@ -72,7 +72,7 @@ class JiraClient(
                         ItemsPage(
                                 issues,
                                 issuesResponse
-                                        .takeUnless { issues.isEmpty() }
+                                        .takeUnless { it.isLast || issues.size   < it.maxResults || issues.isEmpty() }
                                         ?.run { startAt + maxResults })
                     }
 

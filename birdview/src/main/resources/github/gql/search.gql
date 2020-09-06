@@ -1,5 +1,9 @@
 {
-    search(query: "$query", type:ISSUE, last: 100, after: $cursor) {
+    search(query: "$query", type:ISSUE, first: 100, after: $cursor) {
+      pageInfo {
+          endCursor
+          hasNextPage
+      }
       edges {
           cursor
           node {

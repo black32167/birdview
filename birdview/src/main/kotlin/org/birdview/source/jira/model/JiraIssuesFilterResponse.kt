@@ -4,7 +4,8 @@ data class JiraIssuesFilterResponse (
         val issues: List<JiraIssue>,
         val startAt: Int,
         val total: Int,
-        val maxResults: Int
+        val maxResults: Int,
+        val isLast: Boolean
 )
 
 data class JiraIssue (

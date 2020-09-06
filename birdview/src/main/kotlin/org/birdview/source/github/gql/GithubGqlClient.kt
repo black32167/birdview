@@ -12,7 +12,6 @@ import org.birdview.utils.remote.WebTargetFactory
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.GenericType
 
-
 class GithubGqlClient (
         private val githubConfig: BVGithubConfig
 ) {
@@ -47,14 +46,15 @@ class GithubGqlClient (
                                         }
                                     }
                         }
-
-                val edges = response.data?.search?.edges //?.sortedBy { it.node.updatedAt }
-                val prs = edges?.map { it.node } ?: emptyList()
+                val data = response.data!!
+                val edges = data.search.edges //?.sortedBy { it.node.updatedAt }
+                val pageInfo = data.search.pageInfo
+                val prs = edges.map { it.node } ?: emptyList()
                 if (prs.isNotEmpty()) {
                     chunkConsumer.invoke(prs)
-                    cursor = edges?.lastOrNull()?.cursor
                 }
-            } while (prs.isNotEmpty())
+                cursor = pageInfo.endCursor
+            } while (pageInfo.hasNextPage)
         }
     }
 
