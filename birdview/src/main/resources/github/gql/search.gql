@@ -1,5 +1,5 @@
 {
-    search(query: "$query", type:ISSUE, first: 100, after: $cursor) {
+    search(query: "$query", type:ISSUE, first: 80, after: $cursor) {
       pageInfo {
           endCursor
           hasNextPage
@@ -11,12 +11,12 @@
                 author {
                     login
                 }
-                assignees (last: 10) {
+                assignees (last: 5) {
                   nodes {
                     login
                   }
                 }
-                reviewRequests (last: 10) {
+                reviewRequests (last: 5) {
                     nodes {
                         requestedReviewer {
                             __typename
@@ -44,7 +44,7 @@
                 title
                 updatedAt
                 url
-                timelineItems (last:10) {
+                timelineItems (last:5) {
                     nodes {
                         __typename
                         ... on PullRequestCommit {
