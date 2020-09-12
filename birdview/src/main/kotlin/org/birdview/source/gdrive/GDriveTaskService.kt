@@ -66,14 +66,22 @@ open class GDriveTaskService(
         throw e
     }
 
-    private fun extractUsers(file: GDriveFile, config: BVGDriveConfig): List<BVDocumentUser> =
-            listOf(UserRole.CREATOR, UserRole.IMPLEMENTOR).flatMap { userRole ->
-                file.owners.mapNotNull { user -> mapDocumentUser(user, config.sourceName, userRole) }
-            } + listOfNotNull(mapDocumentUser(file.sharingUser, config.sourceName, UserRole.IMPLEMENTOR))
+    private fun extractUsers(file: GDriveFile, config: BVGDriveConfig): List<BVDocumentUser> {
+        val users = mutableListOf<BVDocumentUser>()
+        users += file.owners
+                .mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.CREATOR) }.toMutableList()
+        users += file.owners.mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.IMPLEMENTOR) }.toMutableList()
+        mapDocumentUser(file.sharingUser, config.sourceName, UserRole.IMPLEMENTOR) ?.also { users.add(it) }
+        if(file.modifiedByMe) {
+            mapDocumentUser(config.user, config.sourceName, UserRole.IMPLEMENTOR) ?.also { users.add(it) }
+        }
+        return users
+    }
 
     private fun mapDocumentUser(user: GDriveUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            user ?.emailAddress
-                    ?.let { email -> BVDocumentUser(userName = email, role = userRole, sourceName = sourceName) }
+            mapDocumentUser(user ?.emailAddress, sourceName, userRole)
+    private fun mapDocumentUser(email: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
+            email ?.let { email -> BVDocumentUser(userName = email, role = userRole, sourceName = sourceName) }
 
     private fun parseDate(dateString: String) = BVDateTimeUtils.parse(dateString, GDRIVE_DATETIME_PATTERN)
 }

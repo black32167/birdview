@@ -78,17 +78,18 @@ open class GithubTaskService(
                 null
             }
 
-    private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> {
-        val creators = listOfNotNull(pr.author?.login)
-        val implementors = creators +
-                operations.filter { it.type == BVDocumentOperationType.COLLABORATE }.mapNotNull { it.author }
-        val watchers = pr.assignees.nodes.map { it.login } +
-                pr.reviewRequests.nodes.mapNotNull { (it.requestedReviewer as? GqlGithubReviewUser) ?.login }
-
-        return creators.mapNotNull { mapDocumentUser(it, config.sourceName, UserRole.CREATOR) } +
-                implementors.mapNotNull{ mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR) } +
-                watchers.mapNotNull { mapDocumentUser(it, config.sourceName, UserRole.WATCHER) }
-    }
+    private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
+            (pr.author?.login ?.let { listOfNotNull(
+                mapDocumentUser(it, config.sourceName, UserRole.CREATOR),
+                mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR)) } ?: emptyList()) +
+            pr.assignees.nodes.mapNotNull { mapDocumentUser(it.login, config.sourceName, UserRole.WATCHER) } +
+            pr.reviewRequests.nodes.mapNotNull { mapDocumentUser((it.requestedReviewer as? GqlGithubReviewUser) ?.login, config.sourceName, UserRole.WATCHER) } +
+            operations.mapNotNull {
+                when(it.type) {
+                    BVDocumentOperationType.COLLABORATE -> mapDocumentUser(it.author, config.sourceName, UserRole.IMPLEMENTOR)
+                    BVDocumentOperationType.COMMENT,BVDocumentOperationType.NONE -> mapDocumentUser(it.author, config.sourceName, UserRole.WATCHER)
+                }
+            }
 
     private fun mapDocumentUser(user: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             user ?.let { user -> BVDocumentUser(userName = user, sourceName = sourceName, role = userRole) }

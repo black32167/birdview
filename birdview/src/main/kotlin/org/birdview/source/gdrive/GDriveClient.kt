@@ -4,6 +4,7 @@ import org.birdview.config.BVGDriveConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
+import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
@@ -18,7 +19,7 @@ class GDriveClient(
 ) {
 
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
-    private val filesPerPage = 50
+    private val filesPerPage = 500
 
     private val targetFactoryV3 =
             WebTargetFactory("https://www.googleapis.com/drive/v3") {
@@ -33,18 +34,20 @@ class GDriveClient(
 
             var target:WebTarget? = filesTarget(query)
             do {
-                val page = target
-                        ?.request()
-                        ?.get()
-                        ?.let(this::mapFilesPage)
-                        ?.takeUnless { it.items.isEmpty() }
-                        ?.also {
-                            chunkConsumer.invoke(it.items)
-                        }
+                val page = BVTimeUtil.logTime("gdrive-getFiles-page") {
+                    target
+                            ?.request()
+                            ?.get()
+                            ?.let(this::mapFilesPage)
+                            ?.takeUnless { it.items.isEmpty() }
+                }
+
+                page?.also {  chunkConsumer.invoke(it.items) }
                 target = page?.continuation
                         ?.let { nextPageToken->
                             filesTarget(query).queryParam("pageToken", nextPageToken)
                         }
+
             } while (target != null)
         }
     }
@@ -55,7 +58,7 @@ class GDriveClient(
             .queryParam("supportsAllDrives", true)
             .queryParam("pageSize", filesPerPage)
             .queryParam("orderBy", "modifiedTime desc")
-            .queryParam("fields", "files(id,name,modifiedTime,webViewLink,owners,lastModifyingUser,sharingUser),nextPageToken")
+            .queryParam("fields", "files(id,name,modifiedTime,webViewLink,owners,modifiedByMe,modifiedByMeTime,lastModifyingUser,sharingUser),nextPageToken")
             .queryParam("q", query)
 
     private fun mapFilesPage(response: Response): ItemsPage<GDriveFile, String> =

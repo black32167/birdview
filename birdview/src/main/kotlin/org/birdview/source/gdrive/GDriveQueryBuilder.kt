@@ -30,8 +30,10 @@ class GDriveQueryBuilder (
     private fun formatDate(date: ZonedDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))
 
-    private fun getUserClause(user: String?, sourceName: String): String? =
-        "'${getUser(user, sourceName)}' in owners"
+    private fun getUserClause(user: String?, sourceName: String): String? {
+        val user = getUser(user, sourceName)
+        return "('${user}' in owners) or ('${user}' in writers) or ('${user}' in readers)"
+    }
 
     private fun getUser(userAlias: String?, sourceName: String): String =
             userAlias?.let { userConfigProvider.getUserName(userAlias, sourceName) } ?: "me"

@@ -37,7 +37,7 @@ class JiraClient(
 
         var startAt:Int? = 0
         do {
-            val page = BVTimeUtil.logTime("jira-findIssues-page-$jql") {
+            val page = BVTimeUtil.logTime("jira-findIssues-page") {
                 postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt!!))
                         ?.let(this::mapIssuesPage)
                         ?.also { page ->
