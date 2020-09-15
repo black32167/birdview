@@ -3,77 +3,38 @@ package org.birdview.config
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.birdview.source.SourceType
-import org.birdview.utils.JsonDeserializer
-import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.Cacheable
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-import java.util.stream.Collectors
 import javax.inject.Named
 
 @Named
-open class BVSourcesConfigProvider(
-        open val bvRuntimeConfig: BVRuntimeConfig,
-        open val jsonDeserializer: JsonDeserializer
-) {
-    fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T> =
-            getSourceConfigs()
-                    .filter { configClass.isAssignableFrom(it.javaClass) }
-                    .map { configClass.cast(it) }
-                    .toList()
+interface BVSourcesConfigProvider {
 
-    fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T? =
-            getConfigsOfType(configClass).firstOrNull()
+    fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T>
 
-    private fun getSourceConfigs(): List<BVAbstractSourceConfig> = bvRuntimeConfig.sourcesConfigsFolder
-            .takeIf { Files.isDirectory(it) }
-            ?.let (Files::list)
-            ?.filter { !it.toString().toLowerCase().endsWith(".bak") }
-            ?.collect(Collectors.toList())
-            ?.mapNotNull(jsonDeserializer::deserialize)
-            ?: emptyList()
+    fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T?
 
-    @Cacheable("sourcesConfig")
-    open fun getConfigByName(sourceName: String): BVAbstractSourceConfig =
-        getSourceConfigs().find { it.sourceName == sourceName }!!
+    fun getConfigByName(sourceName: String): BVAbstractSourceConfig?
 
-    fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =
-            getConfigByName(sourceName) as? T
+    fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>) : T?
 
-    fun listSourceNames(): List<String> =
-        getSourceConfigs().map { it.sourceName }
+    fun listSourceNames(): List<String>
 
-    @CacheEvict("sourcesConfig")
-    open fun save(config: BVAbstractSourceConfig) {
-        bvRuntimeConfig.sourcesConfigsFolder.also { folder->
-            Files.createDirectories(folder)
-            jsonDeserializer.serialize(folder.resolve(config.sourceName), config)
-        }
-    }
+    fun save(config: BVAbstractSourceConfig)
 
-    @CacheEvict("sourcesConfig")
-    open fun update(config: BVAbstractSourceConfig) {
-        bvRuntimeConfig.sourcesConfigsFolder.resolve(config.sourceName).also { file ->
-            Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
-            jsonDeserializer.serialize(file, config)
-        }
-    }
+    fun update(config: BVAbstractSourceConfig)
 
-    @CacheEvict("sourcesConfig")
-    open fun delete(sourceName: String) {
-        Files.delete(bvRuntimeConfig.sourcesConfigsFolder.resolve(sourceName))
-    }
+    fun delete(sourceName: String)
 }
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "sourceType")
+        property = "_sourceType")
 @JsonSubTypes(
     JsonSubTypes.Type(value = BVJiraConfig::class, name = "jira"),
     JsonSubTypes.Type(value = BVTrelloConfig::class, name = "trello"),
     JsonSubTypes.Type(value = BVGithubConfig::class, name = "github"),
-    JsonSubTypes.Type(value = BVGDriveConfig::class, name = "gdrive")
+    JsonSubTypes.Type(value = BVGDriveConfig::class, name = "gdrive"),
+    JsonSubTypes.Type(value = BVSlackConfig::class, name = "slack")
 )
 abstract class BVAbstractSourceConfig (
         val sourceType: SourceType,
@@ -87,6 +48,7 @@ abstract class BVOAuthSourceConfig (
         user: String,
         val clientId: String,
         val clientSecret: String,
+        val authCodeUrl: String,
         val tokenExchangeUrl: String,
         val scope: String)
     : BVAbstractSourceConfig(sourceType, sourceName, user) {
@@ -117,6 +79,25 @@ class BVGithubConfig (
     val baseUrl = "https://api.github.com"
 }
 
+class BVSlackConfig (
+        sourceName: String = "slack",
+        user: String,
+        clientId: String,
+        clientSecret: String
+): BVOAuthSourceConfig (
+        sourceType = SourceType.SLACK,
+        sourceName = sourceName,
+        user = user,
+        clientId = clientId,
+        clientSecret = clientSecret,
+        authCodeUrl = "https://slack.com/oauth/v2/authorize?user_scope=identity.basic&",
+        tokenExchangeUrl = "https://slack.com/api/oauth.v2.access",
+        scope = "channels:history" //,channels:read,groups:read,im:history
+) {
+    val baseUrl = "https://slack.com/api"
+}
+//,channels:read,groups:read,im:history
+
 class BVGDriveConfig (
         sourceName: String = "gdrive",
         clientId: String,
@@ -128,6 +109,7 @@ class BVGDriveConfig (
         user = user,
         clientId = clientId,
         clientSecret = clientSecret,
+        authCodeUrl = "https://accounts.google.com/o/oauth2/v2/auth?",
         tokenExchangeUrl = "https://oauth2.googleapis.com/token",
         scope = "https://www.googleapis.com/auth/drive"
 )

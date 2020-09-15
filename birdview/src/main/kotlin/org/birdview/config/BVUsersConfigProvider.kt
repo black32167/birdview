@@ -13,7 +13,7 @@ open class BVUsersConfigProvider(
 ) {
     fun getUserName(userAlias: String?, sourceName: String): String =
             if (userAlias.isNullOrBlank()) {
-                bvSourcesConfigProvider.getConfigByName(sourceName).user
+                bvSourcesConfigProvider.getConfigByName(sourceName)?.user ?: throw java.lang.RuntimeException("Config not found for $sourceName")
             } else {
                 getConfig()
                         .find { it.alias == userAlias }
