@@ -19,7 +19,7 @@ class GdriveSourceWebController(
             user: String,
             val key: String?,
             val secret: String?
-    ): AbstractSourceFormData (sourceName = sourceName, user = user)
+    ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "gdrive")
 
     override fun getRedirectAfterSaveView(config: BVGDriveConfig) =
             RedirectView(oauthController.getAuthTokenUrl(config))

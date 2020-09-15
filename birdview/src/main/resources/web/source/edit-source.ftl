@@ -19,7 +19,7 @@
                 <td class="sign">Source alias:</td>
                 <td>${source.sourceName}</td>
             </tr>
-            <#include "edit-source-${source.sourceName}.ftl">
+            <#include "edit-source-${source.type}.ftl">
             </table>
             <div class="buttons">
                 <input type="submit" value="Update">

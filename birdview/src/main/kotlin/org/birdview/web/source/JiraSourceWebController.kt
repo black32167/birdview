@@ -16,7 +16,7 @@ class JiraSourceWebController(
             user: String,
             val secret: String?,
             val baseUrl: String?
-    ): AbstractSourceFormData (sourceName = sourceName, user = user)
+    ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "jira")
 
     override fun getConfigClass() = BVJiraConfig::class.java
 

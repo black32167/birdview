@@ -15,6 +15,7 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
 ) {
     abstract class AbstractSourceFormData(
             val sourceName:String,
+            val type:String,
             val user: String
     )
 
@@ -51,7 +52,7 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
         sourcesConfigProvider.update(config)
     }
 
-    protected fun  getConfig(sourceName: String): T? =
+    private fun  getConfig(sourceName: String): T? =
             sourcesConfigProvider.getConfigByName(sourceName, getConfigClass())
 
     protected abstract fun mapConfig(sourceFormData: F): T

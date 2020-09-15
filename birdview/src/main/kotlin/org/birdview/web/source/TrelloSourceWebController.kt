@@ -16,7 +16,7 @@ class TrelloSourceWebController(
             user: String,
             val key: String?,
             val secret: String?
-    ): AbstractSourceFormData (sourceName = sourceName, user = user)
+    ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "trello")
 
     override fun getConfigClass() = BVTrelloConfig::class.java
 

@@ -15,7 +15,7 @@ class GithubSourceWebController(
             sourceName:String,
             user: String,
             val secret: String?
-    ): AbstractSourceFormData (sourceName = sourceName, user = user)
+    ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "github")
 
     override fun getConfigClass() = BVGithubConfig::class.java
 
