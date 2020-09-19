@@ -117,6 +117,30 @@ $(function(){
             </tr>
         </@addForm>
 
+        <@addForm "slack">
+            <tr>
+                <td class="sign">Source alias:</td>
+                <td><input type="text" name="sourceName" value="slack"></td>
+            </tr>
+            <tr>
+                <td class="sign">UserId:</td>
+                <td><input type="text" name="user"></td>
+            </tr>
+            <tr>
+                <td class="sign">Client Id:</td>
+                <td><input type="text" name="clientId"></td>
+            </tr>
+            <tr>
+                <td class="sign">Client Secret:</td>
+                <td>
+                    <input type="text" name="clientSecret">
+                    <div class="helpline" >
+                    <!--a href="https://console.developers.google.com/projectcreate">Register</a> and <a href="https://console.developers.google.com/">Generate</a-->
+                    </div>
+                </td>
+            </tr>
+        </@addForm>
+
         <@addForm "github">
             <tr>
                 <td class="sign">Source alias:</td>

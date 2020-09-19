@@ -12,7 +12,7 @@
 
     <div>
     <div class="center">
-        <form id="jira-form" action="/settings/${source.sourceName}/update-source" method="POST">
+        <form id="jira-form" action="/settings/${source.type}/update-source" method="POST">
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>
             <tr>
