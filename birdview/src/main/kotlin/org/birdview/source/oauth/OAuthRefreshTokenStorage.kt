@@ -15,7 +15,7 @@ class OAuthRefreshTokenStorage(
             readToken(getRefreshTokenFilePath(source))
 
     fun hasToken(config: BVOAuthSourceConfig): Boolean =
-            loadLocalRefreshToken(config.sourceName) != null;
+            loadLocalRefreshToken(config.sourceName) != null
 
     fun saveRefreshToken(sourceName: String, refreshToken: String) {
         saveToken(getRefreshTokenFilePath(sourceName), refreshToken)

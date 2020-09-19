@@ -51,8 +51,7 @@ abstract class BVOAuthSourceConfig (
         val authCodeUrl: String,
         val tokenExchangeUrl: String,
         val scope: String)
-    : BVAbstractSourceConfig(sourceType, sourceName, user) {
-}
+    : BVAbstractSourceConfig(sourceType, sourceName, user)
 
 class BVJiraConfig (
         sourceName: String = "jira",

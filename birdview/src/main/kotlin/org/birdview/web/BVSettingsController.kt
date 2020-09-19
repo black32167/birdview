@@ -41,7 +41,7 @@ class BVSettingsController(
     fun deleteSource(model: Model, @RequestParam("sourceName") sourceName: String): ModelAndView {
         sourcesConfigProvider.delete(sourceName)
 
-        return ModelAndView("redirect:${BVWebPaths.SETTINGS}");
+        return ModelAndView("redirect:${BVWebPaths.SETTINGS}")
     }
 
     private fun mapSourceSetting(sourceName: String): SourceSettingView? =

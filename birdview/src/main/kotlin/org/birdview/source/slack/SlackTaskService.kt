@@ -30,7 +30,7 @@ class SlackTaskService(
             val client = SlackClient(sourceConfig, tokenStorage)
             client.findMessages(sourceConfig, chunkConsumer)
         } catch (e: Exception) {
-            log.error("Error reading Slack data (source {})", sourceConfig.sourceName, e);
+            log.error("Error reading Slack data (source {})", sourceConfig.sourceName, e)
         }
     }
 

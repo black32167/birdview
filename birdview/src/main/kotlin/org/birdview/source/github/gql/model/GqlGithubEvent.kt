@@ -23,7 +23,7 @@ open class GqlGithubEvent (
 ) {
     open val contributionType: BVDocumentOperationType = BVDocumentOperationType.NONE
     open val timestamp: String? = null
-    open val user: String? = null;
+    open val user: String? = null
 }
 
 class PullRequestCommit(

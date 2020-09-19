@@ -6,7 +6,7 @@ import javax.inject.Named
 
 @Named
 class BVRuntimeConfig (
-        private @Value("\${config.location}") val sourcesConfigFolder: Path) {
+        @Value("\${config.location}") private val sourcesConfigFolder: Path) {
     val sourcesConfigsFolder = sourcesConfigFolder.resolve("sources")
     val usersConfigFileName = sourcesConfigFolder.resolve("bv-users.json")
     val oauthTokenDir = sourcesConfigFolder.resolve("tokens")

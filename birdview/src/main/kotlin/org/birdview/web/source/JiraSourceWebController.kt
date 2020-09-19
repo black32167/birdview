@@ -23,7 +23,7 @@ class JiraSourceWebController(
     override fun mapConfig(sourceFormData: JiraSourceFormData) =
             BVJiraConfig (
                     sourceName = sourceFormData.sourceName,
-                    user = sourceFormData.user!!,
+                    user = sourceFormData.user,
                     token = sourceFormData.secret!!,
                     baseUrl = sourceFormData.baseUrl!!)
 

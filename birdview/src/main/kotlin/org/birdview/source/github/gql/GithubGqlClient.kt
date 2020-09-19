@@ -28,7 +28,7 @@ class GithubGqlClient (
                         interpolate(it, mapOf("query" to githubQuery))
                     }
 
-            var cursor: String? = null;
+            var cursor: String? = null
             do {
                 val query = interpolate(queryTemplate, mapOf(
                         "cursor" to (cursor?.let { "\"${cursor}\"" } ?: "null")))
@@ -49,7 +49,7 @@ class GithubGqlClient (
                 val data = response.data!!
                 val edges = data.search.edges //?.sortedBy { it.node.updatedAt }
                 val pageInfo = data.search.pageInfo
-                val prs = edges.map { it.node } ?: emptyList()
+                val prs = edges.map { it.node }
                 if (prs.isNotEmpty()) {
                     chunkConsumer.invoke(prs)
                 }

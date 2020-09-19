@@ -22,7 +22,7 @@ class GithubSourceWebController(
     override fun mapConfig(sourceFormData: GithubSourceFormData) =
             BVGithubConfig (
                     sourceName = sourceFormData.sourceName,
-                    user = sourceFormData.user!!,
+                    user = sourceFormData.user,
                     token = sourceFormData.secret!!)
 
     override fun mapForm(config: BVGithubConfig) =
