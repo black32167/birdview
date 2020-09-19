@@ -37,7 +37,7 @@ open class BVSourcesConfigProviderImpl(
     override fun listSourceNames(): List<String> =
             getSourceConfigs().map { it.sourceName }
 
-    @CacheEvict("sourcesConfig")
+    @CacheEvict("sourcesConfig", allEntries = true)
     override fun save(config: BVAbstractSourceConfig) {
         bvRuntimeConfig.sourcesConfigsFolder.also { folder->
             Files.createDirectories(folder)
@@ -45,15 +45,15 @@ open class BVSourcesConfigProviderImpl(
         }
     }
 
-    @CacheEvict("sourcesConfig")
+    @CacheEvict("sourcesConfig", allEntries = true)
     override fun update(config: BVAbstractSourceConfig) {
-        bvRuntimeConfig.sourcesConfigsFolder.resolve(config.sourceName).also { file ->
+            bvRuntimeConfig.sourcesConfigsFolder.resolve(config.sourceName).also { file ->
             Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
             jsonDeserializer.serialize(file, config)
         }
     }
 
-    @CacheEvict("sourcesConfig")
+    @CacheEvict("sourcesConfig", allEntries = true)
     override fun delete(sourceName: String) {
         Files.delete(bvRuntimeConfig.sourcesConfigsFolder.resolve(sourceName))
     }
