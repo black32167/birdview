@@ -1,23 +1,26 @@
 package org.birdview.source.gdrive
 
 import org.birdview.config.BVGDriveConfig
+import org.birdview.config.BVOAuthSourceConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
+import org.birdview.source.oauth.AbstractOAuthClient
+import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
-import org.birdview.web.BVOAuthController
 import org.slf4j.LoggerFactory
+import javax.ws.rs.client.Entity
 import javax.ws.rs.client.WebTarget
+import javax.ws.rs.core.Form
 import javax.ws.rs.core.Response
 
 class GDriveClient(
-        private val oauthController: BVOAuthController,
-        private val config: BVGDriveConfig
-) {
-
+        private val config: BVGDriveConfig,
+        tokenStorage: OAuthRefreshTokenStorage
+): AbstractOAuthClient(tokenStorage) {
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val filesPerPage = 500
 
@@ -72,8 +75,18 @@ class GDriveClient(
                     }
 
     private fun authCodeProvider() =
-            oauthController.getToken(config)
+            getToken(config)
             ?.let(::BearerAuth)
             ?: throw RuntimeException("Failed retrieving Google API access token")
 
+    override fun getTokenRefreshFormEntity(refreshToken:String, config: BVOAuthSourceConfig): Entity<Form> =
+            Entity.form(Form()
+                    .param("client_id", config.clientId)
+                    .param("client_secret", config.clientSecret)
+                    .param("grant_type", "refresh_token")
+                    .param("refresh_token", refreshToken))
+
+    override fun readAccessTokenResponse(response: Response): String = response
+                    .readEntity(GAccessTokenResponse::class.java)
+                    .access_token
 }

@@ -1,16 +1,16 @@
 package org.birdview.source.gdrive
 
 import org.birdview.config.BVGDriveConfig
-import org.birdview.web.BVOAuthController
+import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import javax.inject.Named
 
 @Named
 class GDriveClientProvider(
-        private val oauthController: BVOAuthController
+        private val tokenStorage: OAuthRefreshTokenStorage
 ) {
     fun getGoogleApiClient(config: BVGDriveConfig)
-            = GDriveClient(oauthController, config)
+            = GDriveClient(config, tokenStorage)
 
     fun isAuthenticated(config: BVGDriveConfig)
-            = oauthController.hasToken(config)
+            = tokenStorage.hasToken(config)
 }
