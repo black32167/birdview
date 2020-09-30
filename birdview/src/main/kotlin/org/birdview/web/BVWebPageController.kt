@@ -1,10 +1,8 @@
 package org.birdview.web
 
-import org.birdview.config.BVOAuthSourceConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.config.BVUsersConfigProvider
 import org.birdview.model.*
-import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -15,8 +13,6 @@ import java.time.temporal.ChronoUnit
 
 @Controller
 class BVWebPageController(
-        private val tokenStorage: OAuthRefreshTokenStorage,
-        private val oauthController: BVOAuthController,
         private val usersConfigProvider: BVUsersConfigProvider,
         private val sourcesConfigProvider: BVSourcesConfigProvider
 ) {
@@ -45,18 +41,10 @@ class BVWebPageController(
                 "reportTypes" to ReportType.values(),
                 "userRoles" to UserRole.values(),
                 "sources" to sourcesConfigProvider.listSourceNames(),
-                "oauthRequests" to listOauthUrls(),
                 "users" to listUsers()
         ))
         return "report"
     }
-
-    private fun listOauthUrls(): List<OAuthCodeLink> = sourcesConfigProvider.getConfigsOfType(BVOAuthSourceConfig::class.java)
-            .filter { oAuthConfig -> !tokenStorage.hasToken(oAuthConfig) }
-            .map { oAuthConfig ->
-                val tokenUrl = oauthController.getAuthTokenUrl(oAuthConfig)
-                OAuthCodeLink(source = oAuthConfig.sourceName, authCodeUrl = tokenUrl)
-            }
 
     private fun listUsers() =
             usersConfigProvider.listUsers()

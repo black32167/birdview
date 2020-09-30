@@ -2,18 +2,23 @@ package org.birdview.web.source
 
 import org.birdview.config.BVGDriveConfig
 import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.web.BVOAuthController
+import org.birdview.source.gdrive.GAccessTokenResponse
+import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.web.BVWebPaths
+import org.birdview.web.source.GdriveSourceWebController.Companion.CONTROLLER_PATH
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.servlet.view.RedirectView
+import javax.ws.rs.core.Response
 
 @Controller
-@RequestMapping("${BVWebPaths.SETTINGS}/gdrive")
+@RequestMapping(CONTROLLER_PATH)
 class GdriveSourceWebController(
         sourcesConfigProvider: BVSourcesConfigProvider,
-        private val oauthController: BVOAuthController
-): AbstractSourceWebController<BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(sourcesConfigProvider) {
+        private val tokenStorage: OAuthRefreshTokenStorage
+): AbstractOauthSourceWebController<BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(sourcesConfigProvider) {
+    companion object {
+        const val CONTROLLER_PATH = "${BVWebPaths.SETTINGS}/gdrive"
+    }
     class GdriveSourceFormData(
             sourceName: String,
             user: String,
@@ -21,8 +26,14 @@ class GdriveSourceWebController(
             val secret: String?
     ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "gdrive")
 
-    override fun getRedirectAfterSaveView(config: BVGDriveConfig) =
-            RedirectView(oauthController.getAuthTokenUrl(config))
+    override fun consumeAuthCodeExchangeResponse(sourceName: String, rawResponse: Response) {
+        val refreshToken = rawResponse.readEntity(GAccessTokenResponse::class.java)
+                .refresh_token
+                ?: throw IllegalStateException("Cannot obtain refresh token from auth code exchange response")
+        tokenStorage.saveRefreshToken(sourceName, refreshToken)
+    }
+
+    override fun getControllerPath() = CONTROLLER_PATH
 
     override fun getConfigClass() = BVGDriveConfig::class.java
 

@@ -3,6 +3,7 @@ package org.birdview.web.source
 import org.birdview.config.BVAbstractSourceConfig
 import org.birdview.config.BVSourcesConfigProvider
 import org.birdview.web.BVWebPaths
+import org.slf4j.LoggerFactory
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
@@ -11,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
 
 abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
-        private val sourcesConfigProvider: BVSourcesConfigProvider
+        protected val sourcesConfigProvider: BVSourcesConfigProvider
 ) {
+    private val log = LoggerFactory.getLogger(AbstractSourceWebController::class.java)
+
     abstract class AbstractSourceFormData(
             val sourceName:String,
             val type:String,
