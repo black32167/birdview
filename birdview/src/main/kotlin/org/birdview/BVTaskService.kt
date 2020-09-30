@@ -34,28 +34,46 @@ open class BVTaskService(
 
     //  @Cacheable("bv")
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
-            loadAsync(filter.userFilter.userAlias)
-            BVTimeUtil.printStats()
+        loadAsync(filter.userFilter.userAlias)
+        BVTimeUtil.printStats()
 
-            val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
-                docsMap
-                        .values
-                        .filter { doc ->
-                            filterDocument(doc, filter)
-                        }
-                        .toMutableList()
-            }
+        val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
+            docsMap
+                    .values
+                    .filter { doc ->
+                        filterDocument(doc, filter)
+                    }
+                    .toMutableList()
+        }
 
-            if (filter.sourceType != "") {
-                return filteredDocs
-            }
+        if (filter.sourceType != "") {
+            return filteredDocs
+        }
 
-            val allDocs = filteredDocs + getReferencedDocs(filteredDocs)
+        val allDocs = filteredDocs + getReferencedDocs(filteredDocs)
 
-            return BVTimeUtil.logTime("Linking documents") {
-                linkDocs(allDocs)
-            }
+        val linkedDocs = BVTimeUtil.logTime("Linking documents") {
+            linkDocs(allDocs)
+        }
+
+        if (filter.representationType == RepresentationType.LIST) {
+            return linkedDocs.map { it.copy(subDocuments = optimizeHierarchy(it.subDocuments)) }
+        }
+        return linkedDocs;
     }
+
+    private fun optimizeHierarchy(docs: List<BVDocument>): MutableList<BVDocument> {
+        return docs.flatMap { optimizeDoc(it) }.toMutableList()
+    }
+
+    private fun optimizeDoc(doc: BVDocument): Iterable<BVDocument> =
+        if (doc.subDocuments.isEmpty()) {
+            listOf(doc)
+        } else if (doc.subDocuments.size < 3) {
+            optimizeHierarchy(doc.subDocuments)
+        } else {
+            listOf(doc.copy(subDocuments = optimizeHierarchy(doc.subDocuments)))
+        }
 
     private fun loadAsync(user: String?) {
         usersRetrieved.computeIfAbsent(user ?: "") {

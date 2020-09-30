@@ -7,7 +7,8 @@ data class BVDocumentFilter(
         val grouping: Boolean,
         val updatedPeriod: TimeIntervalFilter,
         val userFilter: UserFilter,
-        val sourceType:String? = null
+        val sourceType:String? = null,
+        val representationType: RepresentationType = RepresentationType.LIST
 )
 
 enum class UserRole {

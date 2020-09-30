@@ -39,6 +39,7 @@ class BVWebPageController(
                 "reportPath" to "report-${tsRequest.reportType}.ftl",
                 "format" to getFormat(tsRequest.reportType),
                 "reportTypes" to ReportType.values(),
+                "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
                 "sources" to sourcesConfigProvider.listSourceNames(),
                 "users" to listUsers()

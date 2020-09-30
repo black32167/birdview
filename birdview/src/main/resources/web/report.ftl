@@ -58,8 +58,9 @@
         <tr><td class="sign">Representation:</td>
         <td>
             <select id="representation" onchange="refresh()">
-                <option value="tree">Tree</option>
-                <option value="list">List</option>
+                <#list representationTypes as representationType>
+                <option value="${representationType}">${representationType}</option>
+                </#list>
             </select>
         </td></tr>
         <tr><td class="sign">Source:</td>

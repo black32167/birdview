@@ -59,7 +59,7 @@ function renderReport(docs) {
     var reportContainer = $('#reportContainer')
     reportContainer.empty()
     switch (representationType) {
-        case "tree":
+        case "TREE":
             var tableContainer = $('<table class="list" id="reportTable">')
             var headerRow = $('<tr>')
                     .append('<th>Title</th>')
@@ -74,7 +74,7 @@ function renderReport(docs) {
             applyTree(tableContainer)
             reportContainer.append(tableContainer)
             break
-        case "list":
+        case "LIST":
             renderList(reportContainer, docs)
             //reportContainer.append(listContainer)
             break
@@ -109,6 +109,7 @@ function refresh() {
     var userRole = $('#userRole').val()
     var user = $('#user').val()
     var source = $('#source').val()
+    var representationType = $('#representation').val()
 
     showOverlay(true)
     $.ajax(`${baseURL}/rest/documents` +
@@ -116,6 +117,7 @@ function refresh() {
         `&daysBack=${daysBack}` +
         `&user=${user}` +
         `&sourceType=${source}` +
+        `&representationType=${representationType}` +
         `&userRole=${userRole}`)
         .done(function( docs ) {
              renderReport(docs)

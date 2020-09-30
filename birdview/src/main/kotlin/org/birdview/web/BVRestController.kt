@@ -30,7 +30,8 @@ class BVRestController(
             val reportType: ReportType,
             val daysBack: Long,
             val sourceType: String?,
-            val userRole: UserRole = UserRole.CREATOR
+            val userRole: UserRole = UserRole.CREATOR,
+            var representationType: RepresentationType
     )
     @GetMapping("/documents")
     fun documents(
@@ -43,7 +44,8 @@ class BVRestController(
                 grouping = true,
                 updatedPeriod = TimeIntervalFilter(after = today.minusDays(documentRequest.daysBack)),
                 userFilter = UserFilter( userAlias = user, role = documentRequest.userRole),
-                sourceType = documentRequest.sourceType)
+                sourceType = documentRequest.sourceType,
+                representationType = documentRequest.representationType)
         val docs = taskService.getDocuments(tsRequest)
                 .map(BVDocumentViewFactory::create)
         return docs
