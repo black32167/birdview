@@ -89,13 +89,12 @@ class BVSlackConfig (
         user = user,
         clientId = clientId,
         clientSecret = clientSecret,
-        authCodeUrl = "https://slack.com/oauth/v2/authorize?user_scope=identity.basic&",
+        authCodeUrl = "https://slack.com/oauth/v2/authorize?user_scope=identity.basic&", //search:read
         tokenExchangeUrl = "https://slack.com/api/oauth.v2.access",
-        scope = "channels:history" //,channels:read,groups:read,im:history
+        scope = "channels:history,channels:read"
 ) {
     val baseUrl = "https://slack.com/api"
 }
-//,channels:read,groups:read,im:history
 
 class BVGDriveConfig (
         sourceName: String = "gdrive",

@@ -5,7 +5,6 @@ import org.birdview.config.BVOAuthSourceConfig
 import org.birdview.config.BVSlackConfig
 import org.birdview.source.oauth.AbstractOAuthClient
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
-import org.birdview.source.slack.model.SlackHistoryResponse
 import org.birdview.source.slack.model.SlackMessage
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.WebTargetFactory
@@ -25,16 +24,26 @@ class SlackClient  (
             }
 
     fun findMessages(sourceConfig: BVSlackConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val resp = targetFactory.getTarget("conversations.history")
-                .queryParam("channel", "C01ATLFE50U") //"CNTMC1S7L")
-                .request()
-                .get()
-        val response = resp.readEntity(SlackHistoryResponse::class.java)
-        response.messages
-                ?.mapNotNull { toBVDocument(it) }
-                ?.also { docs->
-                    chunkConsumer.invoke(docs)
-                }
+//        var r = targetFactory.getTarget("search.messages")
+//                .queryParam("query", "from:@...")
+//                .request()
+//                .get()
+//                .readEntity(String::class.java)
+//        var r1 = targetFactory.getTarget("conversations.history")
+//                .queryParam("channel", "C01B2T1CZBM")
+//                .request()
+//                .get()
+//                .readEntity(String::class.java)
+//            val resp = targetFactory.getTarget("conversations.history")
+//                .queryParam("channel", "???")
+//                .request()
+//                .get()
+//        val response = resp.readEntity(SlackHistoryResponse::class.java)
+//        response.messages
+//                ?.mapNotNull { toBVDocument(it) }
+//                ?.also { docs->
+//                    chunkConsumer.invoke(docs)
+//                }
     }
 
     private fun toBVDocument(slackMessage: SlackMessage): BVDocument? {
@@ -53,5 +62,8 @@ class SlackClient  (
 
     override fun readAccessTokenResponse(response: Response): String = response
             .readEntity(SlackTokenResponse::class.java)
+            .also {
+                print(it)
+            }
             .access_token!!
 }
