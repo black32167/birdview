@@ -1,6 +1,6 @@
 package org.birdview.source.github
 
-import org.birdview.config.BVGithubConfig
+import org.birdview.config.sources.BVGithubConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.github.model.*
 import org.birdview.utils.BVTimeUtil

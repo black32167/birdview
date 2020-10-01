@@ -1,5 +1,6 @@
-package org.birdview.config
+package org.birdview.config.sources
 
+import org.birdview.config.BVRuntimeConfig
 import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
@@ -11,11 +12,11 @@ import java.util.stream.Collectors
 import javax.inject.Named
 
 @Named
-open class BVSourcesConfigProviderImpl(
+open class BVSourcesConfigStorageImpl(
         open val bvRuntimeConfig: BVRuntimeConfig,
         open val jsonDeserializer: JsonDeserializer
-):  BVSourcesConfigProvider {
-    private val log = LoggerFactory.getLogger(BVSourcesConfigProvider::class.java)
+):  BVSourcesConfigStorage {
+    private val log = LoggerFactory.getLogger(BVSourcesConfigStorage::class.java)
 
     override fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T> =
             getSourceConfigs()

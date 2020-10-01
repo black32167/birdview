@@ -1,7 +1,7 @@
 package org.birdview.source.gdrive
 
-import org.birdview.config.BVGDriveConfig
-import org.birdview.config.BVOAuthSourceConfig
+import org.birdview.config.sources.BVGDriveConfig
+import org.birdview.config.sources.BVOAuthSourceConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse

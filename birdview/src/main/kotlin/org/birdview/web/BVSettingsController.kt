@@ -1,6 +1,6 @@
 package org.birdview.web
 
-import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.springframework.stereotype.Controller
@@ -14,7 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @Controller
 @RequestMapping(BVWebPaths.SETTINGS)
 class BVSettingsController(
-        private val sourcesConfigProvider: BVSourcesConfigProvider,
+        private val sourcesConfigStorage: BVSourcesConfigStorage,
         private val sources: List<BVTaskSource>
 ) {
     class SourceSettingView(
@@ -26,7 +26,7 @@ class BVSettingsController(
     @GetMapping
     fun index(model: Model): String? {
         model
-                .addAttribute("sources", sourcesConfigProvider.listSourceNames().map { mapSourceSetting(it) })
+                .addAttribute("sources", sourcesConfigStorage.listSourceNames().map { mapSourceSetting(it) })
         return "settings"
     }
 
@@ -39,13 +39,13 @@ class BVSettingsController(
 
     @GetMapping("/delete")
     fun deleteSource(model: Model, @RequestParam("sourceName") sourceName: String): ModelAndView {
-        sourcesConfigProvider.delete(sourceName)
+        sourcesConfigStorage.delete(sourceName)
 
         return ModelAndView("redirect:${BVWebPaths.SETTINGS}")
     }
 
     private fun mapSourceSetting(sourceName: String): SourceSettingView? =
-            sourcesConfigProvider.getConfigByName(sourceName)
+            sourcesConfigStorage.getConfigByName(sourceName)
                     ?.let { sourceConfig ->
                         SourceSettingView(
                                 name = sourceConfig.sourceName,

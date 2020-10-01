@@ -1,7 +1,7 @@
 package org.birdview.source.trello
 
-import org.birdview.config.BVTrelloConfig
-import org.birdview.config.BVUsersConfigProvider
+import org.birdview.config.sources.BVTrelloConfig
+import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.TimeIntervalFilter
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -9,7 +9,7 @@ import javax.inject.Named
 
 @Named
 class TrelloQueryBuilder(
-        private val usersConfigProvider: BVUsersConfigProvider
+        private val userProfileStorage: BVUserProfileStorage
 ) {
     fun getQueries(user: String?, updatedPeriod: TimeIntervalFilter, trelloConfig: BVTrelloConfig): String =
             listOfNotNull(
@@ -29,7 +29,7 @@ class TrelloQueryBuilder(
 
     private fun getUser(userAlias: String?, sourceName:String): String =
             if (userAlias == null) "me"
-            else usersConfigProvider.getUserName(userAlias, sourceName)
+            else userProfileStorage.getUserName(userAlias, sourceName)
 
     private fun userClause(user: String?, trelloConfig: BVTrelloConfig): String? =
             "@${getUser(user, trelloConfig.sourceName)}"

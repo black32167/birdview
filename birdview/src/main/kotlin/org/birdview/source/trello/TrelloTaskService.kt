@@ -3,8 +3,8 @@ package org.birdview.source.trello
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
-import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.config.BVTrelloConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
+import org.birdview.config.sources.BVTrelloConfig
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -17,7 +17,7 @@ import javax.inject.Named
 
 @Named
 open class TrelloTaskService(
-        private val sourcesConfigProvider: BVSourcesConfigProvider,
+        private val sourcesConfigStorage: BVSourcesConfigStorage,
         private val trelloClientProvider: TrelloClientProvider,
         private val trelloQueryBuilder: TrelloQueryBuilder
 ) : BVTaskSource {
@@ -30,7 +30,7 @@ open class TrelloTaskService(
     }
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
-                sourcesConfigProvider.getConfigsOfType(BVTrelloConfig::class.java)
+                sourcesConfigStorage.getConfigsOfType(BVTrelloConfig::class.java)
                     .forEach { config-> getTasks(user, updatedPeriod, config, chunkConsumer) }
 
     private fun getTasks(
@@ -83,7 +83,7 @@ open class TrelloTaskService(
     override fun getType() = SourceType.TRELLO
 
     override fun isAuthenticated(sourceName: String): Boolean =
-            sourcesConfigProvider.getConfigByName(sourceName, BVTrelloConfig::class.java) != null
+            sourcesConfigStorage.getConfigByName(sourceName, BVTrelloConfig::class.java) != null
 
     private fun extractIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
             setOf(

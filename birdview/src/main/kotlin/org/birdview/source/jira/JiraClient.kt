@@ -1,6 +1,6 @@
 package org.birdview.source.jira
 
-import org.birdview.config.BVJiraConfig
+import org.birdview.config.sources.BVJiraConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest

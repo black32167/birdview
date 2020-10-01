@@ -1,7 +1,7 @@
 package org.birdview.source.github.gql
 
 import org.apache.tomcat.util.http.fileupload.util.Streams
-import org.birdview.config.BVGithubConfig
+import org.birdview.config.sources.BVGithubConfig
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubResponse
 import org.birdview.source.github.gql.model.GqlGithubSearchContainer

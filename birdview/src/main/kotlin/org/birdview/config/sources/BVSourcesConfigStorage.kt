@@ -1,12 +1,10 @@
-package org.birdview.config
+package org.birdview.config.sources
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.birdview.source.SourceType
-import javax.inject.Named
 
-@Named
-interface BVSourcesConfigProvider {
+interface BVSourcesConfigStorage {
 
     fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T>
 
@@ -58,14 +56,14 @@ class BVJiraConfig (
         val baseUrl: String,
         user: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.JIRA, sourceName, user)
+): BVAbstractSourceConfig(SourceType.JIRA, sourceName, user)
 
 class BVTrelloConfig (
         sourceName: String = "trello",
         user: String,
         val key: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.TRELLO, sourceName, user) {
+): BVAbstractSourceConfig(SourceType.TRELLO, sourceName, user) {
     val baseUrl = "https://api.trello.com"
 }
 
@@ -73,7 +71,7 @@ class BVGithubConfig (
         sourceName: String = "github",
         user: String,
         val token: String
-): BVAbstractSourceConfig (SourceType.GITHUB, sourceName, user) {
+): BVAbstractSourceConfig(SourceType.GITHUB, sourceName, user) {
     val baseGqlUrl = "https://api.github.com/graphql"
     val baseUrl = "https://api.github.com"
 }
@@ -83,7 +81,7 @@ class BVSlackConfig (
         user: String,
         clientId: String,
         clientSecret: String
-): BVOAuthSourceConfig (
+): BVOAuthSourceConfig(
         sourceType = SourceType.SLACK,
         sourceName = sourceName,
         user = user,

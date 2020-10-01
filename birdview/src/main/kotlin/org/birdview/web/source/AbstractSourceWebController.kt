@@ -1,7 +1,7 @@
 package org.birdview.web.source
 
-import org.birdview.config.BVAbstractSourceConfig
-import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.sources.BVAbstractSourceConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.web.BVWebPaths
 import org.slf4j.LoggerFactory
 import org.springframework.ui.Model
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
 
 abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
-        protected val sourcesConfigProvider: BVSourcesConfigProvider
+        protected val sourcesConfigStorage: BVSourcesConfigStorage
 ) {
     private val log = LoggerFactory.getLogger(AbstractSourceWebController::class.java)
 
@@ -48,15 +48,15 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
             ModelAndView("redirect:${BVWebPaths.SETTINGS}")
 
     private fun saveConfig(config:T) {
-        sourcesConfigProvider.save(config)
+        sourcesConfigStorage.save(config)
     }
 
     private fun updateConfig(config:T) {
-        sourcesConfigProvider.update(config)
+        sourcesConfigStorage.update(config)
     }
 
     private fun  getConfig(sourceName: String): T? =
-            sourcesConfigProvider.getConfigByName(sourceName, getConfigClass())
+            sourcesConfigStorage.getConfigByName(sourceName, getConfigClass())
 
     protected abstract fun mapConfig(sourceFormData: F): T
     protected abstract fun mapForm(config: T): F

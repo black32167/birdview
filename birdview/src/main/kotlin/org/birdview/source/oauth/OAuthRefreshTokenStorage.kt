@@ -1,7 +1,7 @@
 package org.birdview.source.oauth
 
-import org.birdview.config.BVOAuthSourceConfig
 import org.birdview.config.BVRuntimeConfig
+import org.birdview.config.sources.BVOAuthSourceConfig
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption

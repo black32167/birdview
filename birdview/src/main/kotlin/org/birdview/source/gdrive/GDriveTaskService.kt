@@ -3,8 +3,8 @@ package org.birdview.source.gdrive
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
-import org.birdview.config.BVGDriveConfig
-import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.sources.BVGDriveConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -20,7 +20,7 @@ import javax.inject.Named
 @Named
 open class GDriveTaskService(
         private val clientProvider: GDriveClientProvider,
-        private val bvConfigProvider: BVSourcesConfigProvider,
+        private val sourcesConfigStorage: BVSourcesConfigStorage,
         private val gDriveQueryBuilder: GDriveQueryBuilder
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
@@ -31,7 +31,7 @@ open class GDriveTaskService(
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         try {
-            bvConfigProvider.getConfigOfType(BVGDriveConfig::class.java)
+            sourcesConfigStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->
                         clientProvider.getGoogleApiClient(config)
                                 .getFiles(gDriveQueryBuilder.getQuery(user, updatedPeriod, config.sourceName)) { files ->
@@ -46,7 +46,7 @@ open class GDriveTaskService(
     override fun getType() = SourceType.GDRIVE
 
     override fun isAuthenticated(sourceName: String): Boolean =
-        bvConfigProvider.getConfigByName(sourceName, BVGDriveConfig::class.java)
+        sourcesConfigStorage.getConfigByName(sourceName, BVGDriveConfig::class.java)
                 ?.let { config -> clientProvider.isAuthenticated(config) }
                 ?: false
 

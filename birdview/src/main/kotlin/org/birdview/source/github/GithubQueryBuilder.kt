@@ -1,7 +1,7 @@
 package org.birdview.source.github
 
-import org.birdview.config.BVGithubConfig
-import org.birdview.config.BVUsersConfigProvider
+import org.birdview.config.sources.BVGithubConfig
+import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.TimeIntervalFilter
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -9,7 +9,7 @@ import javax.inject.Named
 
 @Named
 class GithubQueryBuilder(
-        private val usersConfigProvider: BVUsersConfigProvider
+        private val userProfileStorage: BVUserProfileStorage
 ) {
     fun getFilterQueries(user: String?, updatedPeriod: TimeIntervalFilter, githubConfig: BVGithubConfig): String =
                 listOfNotNull(
@@ -33,5 +33,5 @@ class GithubQueryBuilder(
 
     private fun getGithubUser(userAlias: String?, githubConfig: BVGithubConfig): String? =
             if (userAlias == null) "@me"
-            else usersConfigProvider.getUserName(userAlias, githubConfig.sourceName)
+            else userProfileStorage.getUserName(userAlias, githubConfig.sourceName)
 }

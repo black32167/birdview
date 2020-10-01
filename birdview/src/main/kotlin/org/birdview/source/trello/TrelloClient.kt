@@ -1,6 +1,6 @@
 package org.birdview.source.trello
 
-import org.birdview.config.BVTrelloConfig
+import org.birdview.config.sources.BVTrelloConfig
 import org.birdview.source.BVTaskListsDefaults
 import org.birdview.source.ItemsPage
 import org.birdview.source.trello.model.TrelloBoard

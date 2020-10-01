@@ -4,7 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentOperationType
-import org.birdview.config.BVUsersConfigProvider
+import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.*
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
@@ -24,7 +24,7 @@ import javax.inject.Named
 @Named
 open class BVTaskService(
         open var sources: List<BVTaskSource>,
-        open val bvUsersConfigProvider: BVUsersConfigProvider
+        open val userProfileStorage: BVUserProfileStorage
 ) {
     private val log = LoggerFactory.getLogger(BVTaskService::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
@@ -152,7 +152,7 @@ open class BVTaskService(
 
         var userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
-                var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, docUser.sourceName)
+                var filteringUser = userProfileStorage.getUserName(userFilter.userAlias, docUser.sourceName)
                 filteringUser == docUser.userName && userFilter.role == docUser.role
         }
         if (!hasFilteredUser) {
@@ -179,7 +179,7 @@ open class BVTaskService(
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
-            var filteringUser = bvUsersConfigProvider.getUserName(userFilter.userAlias, operation.sourceName)
+            var filteringUser = userProfileStorage.getUserName(userFilter.userAlias, operation.sourceName)
             filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
         }
     }

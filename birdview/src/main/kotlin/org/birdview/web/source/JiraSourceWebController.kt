@@ -1,7 +1,7 @@
 package org.birdview.web.source
 
-import org.birdview.config.BVJiraConfig
-import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.sources.BVJiraConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 @Controller
 @RequestMapping("${BVWebPaths.SETTINGS}/jira")
 class JiraSourceWebController(
-        sourcesConfigProvider: BVSourcesConfigProvider
-): AbstractSourceWebController<BVJiraConfig, JiraSourceWebController.JiraSourceFormData>(sourcesConfigProvider) {
+        sourcesConfigStorage: BVSourcesConfigStorage
+): AbstractSourceWebController<BVJiraConfig, JiraSourceWebController.JiraSourceFormData>(sourcesConfigStorage) {
     class JiraSourceFormData(
             sourceName:String,
             user: String,

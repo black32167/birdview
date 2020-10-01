@@ -1,7 +1,7 @@
 package org.birdview.source.jira
 
-import org.birdview.config.BVJiraConfig
-import org.birdview.config.BVUsersConfigProvider
+import org.birdview.config.sources.BVJiraConfig
+import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.TimeIntervalFilter
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -9,7 +9,7 @@ import javax.inject.Named
 
 @Named
 class JqlBuilder(
-        private val usersConfigProvider: BVUsersConfigProvider
+        private val userProfileStorage: BVUserProfileStorage
 ) {
     fun getJql(user: String?, updatedPeriod: TimeIntervalFilter, jiraConfig: BVJiraConfig): String? =
             getUserJqlClause(user, jiraConfig)
@@ -37,5 +37,5 @@ class JqlBuilder(
 
     private fun getUser(userAlias: String?, jiraConfig: BVJiraConfig): String =
             if(userAlias == null) { "currentUser()" }
-            else { "\"${usersConfigProvider.getUserName(userAlias, jiraConfig.sourceName)}\""}
+            else { "\"${userProfileStorage.getUserName(userAlias, jiraConfig.sourceName)}\""}
 }

@@ -1,7 +1,7 @@
 package org.birdview.web.source
 
-import org.birdview.config.BVGithubConfig
-import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.sources.BVGithubConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 @Controller
 @RequestMapping("${BVWebPaths.SETTINGS}/github")
 class GithubSourceWebController(
-        sourcesConfigProvider: BVSourcesConfigProvider
-): AbstractSourceWebController<BVGithubConfig, GithubSourceWebController.GithubSourceFormData>(sourcesConfigProvider) {
+        sourcesConfigStorage: BVSourcesConfigStorage
+): AbstractSourceWebController<BVGithubConfig, GithubSourceWebController.GithubSourceFormData>(sourcesConfigStorage) {
     class GithubSourceFormData(
             sourceName:String,
             user: String,

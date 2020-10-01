@@ -1,7 +1,7 @@
 package org.birdview.web
 
-import org.birdview.config.BVSourcesConfigProvider
-import org.birdview.config.BVUsersConfigProvider
+import org.birdview.config.sources.BVSourcesConfigStorage
+import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.*
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -13,8 +13,8 @@ import java.time.temporal.ChronoUnit
 
 @Controller
 class BVWebPageController(
-        private val usersConfigProvider: BVUsersConfigProvider,
-        private val sourcesConfigProvider: BVSourcesConfigProvider
+        private val userProfileStorage: BVUserProfileStorage,
+        private val sourcesConfigStorage: BVSourcesConfigStorage
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
     class OAuthCodeLink(val source: String, val authCodeUrl:String)
@@ -41,14 +41,14 @@ class BVWebPageController(
                 "reportTypes" to ReportType.values(),
                 "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
-                "sources" to sourcesConfigProvider.listSourceNames(),
+                "sources" to sourcesConfigStorage.listSourceNames(),
                 "users" to listUsers()
         ))
         return "report"
     }
 
     private fun listUsers() =
-            usersConfigProvider.listUsers()
+            userProfileStorage.listUsers()
 
     private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
         return "${baseUrl}?report=${reportType.name.toLowerCase()}" +

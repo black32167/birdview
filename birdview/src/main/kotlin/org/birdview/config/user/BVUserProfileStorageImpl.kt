@@ -1,19 +1,20 @@
-package org.birdview.config
+package org.birdview.config.user
 
+import org.birdview.config.BVRuntimeConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.utils.JsonDeserializer
-import org.springframework.cache.annotation.Cacheable
 import java.nio.file.Files
 import javax.inject.Named
 
 @Named
-open class BVUsersConfigProvider(
+class BVUserProfileStorageImpl(
         private val bvRuntimeConfig: BVRuntimeConfig,
         private val jsonDeserializer: JsonDeserializer,
-        private val bvSourcesConfigProvider: BVSourcesConfigProvider
-) {
-    fun getUserName(userAlias: String?, sourceName: String): String =
+        private val sourcesConfigStorage: BVSourcesConfigStorage
+): BVUserProfileStorage {
+    override fun getUserName(userAlias: String?, sourceName: String): String =
             if (userAlias.isNullOrBlank()) {
-                bvSourcesConfigProvider.getConfigByName(sourceName)?.user ?: throw java.lang.RuntimeException("Config not found for $sourceName")
+                sourcesConfigStorage.getConfigByName(sourceName)?.user ?: throw java.lang.RuntimeException("Config not found for $sourceName")
             } else {
                 getConfig()
                         .find { it.alias == userAlias }
@@ -23,16 +24,13 @@ open class BVUsersConfigProvider(
                         ?: throw RuntimeException("Cannot find user for alias '${userAlias}' and source '${sourceName}'")
             }
 
-    @Cacheable
+    override fun listUsers() = getConfig().map { it.alias }
+
     private fun getConfig(): Array<BVUserSourcesConfig> =
             bvRuntimeConfig.usersConfigFileName
                     .takeIf { Files.exists(it) }
                     ?.let (jsonDeserializer::deserialize)
                     ?: emptyArray()
-
-
-    fun listUsers() = getConfig()
-            .map { it.alias }
 }
 
 class BVUserSourcesConfig(

@@ -1,6 +1,6 @@
 package org.birdview.source.oauth
 
-import org.birdview.config.BVOAuthSourceConfig
+import org.birdview.config.sources.BVOAuthSourceConfig
 import org.birdview.utils.remote.WebTargetFactory
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.Form

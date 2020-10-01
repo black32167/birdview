@@ -1,8 +1,8 @@
 package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
-import org.birdview.config.BVSlackConfig
-import org.birdview.config.BVSourcesConfigProvider
+import org.birdview.config.sources.BVSlackConfig
+import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
@@ -12,12 +12,12 @@ import javax.inject.Named
 
 @Named
 class SlackTaskService(
-        private val sourcesConfigProvider: BVSourcesConfigProvider,
+        private val sourcesConfigStorage: BVSourcesConfigStorage,
         private val tokenStorage: OAuthRefreshTokenStorage
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(SlackTaskService::class.java)
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
-        sourcesConfigProvider.getConfigsOfType(BVSlackConfig::class.java)
+        sourcesConfigStorage.getConfigsOfType(BVSlackConfig::class.java)
                 .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
     }
 
@@ -37,7 +37,7 @@ class SlackTaskService(
     override fun getType(): SourceType = SourceType.SLACK
 
     override fun isAuthenticated(sourceName: String): Boolean =
-            sourcesConfigProvider.getConfigByName(sourceName, BVSlackConfig::class.java)
+            sourcesConfigStorage.getConfigByName(sourceName, BVSlackConfig::class.java)
                     ?.let { config -> tokenStorage.hasToken(config) }
                     ?: false
 }

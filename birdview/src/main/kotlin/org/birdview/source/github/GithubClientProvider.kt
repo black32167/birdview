@@ -1,6 +1,6 @@
 package org.birdview.source.github
 
-import org.birdview.config.BVGithubConfig
+import org.birdview.config.sources.BVGithubConfig
 import org.birdview.source.github.gql.GithubGqlClient
 import javax.inject.Named
 
