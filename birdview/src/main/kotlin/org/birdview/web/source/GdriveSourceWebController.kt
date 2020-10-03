@@ -17,7 +17,7 @@ class GdriveSourceWebController(
         private val tokenStorage: OAuthRefreshTokenStorage
 ): AbstractOauthSourceWebController<BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(sourcesConfigStorage) {
     companion object {
-        const val CONTROLLER_PATH = "${BVWebPaths.SETTINGS}/gdrive"
+        const val CONTROLLER_PATH = "${BVWebPaths.SECRETS}/gdrive"
     }
     class GdriveSourceFormData(
             sourceName: String,

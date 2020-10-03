@@ -7,7 +7,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
-@RequestMapping("${BVWebPaths.SETTINGS}/jira")
+@RequestMapping("${BVWebPaths.SECRETS}/jira")
 class JiraSourceWebController(
         sourcesConfigStorage: BVSourcesConfigStorage
 ): AbstractSourceWebController<BVJiraConfig, JiraSourceWebController.JiraSourceFormData>(sourcesConfigStorage) {

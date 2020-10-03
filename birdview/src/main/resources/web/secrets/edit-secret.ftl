@@ -7,19 +7,19 @@
 
 <body>
     <div class="menu">
-       <a href="/settings">< Settings</a>
+       <a href="/secrets">< Settings</a>
     </div>
 
     <div>
     <div class="center">
-        <form id="jira-form" action="/settings/${source.type}/update-source" method="POST">
+        <form id="jira-form" action="/secrets/${source.type}/update-secret" method="POST">
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>
             <tr>
                 <td class="sign">Source alias:</td>
                 <td>${source.sourceName}</td>
             </tr>
-            <#include "edit-source-${source.type}.ftl">
+            <#include "edit-secret-${source.type}.ftl">
             </table>
             <div class="buttons">
                 <input type="submit" value="Update">

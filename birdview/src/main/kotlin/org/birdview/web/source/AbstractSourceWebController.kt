@@ -22,22 +22,22 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
             val user: String
     )
 
-    @GetMapping("/edit-source")
+    @GetMapping("/edit-secret")
     fun editSourceView1(model: Model, @RequestParam("sourceName") sourceName: String): String {
         val config = getConfig(sourceName)!!
         model.addAttribute("source", mapForm(config))
 
-        return "source/edit-source"
+        return "secrets/edit-secret"
     }
 
-    @PostMapping("/add-source")
+    @PostMapping("/add-secret")
     fun addSource(model: Model, @ModelAttribute sourceFormData: F): Any {
         val config = mapConfig(sourceFormData)
         saveConfig(config)
         return getRedirectAfterSaveView(config)
     }
 
-    @PostMapping("/update-source")
+    @PostMapping("/update-secret")
     fun updateSource(model: Model, @ModelAttribute sourceFormData: F): Any {
         val config = mapConfig(sourceFormData)
         updateConfig(config)
@@ -45,7 +45,7 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
     }
 
     protected open fun getRedirectAfterSaveView(config:T): Any =
-            ModelAndView("redirect:${BVWebPaths.SETTINGS}")
+            ModelAndView("redirect:${BVWebPaths.SECRETS}")
 
     private fun saveConfig(config:T) {
         sourcesConfigStorage.save(config)

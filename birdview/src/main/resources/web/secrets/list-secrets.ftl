@@ -2,7 +2,7 @@
 <html>
 
 <head>
-<link rel="stylesheet" href="css/bv.css"></link>
+<link rel="stylesheet" href="/css/bv.css"></link>
 <script src="js/jquery-3.5.1.min.js"></script>
 </head>
 
@@ -10,7 +10,7 @@
     <div class="menu">
        <a href="/">< Home</a>
        |
-       <a href="settings/add-source">Add source</a>
+       <a href="secrets/add-secret">Add secret</a>
     </div>
 
     <div>
@@ -24,13 +24,13 @@
     <#list sources as source>
         <tr>
         <td>
-            <a href="settings/${source.type?lower_case}/edit-source?sourceName=${source.name}">${source.name}</a>
+            <a href="secrets/${source.type?lower_case}/edit-secret?sourceName=${source.name}">${source.name}</a>
         </td>
         <td>
             ${source.type}
         </td>
         <td>
-            <a href="settings/delete?sourceName=${source.name}">X</a>
+            <a href="secrets/delete?sourceName=${source.name}">X</a>
         </td>
         </tr>
     </#list>

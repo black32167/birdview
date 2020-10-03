@@ -37,7 +37,7 @@ abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
             code != null -> exchangeAuthorizationCode(sourceName = source, authCode = code)
             else -> log.error("OAuth authentication error for source ${source}:no code provided!")
         }
-        return ModelAndView("redirect:/settings")
+        return ModelAndView("redirect:/secrets")
     }
 
     override fun getRedirectAfterSaveView(config: T): Any =

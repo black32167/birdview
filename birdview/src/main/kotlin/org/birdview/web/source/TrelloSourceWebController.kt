@@ -7,7 +7,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
-@RequestMapping("${BVWebPaths.SETTINGS}/trello")
+@RequestMapping("${BVWebPaths.SECRETS}/trello")
 class TrelloSourceWebController(
         sourcesConfigStorage: BVSourcesConfigStorage
 ): AbstractSourceWebController<BVTrelloConfig, TrelloSourceWebController.TrelloSourceFormData>(sourcesConfigStorage) {

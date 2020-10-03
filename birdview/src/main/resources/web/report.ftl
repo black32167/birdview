@@ -75,7 +75,7 @@
     </table>
 
     <div class="menu-item">
-        <a href="settings">Settings...</a>
+        <a href="/secrets">Secrets...</a>
         |
         <a href="#" onclick="reindex()" class="refresh">Update</a>
     </div>

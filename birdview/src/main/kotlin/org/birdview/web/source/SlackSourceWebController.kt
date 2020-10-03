@@ -17,7 +17,7 @@ class SlackSourceWebController(
         private val tokenStorage: OAuthRefreshTokenStorage
 ): AbstractOauthSourceWebController<BVSlackConfig, SlackSourceWebController.SlackSourceFormData>(sourcesConfigStorage) {
     companion object {
-        const val CONTROLLER_PATH = "${BVWebPaths.SETTINGS}/slack"
+        const val CONTROLLER_PATH = "${BVWebPaths.SECRETS}/slack"
     }
 
     class SlackSourceFormData(
