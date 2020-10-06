@@ -7,12 +7,12 @@
 
 <body>
     <div class="menu">
-       <a href="/secrets">< Settings</a>
+       <a href="/admin/secrets">< Settings</a>
     </div>
 
     <div>
     <div class="center">
-        <form id="jira-form" action="/secrets/${source.type}/update-secret" method="POST">
+        <form id="jira-form" action="/admin/secrets/${source.type}/update-secret" method="POST">
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>
             <tr>

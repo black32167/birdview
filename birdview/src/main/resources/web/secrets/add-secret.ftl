@@ -1,5 +1,5 @@
 <#macro addForm sourceType>
-<form id="${sourceType}-form" source="${sourceType}" action="/secrets/${sourceType}/add-secret" method="POST">
+<form id="${sourceType}-form" source="${sourceType}" action="/admin/secrets/${sourceType}/add-secret" method="POST">
     <table>
     <#nested>
     </table>
@@ -57,7 +57,7 @@ $(function(){
 
 <body>
     <div class="menu">
-       <a href="/secrets">< Settings</a>
+       <a href="/admin/secrets">< Settings</a>
     </div>
 
     <div>
