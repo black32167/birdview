@@ -8,9 +8,11 @@
 
 <body>
     <div class="menu">
-       <a href="/">< Home</a>
-       |
-       <a href="secrets/add-secret">Add secret</a>
+        <a href="secrets/add-secret">Add secret</a>
+
+        <div class="menu_right">
+            <#include "/logout-form.ftl">
+        </div>
     </div>
 
     <div>

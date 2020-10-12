@@ -78,6 +78,8 @@
         <a href="/secrets">Secrets...</a>
         |
         <a href="#" onclick="reindex()" class="refresh">Update</a>
+        |
+        <#include "/logout-form.ftl">
     </div>
     </span>
 </td>
