@@ -1,31 +1,39 @@
 package org.birdview.web
 
 import org.birdview.config.sources.BVSourcesConfigStorage
-import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.*
+import org.birdview.security.UserContext
+import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserStorage
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 @Controller
+@RequestMapping(BVWebPaths.EXPLORE)
 class BVWebPageController(
-        private val userProfileStorage: BVUserProfileStorage,
+        private val userSourceStorage: BVUserSourceStorage,
+        private val userStorage: BVUserStorage,
         private val sourcesConfigStorage: BVSourcesConfigStorage
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
     class OAuthCodeLink(val source: String, val authCodeUrl:String)
 
-    @GetMapping("/")
+    @GetMapping
     fun index(model: Model,
               @RequestParam(value = "user", required = false) user: String?,
               @RequestParam(value = "report", required = false) report: String?
     ): String? {
         val baseUrl = getBaseUrl()
-        val tsRequest = buildTSRequest(user, report)
+
+        val tsRequest = buildTSRequest(
+                user ?: UserContext.getUserName(),
+                report)
 
         model.asMap().putAll(mapOf(
                 "reportLinks" to ReportType.values()
@@ -44,11 +52,11 @@ class BVWebPageController(
                 "sources" to sourcesConfigStorage.listSourceNames(),
                 "users" to listUsers()
         ))
-        return "report"
+        return "/report"
     }
 
     private fun listUsers() =
-            userProfileStorage.listUsers()
+            userStorage.listUsers()
 
     private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
         return "${baseUrl}?report=${reportType.name.toLowerCase()}" +
