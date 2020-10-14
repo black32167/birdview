@@ -7,6 +7,7 @@ import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.model.*
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
@@ -20,19 +21,22 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.inject.Named
+import kotlin.NoSuchElementException
 
 @Named
 open class BVTaskService(
-        open var sources: List<BVTaskSource>,
-        open val userSourceStorage: BVUserSourceStorage
+        sourceManagers: List<BVTaskSource>,
+        val userSourceStorage: BVUserSourceStorage,
+        val sourceSecretsStorage: BVSourceSecretsStorage
 ) {
+    private val sourceManagersMap = sourceManagers.map { it.getType() to it }.toMap()
+
     private val log = LoggerFactory.getLogger(BVTaskService::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
     // id -> doc
     private val docsMap = ConcurrentHashMap<BVDocumentId, BVDocument>()
     private val usersRetrieved = ConcurrentHashMap<String, Boolean>()
 
-    //  @Cacheable("bv")
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
         loadAsync(filter.userFilter.userAlias)
         BVTimeUtil.printStats()
@@ -75,7 +79,7 @@ open class BVTaskService(
             listOf(doc.copy(subDocuments = optimizeHierarchy(doc.subDocuments)))
         }
 
-    private fun loadAsync(user: String?) {
+    private fun loadAsync(user: String) {
         usersRetrieved.computeIfAbsent(user ?: "") {
             loadDocuments(user).forEach{
                 try {
@@ -88,29 +92,31 @@ open class BVTaskService(
         }
     }
 
-    open fun loadDocuments(user: String?):List<Future<*>> =
-        sources
-                .map { source ->
-                    val subtaskFutures = mutableListOf<Future<*>>()
-                    CompletableFuture.runAsync(Runnable {
-                        BVTimeUtil.logTime("Loading data from ${source.getType()}") {
-                            source.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
-                                docChunk.forEach { doc ->
-                                    doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
-                                }
-
-                                subtaskFutures.add(executor.submit {
-                                    loadReferredDocs(docChunk) { docChunk ->
-                                        docChunk.forEach { doc ->
-                                            doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
-                                        }
+    open fun loadDocuments(user: String):List<Future<*>> =
+            userSourceStorage.listUserSources(user)
+                    .mapNotNull (sourceSecretsStorage::getConfigByName)
+                    .map { source ->
+                        val subtaskFutures = mutableListOf<Future<*>>()
+                        CompletableFuture.runAsync(Runnable {
+                            BVTimeUtil.logTime("Loading data from ${source.sourceType}") {
+                                val sourceManager = getSourceManager(source.sourceType)
+                                sourceManager.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
+                                    docChunk.forEach { doc ->
+                                        doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                                     }
-                                })
+
+                                    subtaskFutures.add(executor.submit {
+                                        loadReferredDocs(docChunk) { docChunk ->
+                                            docChunk.forEach { doc ->
+                                                doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
+                                            }
+                                        }
+                                    })
+                                }
+                                subtaskFutures.forEach { it.get() }
                             }
-                            subtaskFutures.forEach { it.get() }
-                        }
-                    }, executor)
-                }
+                        }, executor)
+                    }
 
     // @CacheEvict(value = ["bv"], allEntries = true)
     open fun invalidateCache() {
@@ -138,7 +144,7 @@ open class BVTaskService(
             }
         }
 
-        var inferredDocStatus = inferDocStatus(doc)
+        val inferredDocStatus = inferDocStatus(doc)
         val targetDocumentStatuses = getTargetDocStatuses(filter.reportType)
         if (!targetDocumentStatuses.contains(inferredDocStatus)) {
             log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
@@ -150,9 +156,9 @@ open class BVTaskService(
             return false
         }
 
-        var userFilter = filter.userFilter
+        val userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
-                var filteringUser = userSourceStorage.getUserName(userFilter.userAlias, docUser.sourceName)
+                val filteringUser = userSourceStorage.getBVUserNameBySourceUserName(userFilter.userAlias, docUser.sourceName)
                 filteringUser == docUser.userName && userFilter.role == docUser.role
         }
         if (!hasFilteredUser) {
@@ -179,7 +185,7 @@ open class BVTaskService(
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
-            var filteringUser = userSourceStorage.getUserName(userFilter.userAlias, operation.sourceName)
+            var filteringUser = userSourceStorage.getBVUserNameBySourceUserName(userFilter.userAlias, operation.sourceName)
             filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
         }
     }
@@ -198,7 +204,7 @@ open class BVTaskService(
             }
 
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
-        var parentStatuses = doc.refsIds
+        val parentStatuses = doc.refsIds
                 .map { key -> getDocByStringKey(key)?.status }
         if (parentStatuses.isNotEmpty() && parentStatuses.all { it == BVDocumentStatus.DONE }) {
             return BVDocumentStatus.DONE
@@ -237,22 +243,21 @@ open class BVTaskService(
                     getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
                 }
-        return sources
-                .filter { source -> type2Ids.contains(source.getType()) }
-                .forEach { source ->
-                    type2Ids[source.getType()]
-                            ?.also { ids ->
-                                try {
-                                    source.loadByIds(ids, chunkConsumer)
-                                } catch (e: Exception) {
-                                    log.error("", e)
-                                }
-                            }
-                }
+        return type2Ids.entries.forEach { (sourceType, sourceIds) ->
+            val sourceManager = getSourceManager(sourceType)
+            try {
+                sourceManager.loadByIds(sourceIds, chunkConsumer)
+            } catch (e: Exception) {
+                log.error("", e)
+            }
+        }
     }
 
+    private fun getSourceManager(sourceType: SourceType) =
+            sourceManagersMap[sourceType] ?: throw NoSuchElementException("Unknown source type ${sourceType}")
+
     private fun getSourceTypes(id: String): SourceType? =
-            sources.find { it.canHandleId(id) }?.getType()
+            sourceManagersMap.values.find { it.canHandleId(id) }?.getType()
 
     private fun linkDocs(_docs: List<BVDocument>): List<BVDocument> {
         //FIXME (subDocuments)

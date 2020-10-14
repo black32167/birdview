@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="css/jquery.treetable.css"></link>
-<link rel="stylesheet" href="css/jquery.treetable.theme.default.css"></link>
-<link rel="stylesheet" href="css/bv.css"></link>
+<link rel="stylesheet" href="/css/jquery.treetable.css"></link>
+<link rel="stylesheet" href="/css/jquery.treetable.theme.default.css"></link>
+<link rel="stylesheet" href="/css/bv.css"></link>
 
-<script src="js/jquery-3.5.1.min.js"></script>
-<script src="js/jquery.treetable.js"></script>
-<script src="js/report.js"></script>
+<script src="/js/jquery-3.5.1.min.js"></script>
+<script src="/js/jquery.treetable.js"></script>
+<script src="/js/report.js"></script>
 <script>
     baseURL = "${baseURL}"
     $(function() {
@@ -75,7 +75,7 @@
     </table>
 
     <div class="menu-item">
-        <a href="/secrets">Secrets...</a>
+        <a href="/user/sources">Sources...</a>
         |
         <a href="#" onclick="reindex()" class="refresh">Update</a>
         |
