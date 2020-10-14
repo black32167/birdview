@@ -1,10 +1,10 @@
-package org.birdview.config.sources
+package org.birdview.storage
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.birdview.source.SourceType
 
-interface BVSourcesConfigStorage {
+interface BVSourceSecretsStorage {
 
     fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T>
 
@@ -16,7 +16,7 @@ interface BVSourcesConfigStorage {
 
     fun listSourceNames(): List<String>
 
-    fun save(config: BVAbstractSourceConfig)
+    fun create(config: BVAbstractSourceConfig)
 
     fun update(config: BVAbstractSourceConfig)
 

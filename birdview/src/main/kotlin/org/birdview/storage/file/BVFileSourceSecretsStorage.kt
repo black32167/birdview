@@ -1,6 +1,8 @@
-package org.birdview.config.sources
+package org.birdview.storage.file
 
-import org.birdview.config.BVRuntimeConfig
+import org.birdview.config.BVFoldersConfig
+import org.birdview.storage.BVAbstractSourceConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
@@ -10,13 +12,15 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors
 import javax.inject.Named
-
 @Named
-open class BVSourcesConfigStorageImpl(
-        open val bvRuntimeConfig: BVRuntimeConfig,
+open class BVFileSourceSecretsStorage(
+        open val bvFoldersConfig: BVFoldersConfig,
         open val jsonDeserializer: JsonDeserializer
-):  BVSourcesConfigStorage {
-    private val log = LoggerFactory.getLogger(BVSourcesConfigStorage::class.java)
+): BVSourceSecretsStorage {
+    companion object {
+        const val CACHE_NAME = "sourcesConfig"
+    }
+    private val log = LoggerFactory.getLogger(BVSourceSecretsStorage::class.java)
 
     override fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T> =
             getSourceConfigs()
@@ -27,28 +31,28 @@ open class BVSourcesConfigStorageImpl(
     override fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T? =
             getConfigsOfType(configClass).firstOrNull()
 
-    @Cacheable("sourcesConfig")
+    @Cacheable(CACHE_NAME)
     override fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
             getSourceConfigs().find { it.sourceName == sourceName }!!
 
-    @Cacheable("sourcesConfig")
+    @Cacheable(CACHE_NAME)
     override fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =
             getConfigByName(sourceName) as? T
 
     override fun listSourceNames(): List<String> =
             getSourceConfigs().map { it.sourceName }
 
-    @CacheEvict("sourcesConfig", allEntries = true)
-    override fun save(config: BVAbstractSourceConfig) {
-        bvRuntimeConfig.sourcesConfigsFolder.also { folder->
+    @CacheEvict(CACHE_NAME, allEntries = true)
+    override fun create(config: BVAbstractSourceConfig) {
+        bvFoldersConfig.sourcesSharedSecretsConfigsFolder.also { folder->
             Files.createDirectories(folder)
             jsonDeserializer.serialize(folder.resolve(config.sourceName), config)
         }
     }
 
-    @CacheEvict("sourcesConfig", allEntries = true)
+    @CacheEvict(CACHE_NAME, allEntries = true)
     override fun update(config: BVAbstractSourceConfig) {
-            bvRuntimeConfig.sourcesConfigsFolder.resolve(config.sourceName).also { file ->
+            bvFoldersConfig.sourcesSharedSecretsConfigsFolder.resolve(config.sourceName).also { file ->
             Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
             jsonDeserializer.serialize(file, config)
         }
@@ -56,10 +60,10 @@ open class BVSourcesConfigStorageImpl(
 
     @CacheEvict("sourcesConfig", allEntries = true)
     override fun delete(sourceName: String) {
-        Files.delete(bvRuntimeConfig.sourcesConfigsFolder.resolve(sourceName))
+        Files.delete(bvFoldersConfig.sourcesSharedSecretsConfigsFolder.resolve(sourceName))
     }
 
-    private fun getSourceConfigs(): List<BVAbstractSourceConfig> = bvRuntimeConfig.sourcesConfigsFolder
+    private fun getSourceConfigs(): List<BVAbstractSourceConfig> = bvFoldersConfig.sourcesSharedSecretsConfigsFolder
             .takeIf { Files.isDirectory(it) }
             ?.let (Files::list)
             ?.filter { !it.toString().toLowerCase().endsWith(".bak") }
@@ -67,7 +71,7 @@ open class BVSourcesConfigStorageImpl(
             ?.mapNotNull (this::deserialize)
             ?: emptyList()
 
-    private fun deserialize(path: Path):BVAbstractSourceConfig? {
+    private fun deserialize(path: Path): BVAbstractSourceConfig? {
         try {
             return jsonDeserializer.deserialize(path)
         } catch (e: Exception) {
