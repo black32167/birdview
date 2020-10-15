@@ -22,8 +22,8 @@ class BVFileUserSourceStorage(
     }
 
     @Cacheable(CACHE_NAME)
-    override fun getSourceProfile(bvUserName: String, sourceName: String): BVUserSourceConfig =
-            deserialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
+    override fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig =
+            deserialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
 
     override fun listUserSources(userName: String): List<String> =
             Files.list(getUserSourcesFolder(userName))

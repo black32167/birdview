@@ -92,15 +92,16 @@ open class BVTaskService(
         }
     }
 
-    open fun loadDocuments(user: String):List<Future<*>> =
-            userSourceStorage.listUserSources(user)
+    open fun loadDocuments(bvUser: String):List<Future<*>> =
+            userSourceStorage.listUserSources(bvUser)
+                    .filter { sourceName -> isEnabled(bvUser = bvUser, sourceName = sourceName) }
                     .mapNotNull (sourceSecretsStorage::getConfigByName)
                     .map { source ->
                         val subtaskFutures = mutableListOf<Future<*>>()
                         CompletableFuture.runAsync(Runnable {
                             BVTimeUtil.logTime("Loading data from ${source.sourceType}") {
                                 val sourceManager = getSourceManager(source.sourceType)
-                                sourceManager.getTasks(user, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
+                                sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
                                     docChunk.forEach { doc ->
                                         doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                                     }
@@ -117,6 +118,13 @@ open class BVTaskService(
                             }
                         }, executor)
                     }
+
+    private fun isEnabled(bvUser: String, sourceName: String): Boolean = try {
+        userSourceStorage.getSourceProfile(bvUser = bvUser, sourceName = sourceName).enabled
+    } catch (exception: java.lang.Exception) {
+        log.warn("Error reading source '${sourceName}' config for user '${bvUser}'")
+        false
+    }
 
     // @CacheEvict(value = ["bv"], allEntries = true)
     open fun invalidateCache() {
@@ -185,7 +193,7 @@ open class BVTaskService(
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
-            var filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, operation.sourceName).sourceUserName
+            val filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, operation.sourceName).sourceUserName
             filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
         }
     }

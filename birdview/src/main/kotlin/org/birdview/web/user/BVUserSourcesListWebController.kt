@@ -45,7 +45,7 @@ class BVUserSourcesListWebController (
 
     @GetMapping("{sourceName}/edit")
     fun editForm(model: Model, @PathVariable("sourceName") sourceName:String): String {
-        val sourceProfile = userSourceStorage.getSourceProfile(bvUserName = currentUserName(), sourceName = sourceName)
+        val sourceProfile = userSourceStorage.getSourceProfile(bvUser = currentUserName(), sourceName = sourceName)
         model
                 .addAttribute("sourceUserName", sourceProfile.sourceUserName)
                 .addAttribute("enabled", if (sourceProfile.enabled) YES else NO)
