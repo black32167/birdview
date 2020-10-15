@@ -1,4 +1,4 @@
-package org.birdview.web.source
+package org.birdview.web.secrets
 
 class BVDocumentView (
         val id: String,

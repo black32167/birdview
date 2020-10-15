@@ -1,8 +1,8 @@
-package org.birdview.web.source
+package org.birdview.web.secrets
 
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -15,7 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @Controller
 @RequestMapping(BVWebPaths.SECRETS)
 class BVSourceSecretListController(
-        private val sourcesConfigStorage: BVSourcesConfigStorage,
+        private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val sources: List<BVTaskSource>
 ) {
     class SourceSettingView(
@@ -27,7 +27,7 @@ class BVSourceSecretListController(
     @GetMapping
     fun index(model: Model): String? {
         model
-                .addAttribute("sources", sourcesConfigStorage.listSourceNames().map { mapSourceSetting(it) })
+                .addAttribute("sources", sourceSecretsStorage.listSourceNames().map { mapSourceSetting(it) })
         return "secrets/list-secrets"
     }
 
@@ -40,13 +40,13 @@ class BVSourceSecretListController(
 
     @GetMapping("/delete")
     fun deleteSource(model: Model, @RequestParam("sourceName") sourceName: String): ModelAndView {
-        sourcesConfigStorage.delete(sourceName)
+        sourceSecretsStorage.delete(sourceName)
 
         return ModelAndView("redirect:${BVWebPaths.SECRETS}")
     }
 
     private fun mapSourceSetting(sourceName: String): SourceSettingView? =
-            sourcesConfigStorage.getConfigByName(sourceName)
+            sourceSecretsStorage.getConfigByName(sourceName)
                     ?.let { sourceConfig ->
                         SourceSettingView(
                                 name = sourceConfig.sourceName,

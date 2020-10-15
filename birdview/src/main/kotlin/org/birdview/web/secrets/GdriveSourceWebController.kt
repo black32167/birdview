@@ -1,11 +1,11 @@
-package org.birdview.web.source
+package org.birdview.web.secrets
 
-import org.birdview.config.sources.BVGDriveConfig
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.source.gdrive.GAccessTokenResponse
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
+import org.birdview.storage.BVGDriveConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
-import org.birdview.web.source.GdriveSourceWebController.Companion.CONTROLLER_PATH
+import org.birdview.web.secrets.GdriveSourceWebController.Companion.CONTROLLER_PATH
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 import javax.ws.rs.core.Response
@@ -13,9 +13,9 @@ import javax.ws.rs.core.Response
 @Controller
 @RequestMapping(CONTROLLER_PATH)
 class GdriveSourceWebController(
-        sourcesConfigStorage: BVSourcesConfigStorage,
+        sourceSecretsStorage: BVSourceSecretsStorage,
         private val tokenStorage: OAuthRefreshTokenStorage
-): AbstractOauthSourceWebController<BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(sourcesConfigStorage) {
+): AbstractOauthSourceWebController<BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(sourceSecretsStorage) {
     companion object {
         const val CONTROLLER_PATH = "${BVWebPaths.SECRETS}/gdrive"
     }

@@ -1,11 +1,11 @@
-package org.birdview.web.source
+package org.birdview.web.secrets
 
-import org.birdview.config.sources.BVSlackConfig
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.source.slack.SlackTokenResponse
+import org.birdview.storage.BVSlackConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
-import org.birdview.web.source.SlackSourceWebController.Companion.CONTROLLER_PATH
+import org.birdview.web.secrets.SlackSourceWebController.Companion.CONTROLLER_PATH
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 import javax.ws.rs.core.Response
@@ -13,9 +13,9 @@ import javax.ws.rs.core.Response
 @Controller
 @RequestMapping(CONTROLLER_PATH)
 class SlackSourceWebController(
-        sourcesConfigStorage: BVSourcesConfigStorage,
+        sourceSecretsStorage: BVSourceSecretsStorage,
         private val tokenStorage: OAuthRefreshTokenStorage
-): AbstractOauthSourceWebController<BVSlackConfig, SlackSourceWebController.SlackSourceFormData>(sourcesConfigStorage) {
+): AbstractOauthSourceWebController<BVSlackConfig, SlackSourceWebController.SlackSourceFormData>(sourceSecretsStorage) {
     companion object {
         const val CONTROLLER_PATH = "${BVWebPaths.SECRETS}/slack"
     }

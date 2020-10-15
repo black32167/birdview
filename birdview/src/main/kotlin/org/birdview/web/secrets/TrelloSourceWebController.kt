@@ -1,7 +1,7 @@
-package org.birdview.web.source
+package org.birdview.web.secrets
 
-import org.birdview.config.sources.BVSourcesConfigStorage
-import org.birdview.config.sources.BVTrelloConfig
+import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVTrelloConfig
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 @Controller
 @RequestMapping("${BVWebPaths.SECRETS}/trello")
 class TrelloSourceWebController(
-        sourcesConfigStorage: BVSourcesConfigStorage
-): AbstractSourceWebController<BVTrelloConfig, TrelloSourceWebController.TrelloSourceFormData>(sourcesConfigStorage) {
+        sourceSecretsStorage: BVSourceSecretsStorage
+): AbstractSourceWebController<BVTrelloConfig, TrelloSourceWebController.TrelloSourceFormData>(sourceSecretsStorage) {
     class TrelloSourceFormData(
             sourceName: String,
             user: String,

@@ -1,7 +1,7 @@
-package org.birdview.web.source
+package org.birdview.web.secrets
 
-import org.birdview.config.sources.BVOAuthSourceConfig
-import org.birdview.config.sources.BVSourcesConfigStorage
+import org.birdview.storage.BVOAuthSourceConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,8 +14,8 @@ import javax.ws.rs.core.Form
 import javax.ws.rs.core.Response
 
 abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
-        sourcesConfigStorage: BVSourcesConfigStorage
-): AbstractSourceWebController<T, F>(sourcesConfigStorage) {
+        sourceSecretsStorage: BVSourceSecretsStorage
+): AbstractSourceWebController<T, F>(sourceSecretsStorage) {
     companion object {
         const val CODE_ENDPOINT_PATH = "/code"
     }
@@ -52,7 +52,7 @@ abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
     }
 
     private fun exchangeAuthorizationCode(sourceName: String, authCode:String) {
-        val config = sourcesConfigStorage.getConfigByName(sourceName) as BVOAuthSourceConfig
+        val config = sourceSecretsStorage.getConfigByName(sourceName) as BVOAuthSourceConfig
         val formEntity = Entity.form(Form()
                 .param("client_id", config.clientId)
                 .param("client_secret", config.clientSecret)

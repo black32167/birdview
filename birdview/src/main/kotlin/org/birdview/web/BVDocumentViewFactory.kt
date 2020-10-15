@@ -2,7 +2,7 @@ package org.birdview.web
 
 import org.birdview.analysis.BVDocument
 import org.birdview.utils.BVDateTimeUtils
-import org.birdview.web.source.BVDocumentView
+import org.birdview.web.secrets.BVDocumentView
 import java.util.*
 
 object BVDocumentViewFactory {

@@ -1,9 +1,8 @@
 package org.birdview.web
 
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.model.*
 import org.birdview.security.UserContext
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserStorage
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -16,13 +15,11 @@ import java.time.temporal.ChronoUnit
 
 @Controller
 @RequestMapping(BVWebPaths.EXPLORE)
-class BVWebPageController(
-        private val userSourceStorage: BVUserSourceStorage,
+class BVExploreWebController(
         private val userStorage: BVUserStorage,
-        private val sourcesConfigStorage: BVSourcesConfigStorage
+        private val sourceSecretsStorage: BVSourceSecretsStorage
 ) {
     class ReportLink(val reportUrl:String, val reportName:String)
-    class OAuthCodeLink(val source: String, val authCodeUrl:String)
 
     @GetMapping
     fun index(model: Model,
@@ -49,7 +46,7 @@ class BVWebPageController(
                 "reportTypes" to ReportType.values(),
                 "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
-                "sources" to sourcesConfigStorage.listSourceNames(),
+                "sources" to sourceSecretsStorage.listSourceNames(),
                 "users" to listUsers()
         ))
         return "/report"
@@ -77,13 +74,13 @@ class BVWebPageController(
                     reportType = reportType,
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(),
-                    userFilter = UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
+                    userFilter = UserFilter( userAlias = user ?: UserContext.getUserName(), role = UserRole.IMPLEMENTOR),
                     sourceType = sourceType)
             ReportType.WORKED -> BVDocumentFilter(
                     reportType = reportType,
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(after = today.minusDays(10)),
-                    userFilter = UserFilter( userAlias = user, role = UserRole.IMPLEMENTOR),
+                    userFilter = UserFilter( userAlias = user ?: UserContext.getUserName(), role = UserRole.IMPLEMENTOR),
                     sourceType = sourceType)
         }
     }
