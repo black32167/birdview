@@ -1,6 +1,6 @@
 package org.birdview.source.jira
 
-import org.birdview.config.sources.BVJiraConfig
+import org.birdview.storage.BVJiraConfig
 import javax.inject.Named
 
 @Named

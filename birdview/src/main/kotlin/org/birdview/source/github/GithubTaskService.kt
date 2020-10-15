@@ -1,8 +1,6 @@
 package org.birdview.source.github
 
 import org.birdview.analysis.*
-import org.birdview.config.sources.BVGithubConfig
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -12,6 +10,8 @@ import org.birdview.source.github.GithubUtils.parseDate
 import org.birdview.source.github.gql.model.GqlGithubEvent
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
+import org.birdview.storage.BVGithubConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVFilters
 import java.util.*
@@ -20,7 +20,7 @@ import javax.inject.Named
 
 @Named
 open class GithubTaskService(
-        private val sourcesConfigStorage: BVSourcesConfigStorage,
+        private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val githubClientProvider: GithubClientProvider,
         private val githubQueryBuilder: GithubQueryBuilder
 ): BVTaskSource {
@@ -30,7 +30,7 @@ open class GithubTaskService(
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
-        sourcesConfigStorage.getConfigsOfType(BVGithubConfig::class.java)
+        sourceSecretsStorage.getConfigsOfType(BVGithubConfig::class.java)
                 .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
     }
 
@@ -121,6 +121,6 @@ open class GithubTaskService(
     override fun getType() = SourceType.GITHUB
 
     override fun isAuthenticated(sourceName: String): Boolean =
-            sourcesConfigStorage.getConfigByName(sourceName, BVGithubConfig::class.java) != null
+            sourceSecretsStorage.getConfigByName(sourceName, BVGithubConfig::class.java) != null
 
 }

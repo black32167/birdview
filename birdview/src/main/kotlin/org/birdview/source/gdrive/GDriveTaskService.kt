@@ -3,8 +3,6 @@ package org.birdview.source.gdrive
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
-import org.birdview.config.sources.BVGDriveConfig
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -12,6 +10,8 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
+import org.birdview.storage.BVGDriveConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
@@ -20,7 +20,7 @@ import javax.inject.Named
 @Named
 open class GDriveTaskService(
         private val clientProvider: GDriveClientProvider,
-        private val sourcesConfigStorage: BVSourcesConfigStorage,
+        private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val gDriveQueryBuilder: GDriveQueryBuilder
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
@@ -31,7 +31,7 @@ open class GDriveTaskService(
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         try {
-            sourcesConfigStorage.getConfigOfType(BVGDriveConfig::class.java)
+            sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->
                         clientProvider.getGoogleApiClient(config)
                                 .getFiles(gDriveQueryBuilder.getQuery(user, updatedPeriod, config.sourceName)) { files ->
@@ -46,7 +46,7 @@ open class GDriveTaskService(
     override fun getType() = SourceType.GDRIVE
 
     override fun isAuthenticated(sourceName: String): Boolean =
-        sourcesConfigStorage.getConfigByName(sourceName, BVGDriveConfig::class.java)
+        sourceSecretsStorage.getConfigByName(sourceName, BVGDriveConfig::class.java)
                 ?.let { config -> clientProvider.isAuthenticated(config) }
                 ?: false
 

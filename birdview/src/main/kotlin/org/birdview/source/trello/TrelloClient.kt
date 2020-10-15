@@ -1,12 +1,12 @@
 package org.birdview.source.trello
 
-import org.birdview.config.sources.BVTrelloConfig
 import org.birdview.source.BVTaskListsDefaults
 import org.birdview.source.ItemsPage
 import org.birdview.source.trello.model.TrelloBoard
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.source.trello.model.TrelloCardsSearchResponse
 import org.birdview.source.trello.model.TrelloList
+import org.birdview.storage.BVTrelloConfig
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory

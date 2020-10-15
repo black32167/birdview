@@ -1,8 +1,8 @@
 package org.birdview.source.github
 
-import org.birdview.config.sources.BVGithubConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.github.model.*
+import org.birdview.storage.BVGithubConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.ResponseValidationUtils

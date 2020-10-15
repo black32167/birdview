@@ -1,11 +1,11 @@
 package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
-import org.birdview.config.sources.BVOAuthSourceConfig
-import org.birdview.config.sources.BVSlackConfig
 import org.birdview.source.oauth.AbstractOAuthClient
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.source.slack.model.SlackMessage
+import org.birdview.storage.BVOAuthSourceConfig
+import org.birdview.storage.BVSlackConfig
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.WebTargetFactory
 import javax.ws.rs.client.Entity

@@ -1,10 +1,10 @@
 package org.birdview.source.github.gql
 
 import org.apache.tomcat.util.http.fileupload.util.Streams
-import org.birdview.config.sources.BVGithubConfig
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubResponse
 import org.birdview.source.github.gql.model.GqlGithubSearchContainer
+import org.birdview.storage.BVGithubConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.ResponseValidationUtils

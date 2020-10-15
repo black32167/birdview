@@ -1,7 +1,7 @@
 package org.birdview.source.oauth
 
-import org.birdview.config.BVRuntimeConfig
-import org.birdview.config.sources.BVOAuthSourceConfig
+import org.birdview.config.BVFoldersConfig
+import org.birdview.storage.BVOAuthSourceConfig
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -9,7 +9,7 @@ import javax.inject.Named
 
 @Named
 class OAuthRefreshTokenStorage(
-        val bvRuntimeConfig: BVRuntimeConfig
+        val bvFoldersConfig: BVFoldersConfig
 ) {
     fun loadLocalRefreshToken(source: String):String? =
             readToken(getRefreshTokenFilePath(source))
@@ -29,9 +29,9 @@ class OAuthRefreshTokenStorage(
         readToken(getAccessTokenFilePath(config.sourceName))
 
     private fun getRefreshTokenFilePath(source: String): Path =
-            bvRuntimeConfig.oauthTokenDir.resolve("${source}.token")
+            bvFoldersConfig.oauthTokenDir.resolve("${source}.token")
     private fun getAccessTokenFilePath(sourceName: String): Path =
-            bvRuntimeConfig.oauthTokenDir.resolve("${sourceName}.access.token")
+            bvFoldersConfig.oauthTokenDir.resolve("${sourceName}.access.token")
     private fun readToken(filePath: Path):String? =
             filePath
                     .takeIf { Files.exists(it) }

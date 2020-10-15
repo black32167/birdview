@@ -4,8 +4,6 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentUser
-import org.birdview.config.sources.BVJiraConfig
-import org.birdview.config.sources.BVSourcesConfigStorage
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
@@ -13,6 +11,8 @@ import org.birdview.source.SourceType
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraUser
+import org.birdview.storage.BVJiraConfig
+import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
@@ -21,7 +21,7 @@ import javax.inject.Named
 @Named
 open class JiraTaskService(
         private val jiraClientProvider: JiraClientProvider,
-        private val sourcesConfigStorage: BVSourcesConfigStorage,
+        private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
     companion object {
@@ -30,7 +30,7 @@ open class JiraTaskService(
     private val log = LoggerFactory.getLogger(JiraTaskService::class.java)
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
     private val jiraConfigs: List<BVJiraConfig>
-            get() = sourcesConfigStorage.getConfigsOfType(BVJiraConfig::class.java)
+            get() = sourceSecretsStorage.getConfigsOfType(BVJiraConfig::class.java)
 
     override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         jiraConfigs.forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
@@ -118,7 +118,7 @@ open class JiraTaskService(
     override fun getType() = SourceType.JIRA
 
     override fun isAuthenticated(sourceName: String): Boolean =
-            sourcesConfigStorage.getConfigByName(sourceName, BVJiraConfig::class.java) != null
+            sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java) != null
 
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +

@@ -1,7 +1,7 @@
 package org.birdview.source.trello
 
-import org.birdview.config.sources.BVTrelloConfig
 import org.birdview.source.BVTaskListsDefaults
+import org.birdview.storage.BVTrelloConfig
 import javax.inject.Named
 
 @Named

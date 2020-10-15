@@ -1,12 +1,12 @@
 package org.birdview.source.gdrive
 
-import org.birdview.config.sources.BVGDriveConfig
-import org.birdview.config.sources.BVOAuthSourceConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
 import org.birdview.source.oauth.AbstractOAuthClient
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
+import org.birdview.storage.BVGDriveConfig
+import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
 import org.birdview.utils.remote.ResponseValidationUtils

@@ -1,14 +1,14 @@
 package org.birdview.source.gdrive
 
-import org.birdview.config.user.BVUserProfileStorage
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.storage.BVUserSourceStorage
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
 @Named
 class GDriveQueryBuilder (
-        private val userConfigProvider: BVUserProfileStorage
+        private val userConfigProvider: BVUserSourceStorage
 ) {
     fun getQuery(user: String?, updatedPeriod: TimeIntervalFilter, sourceName: String): String? {
         val userClause = getUserClause(user, sourceName)
@@ -36,5 +36,5 @@ class GDriveQueryBuilder (
     }
 
     private fun getUser(userAlias: String?, sourceName: String): String =
-            userAlias?.let { userConfigProvider.getUserName(userAlias, sourceName) } ?: "me"
+            userAlias?.let { userConfigProvider.getBVUserNameBySourceUserName(userAlias, sourceName) } ?: "me"
 }

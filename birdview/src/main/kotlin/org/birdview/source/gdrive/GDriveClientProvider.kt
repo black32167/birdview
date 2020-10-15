@@ -1,7 +1,7 @@
 package org.birdview.source.gdrive
 
-import org.birdview.config.sources.BVGDriveConfig
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
+import org.birdview.storage.BVGDriveConfig
 import javax.inject.Named
 
 @Named

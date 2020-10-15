@@ -1,10 +1,10 @@
 package org.birdview.source.jira
 
-import org.birdview.config.sources.BVJiraConfig
 import org.birdview.source.ItemsPage
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
+import org.birdview.storage.BVJiraConfig
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
