@@ -44,6 +44,10 @@ class BVFileUserSourceStorage(
                     .map { it.name.substringBeforeLast(".") }
                     .collect(toList())
 
+    override fun delete(bvUserName: String, sourceName: String) {
+        Files.delete(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
+    }
+
     @CacheEvict(CACHE_NAME, allEntries = true)
     override fun create(bvUserName: String, sourceName: String, sourceUserName:String) {
         serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, false))

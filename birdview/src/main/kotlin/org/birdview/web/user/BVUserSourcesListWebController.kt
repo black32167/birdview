@@ -52,6 +52,12 @@ class BVUserSourcesListWebController (
         return "/user/edit-source"
     }
 
+    @GetMapping("{sourceName}/delete")
+    fun delete(model: Model, @PathVariable("sourceName") sourceName:String): String {
+        userSourceStorage.delete(bvUserName = currentUserName(), sourceName = sourceName)
+        return "redirect:${BVWebPaths.USER_SOURCES}"
+    }
+
     @GetMapping("add")
     fun addForm(model: Model): String {
         model
