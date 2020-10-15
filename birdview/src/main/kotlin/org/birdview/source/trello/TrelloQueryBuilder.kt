@@ -11,7 +11,7 @@ import javax.inject.Named
 class TrelloQueryBuilder(
         private val userSourceStorage: BVUserSourceStorage
 ) {
-    fun getQueries(user: String?, updatedPeriod: TimeIntervalFilter, trelloConfig: BVTrelloConfig): String =
+    fun getQueries(user: String, updatedPeriod: TimeIntervalFilter, trelloConfig: BVTrelloConfig): String =
             listOfNotNull(
                     userClause(user, trelloConfig),
                     getUpdateAfterClause(updatedPeriod.after),
@@ -27,10 +27,6 @@ class TrelloQueryBuilder(
     private fun getDaysBackFromNow(since: ZonedDateTime): Int =
             ChronoUnit.DAYS.between(since, ZonedDateTime.now()).toInt()
 
-    private fun getUser(userAlias: String?, sourceName:String): String =
-            if (userAlias == null) "me"
-            else userSourceStorage.getBVUserNameBySourceUserName(userAlias, sourceName)
-
-    private fun userClause(user: String?, trelloConfig: BVTrelloConfig): String? =
-            "@${getUser(user, trelloConfig.sourceName)}"
+    private fun userClause(bvUser: String, trelloConfig: BVTrelloConfig): String? =
+            "@${userSourceStorage.getSourceProfile(bvUser, trelloConfig.sourceName).sourceUserName}"
 }

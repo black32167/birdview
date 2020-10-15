@@ -29,12 +29,12 @@ open class TrelloTaskService(
         private const val TRELLO_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
-    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
+    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
                 sourceSecretsStorage.getConfigsOfType(BVTrelloConfig::class.java)
                     .forEach { config-> getTasks(user, updatedPeriod, config, chunkConsumer) }
 
     private fun getTasks(
-            user: String?,
+            user: String,
             updatedPeriod: TimeIntervalFilter,
             trelloConfig: BVTrelloConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {

@@ -29,13 +29,13 @@ open class GithubTaskService(
     }
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         sourceSecretsStorage.getConfigsOfType(BVGithubConfig::class.java)
                 .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
     }
 
     private fun getTasks(
-            user: String?,
+            user: String,
             updatedPeriod: TimeIntervalFilter,
             githubConfig: BVGithubConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {

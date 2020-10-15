@@ -29,7 +29,7 @@ open class GDriveTaskService(
         private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
-    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         try {
             sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->

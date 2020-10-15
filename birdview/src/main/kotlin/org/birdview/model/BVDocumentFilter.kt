@@ -18,7 +18,7 @@ enum class UserRole {
 }
 
 data class UserFilter(
-        val userAlias: String?,
+        val userAlias: String,
         val role: UserRole
 )
 

@@ -11,7 +11,7 @@ import javax.inject.Named
 class JqlBuilder(
         private val userSourceStorage: BVUserSourceStorage
 ) {
-    fun getJql(user: String?, updatedPeriod: TimeIntervalFilter, jiraConfig: BVJiraConfig): String? =
+    fun getJql(user: String, updatedPeriod: TimeIntervalFilter, jiraConfig: BVJiraConfig): String? =
             getUserJqlClause(user, jiraConfig)
                     .let { userClause ->
                         listOfNotNull(
@@ -30,12 +30,11 @@ class JqlBuilder(
     private fun formatDate(date: ZonedDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
 
-    private fun getUserJqlClause(user: String?, jiraConfig: BVJiraConfig): String {
-        val user = getUser(user, jiraConfig)
+    private fun getUserJqlClause(bvUser: String, jiraConfig: BVJiraConfig): String {
+        val user = getUser(bvUser, jiraConfig)
         return "(creator = $user OR assignee = $user OR watcher = $user)"
     }
 
-    private fun getUser(userAlias: String?, jiraConfig: BVJiraConfig): String =
-            if(userAlias == null) { "currentUser()" }
-            else { "\"${userSourceStorage.getBVUserNameBySourceUserName(userAlias, jiraConfig.sourceName)}\""}
+    private fun getUser(userAlias: String, jiraConfig: BVJiraConfig): String =
+            userSourceStorage.getSourceProfile(userAlias, jiraConfig.sourceName).sourceUserName
 }

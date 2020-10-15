@@ -11,6 +11,6 @@ import org.springframework.context.annotation.Bean
 open class BirdviewConfiguration {
     @Bean
     open fun cacheManager(): CacheManager {
-        return ConcurrentMapCacheManager("bv", "sourcesConfig")
+        return ConcurrentMapCacheManager("bv", "sourcesConfig", "userProfilesConfig")
     }
 }

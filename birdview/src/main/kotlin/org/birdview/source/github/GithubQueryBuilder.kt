@@ -11,7 +11,7 @@ import javax.inject.Named
 class GithubQueryBuilder(
         private val userSourceStorage: BVUserSourceStorage
 ) {
-    fun getFilterQueries(user: String?, updatedPeriod: TimeIntervalFilter, githubConfig: BVGithubConfig): String =
+    fun getFilterQueries(user: String, updatedPeriod: TimeIntervalFilter, githubConfig: BVGithubConfig): String =
                 listOfNotNull(
                         "type:pr ",
                         userClause(user, githubConfig),
@@ -25,13 +25,12 @@ class GithubQueryBuilder(
     private fun getUpdateBeforeClause(before: ZonedDateTime?):String? =
             before?.let { "updated:<${it.format(DateTimeFormatter.ISO_LOCAL_DATE)}" }
 
-    private fun userClause(userAlias: String?, githubConfig: BVGithubConfig): String? {
-        var user = getGithubUser(userAlias, githubConfig)
+    private fun userClause(userAlias: String, githubConfig: BVGithubConfig): String? {
+        val user = getGithubUser(userAlias, githubConfig)
         return "involves:${user}"
     }
 
 
-    private fun getGithubUser(userAlias: String?, githubConfig: BVGithubConfig): String? =
-            if (userAlias == null) "@me"
-            else userSourceStorage.getBVUserNameBySourceUserName(userAlias, githubConfig.sourceName)
+    private fun getGithubUser(bvUser: String, githubConfig: BVGithubConfig): String =
+            userSourceStorage.getSourceProfile(bvUser, githubConfig.sourceName).sourceUserName
 }

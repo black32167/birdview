@@ -1,7 +1,6 @@
 package org.birdview.storage.file
 
 import org.birdview.config.BVFoldersConfig
-import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
 import org.birdview.utils.JsonDeserializer
@@ -16,22 +15,11 @@ import javax.inject.Named
 @Named
 class BVFileUserSourceStorage(
         private val bvFoldersConfig: BVFoldersConfig,
-        private val jsonDeserializer: JsonDeserializer,
-        private val sourceSecretsStorage: BVSourceSecretsStorage
+        private val jsonDeserializer: JsonDeserializer
 ): BVUserSourceStorage {
     companion object {
         const val CACHE_NAME = "userProfilesConfig"
     }
-
-    @Cacheable(CACHE_NAME)
-    override fun getBVUserNameBySourceUserName(userAlias: String?, sourceName: String): String =
-            if (userAlias.isNullOrBlank()) {
-                sourceSecretsStorage.getConfigByName(sourceName)?.user ?: throw java.lang.RuntimeException("Config not found for $sourceName")
-            } else {
-                jsonDeserializer
-                        .deserialize(getSourceConfigFileName(userAlias, sourceName), BVUserSourceConfig::class.java)
-                        .sourceUserName
-            }
 
     @Cacheable(CACHE_NAME)
     override fun getSourceProfile(bvUserName: String, sourceName: String): BVUserSourceConfig =

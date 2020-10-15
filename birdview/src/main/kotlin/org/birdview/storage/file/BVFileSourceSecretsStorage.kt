@@ -33,7 +33,7 @@ open class BVFileSourceSecretsStorage(
 
     @Cacheable(CACHE_NAME)
     override fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
-            getSourceConfigs().find { it.sourceName == sourceName }!!
+            getSourceConfigs().find { it.sourceName == sourceName }
 
     @Cacheable(CACHE_NAME)
     override fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =

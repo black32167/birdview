@@ -158,7 +158,7 @@ open class BVTaskService(
 
         val userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
-                val filteringUser = userSourceStorage.getBVUserNameBySourceUserName(userFilter.userAlias, docUser.sourceName)
+                val filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, docUser.sourceName).sourceUserName
                 filteringUser == docUser.userName && userFilter.role == docUser.role
         }
         if (!hasFilteredUser) {
@@ -185,7 +185,7 @@ open class BVTaskService(
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
-            var filteringUser = userSourceStorage.getBVUserNameBySourceUserName(userFilter.userAlias, operation.sourceName)
+            var filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, operation.sourceName).sourceUserName
             filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
         }
     }

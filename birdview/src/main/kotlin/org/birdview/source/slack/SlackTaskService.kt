@@ -16,7 +16,7 @@ class SlackTaskService(
         private val tokenStorage: OAuthRefreshTokenStorage
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(SlackTaskService::class.java)
-    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         sourceSecretsStorage.getConfigsOfType(BVSlackConfig::class.java)
                 .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
     }

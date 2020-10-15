@@ -32,12 +32,12 @@ open class JiraTaskService(
     private val jiraConfigs: List<BVJiraConfig>
             get() = sourceSecretsStorage.getConfigsOfType(BVJiraConfig::class.java)
 
-    override fun getTasks(user: String?, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         jiraConfigs.forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
     }
 
     private fun getTasks(
-            user: String?,
+            user: String,
             updatedPeriod: TimeIntervalFilter,
             config: BVJiraConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {

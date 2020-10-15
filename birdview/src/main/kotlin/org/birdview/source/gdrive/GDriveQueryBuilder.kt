@@ -10,7 +10,7 @@ import javax.inject.Named
 class GDriveQueryBuilder (
         private val userConfigProvider: BVUserSourceStorage
 ) {
-    fun getQuery(user: String?, updatedPeriod: TimeIntervalFilter, sourceName: String): String? {
+    fun getQuery(user: String, updatedPeriod: TimeIntervalFilter, sourceName: String): String? {
         val userClause = getUserClause(user, sourceName)
         return listOfNotNull(
                 userClause,
@@ -30,11 +30,11 @@ class GDriveQueryBuilder (
     private fun formatDate(date: ZonedDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))
 
-    private fun getUserClause(user: String?, sourceName: String): String? {
-        val user = getUser(user, sourceName)
-        return "('${user}' in owners) or ('${user}' in writers) or ('${user}' in readers)"
+    private fun getUserClause(bvUser: String, sourceName: String): String? {
+        val sourceUserName = getUser(bvUser, sourceName)
+        return "('${sourceUserName}' in owners) or ('${sourceUserName}' in writers) or ('${bvUser}' in readers)"
     }
 
-    private fun getUser(userAlias: String?, sourceName: String): String =
-            userAlias?.let { userConfigProvider.getBVUserNameBySourceUserName(userAlias, sourceName) } ?: "me"
+    private fun getUser(userAlias: String, sourceName: String): String =
+            userConfigProvider.getSourceProfile(userAlias, sourceName).sourceUserName
 }
