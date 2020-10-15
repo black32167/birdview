@@ -54,7 +54,7 @@ open class JiraTaskService(
 
     override fun loadByIds(keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
         jiraConfigs.forEach { config ->
-            var client = jiraClientProvider.getJiraClient(config)
+            val client = jiraClientProvider.getJiraClient(config)
             client.findIssues(
                     "key IN (${keyList.distinct().joinToString(",")})") { issues->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })

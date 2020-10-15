@@ -5,7 +5,6 @@ import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.web.secrets.BVDocumentView
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.ZonedDateTime
@@ -16,19 +15,6 @@ import java.time.temporal.ChronoUnit
 class BVRestController(
         private val taskService: BVTaskService
 ) {
-//    class ReportLink(val reportUrl:String, val reportName:String)
-
-//    @GetMapping("/report")
-//    fun report(
-//            @RequestParam(value = "user", required = false) user: String?,
-//            @RequestParam(value = "report", required = false) report: String?
-//    ): List<BVDocumentView> {
-//        val tsRequest = buildTSRequest(user, report)
-//        val docs = taskService.getDocuments(tsRequest)
-//                .map(BVDocumentViewFactory::create)
-//        return docs
-//    }
-
     class DocumentRequest(
             val user: String?,
             val reportType: ReportType,
@@ -55,31 +41,8 @@ class BVRestController(
         return docs
     }
 
-    @PostMapping("documents/reindex")
+    @GetMapping("documents/reindex")
     fun reindexDocuments() {
         taskService.invalidateCache()
     }
-
-//    private fun buildTSRequest(user: String?, report: String?) : BVDocumentFilter {
-//        val sourceType = null
-//        val reportType = report
-//                ?.toUpperCase()
-//                ?.let { ReportType.valueOf(it) }
-//                ?: ReportType.WORKED
-//        val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
-//        return when(reportType) {
-//            ReportType.PLANNED -> BVDocumentFilter(
-//                    reportType = reportType,
-//                    grouping = true,
-//                    updatedPeriod = TimeIntervalFilter(),
-//                    userFilter = UserFilter( userAlias = user ?: UserContext.getUserName(), role = UserRole.IMPLEMENTOR),
-//                    sourceType = sourceType)
-//            ReportType.WORKED -> BVDocumentFilter(
-//                    reportType = reportType,
-//                    grouping = true,
-//                    updatedPeriod = TimeIntervalFilter(after = today.minusDays(10)),
-//                    userFilter = UserFilter( userAlias = user ?: UserContext.getUserName(), role = UserRole.IMPLEMENTOR),
-//                    sourceType = sourceType)
-//        }
-//    }
 }

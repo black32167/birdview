@@ -31,7 +31,7 @@ class JqlBuilder(
             date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
 
     private fun getUserJqlClause(bvUser: String, jiraConfig: BVJiraConfig): String {
-        val user = getUser(bvUser, jiraConfig)
+        val user = "\"${getUser(bvUser, jiraConfig)}\""
         return "(creator = $user OR assignee = $user OR watcher = $user)"
     }
 

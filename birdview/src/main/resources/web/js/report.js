@@ -94,7 +94,7 @@ function authenticate(url) {
 }
 function reindex() {
     showOverlay(true)
-    $.post(`${baseURL}/rest/documents/reindex`)
+    $.ajax(`${baseURL}/rest/documents/reindex`)
     .always(function(){
         showOverlay(false)
         refresh()
