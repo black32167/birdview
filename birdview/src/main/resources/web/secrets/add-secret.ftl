@@ -1,5 +1,6 @@
 <#macro addForm sourceType>
 <form id="${sourceType}-form" source="${sourceType}" action="/admin/secrets/${sourceType}/add-secret" method="POST">
+    <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
     <table>
     <#nested>
     </table>
@@ -10,7 +11,6 @@
         <img src="/img/get-token-${sourceType}.png"/>
     </div>
 </form>
-
 </#macro>
 
 <!DOCTYPE html>

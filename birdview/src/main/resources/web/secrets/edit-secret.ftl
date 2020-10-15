@@ -12,7 +12,8 @@
 
     <div>
     <div class="center">
-        <form id="jira-form" action="/admin/secrets/${source.type}/update-secret" method="POST">
+        <form action="/admin/secrets/${source.type}/update-secret" method="POST">
+            <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>
             <tr>
