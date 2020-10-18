@@ -27,6 +27,7 @@ class FileUserDetailsService (
         return User.withUsername(username)
                 .password("{SHA-256}${userSettings.passwordHash}")
                 .roles(Roles.USER)
+                .disabled(!userSettings.enabled)
                 .build()
     }
 }
