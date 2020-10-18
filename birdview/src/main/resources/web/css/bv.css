@@ -5,6 +5,27 @@ html, body {
 #tableContainer {
     font-size: 18pt;
 }
+
+.panel {
+    border: 1px solid gray;
+    border-radius: 10px;
+    padding: 5px;
+    background: cyan;
+    display: inline-block;
+    margin:5px;
+}
+.panel-header {
+    text-align: center;
+    font-weight: bold;
+}
+.panel-body {
+}
+.panel-content {
+    background: white;
+    margin: 0;
+    padding: 0;
+}
+
 .menu {
     background: cyan;
     height: 1.5em;
@@ -58,10 +79,6 @@ table.treetable {
     margin: 0px;
 }
 
-/*table.settings, .settings th, .settings td {
-    border: 1px solid gray;
-}*/
-
 form table, table.settings {
     border: 1px solid gray;
     margin: 10px;
@@ -85,10 +102,10 @@ a {
     color: #0000EE;
 }
 
-.settings th, .settings td {
+table th, table td {
     padding: 5px;
 }
-.settings th {
+table th {
     background: cyan;
 }
 td.sign {

@@ -1,4 +1,5 @@
 <#include '/links.ftl'/>
+<#include '/include/panel.ftl'/>
 <!DOCTYPE html>
 <html>
 
@@ -17,7 +18,8 @@
 
     <div>
     <div class="center">
-    <table class="settings">
+    <@panel "Secrets">
+    <table>
     <tr>
         <th>Name</th>
         <th>Type</th>
@@ -37,6 +39,27 @@
         </tr>
     </#list>
     </table>
+    </@panel>
+    <div style="float:right">
+    <@panel "Users">
+        <table>
+        <tr>
+            <th>User</th>
+            <th></th>
+        </tr>
+        <#list userNames as userName>
+                <tr>
+                <td>
+                    ${userName}
+                </td>
+                <td>
+                    X
+                </td>
+                </tr>
+            </#list>
+        </table>
+        </@panel>
+        </div>
     </div>
     </div>
 </body>
