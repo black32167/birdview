@@ -1,6 +1,5 @@
 package org.birdview.storage.file
 
-import org.birdview.BVCacheNames
 import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
 import org.birdview.config.BVFoldersConfig
@@ -37,6 +36,12 @@ class BVFileUserStorage (
     @Cacheable(USER_SETTINGS_CACHE)
     override fun getUserSettings(userName: String): BVUserSettings =
             deserialize(getUserSettingsFile(userName))
+
+    @CacheEvict(USER_SETTINGS_CACHE, allEntries = true)
+    override fun updateUserStatus(userName: String, enabled: Boolean) {
+        val userSettings = getUserSettings(userName)
+        update(userName, userSettings.copy(enabled = enabled))
+    }
 
     @Cacheable(USER_NAMES_CACHE)
     override fun listUserNames(): List<String> = Files.list(bvFoldersConfig.usersConfigFolder)

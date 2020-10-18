@@ -6,6 +6,12 @@
 <head>
 <link rel="stylesheet" href="/css/bv.css"></link>
 <script src="js/jquery-3.5.1.min.js"></script>
+<script src="js/report.js"></script>
+<script src="js/admin-user.js"></script>
+<script>
+var csrf_token_parameter_name="${_csrf.parameterName}"
+var csrf_token = "${_csrf.token}"
+</script>
 </head>
 <body>
     <div class="menu">
@@ -45,15 +51,21 @@
         <table>
         <tr>
             <th>User</th>
-            <th></th>
+            <th>Enabled</th>
         </tr>
-        <#list userNames as userName>
+        <#list users as user>
                 <tr>
                 <td>
-                    ${userName}
+                    ${user.name}
                 </td>
                 <td>
-                    X
+                    <#if user.enabled>
+                        <#assign checkedHint="checked">
+                    <#else>
+                        <#assign checkedHint="">
+                    </#if>
+                    <input type="checkbox" user="${user.name}" name="enabled" ${checkedHint}
+                        onchange="updateUserState(this.getAttribute('user'), this.checked)">
                 </td>
                 </tr>
             </#list>

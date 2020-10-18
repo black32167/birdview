@@ -8,6 +8,7 @@ import org.birdview.web.secrets.BVSourceSecretListWebController
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 
 
@@ -30,8 +31,16 @@ class BVAdminDashboardWebController(
         return BVTemplatePaths.ADMIN_DASHBOARD
     }
 
+    @PostMapping("user/update")
+    fun updateUserState(userForm: UserWebView):String {
+        userStorage.updateUserStatus(userForm.name, userForm.enabled)
+        return "redirect:${BVWebPaths.ADMIN_ROOT}"
+    }
+
     private fun mapUserView(userName: String): UserWebView =
-            userStorage.getUserSettings(userName).let { userSetting -> UserWebView(name = userName, enabled = userSetting.enabled) }
+            userStorage.getUserSettings(userName)
+                    .let { userSetting ->
+                        UserWebView(name = userName, enabled = userSetting.enabled) }
 
     private fun mapSourceSetting(sourceName: String): BVSourceSecretListWebController.SourceSettingView? =
             sourceSecretsStorage.getConfigByName(sourceName)

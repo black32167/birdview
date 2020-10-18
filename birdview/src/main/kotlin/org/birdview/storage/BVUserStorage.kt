@@ -10,4 +10,6 @@ interface BVUserStorage {
     fun update(userName:String, userSettings: BVUserSettings)
 
     fun getUserSettings(userName: String): BVUserSettings
+
+    fun updateUserStatus(userName: String, enabled: Boolean)
 }
