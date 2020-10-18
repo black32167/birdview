@@ -13,17 +13,25 @@ import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
 @RequestMapping(BVWebPaths.ADMIN_ROOT)
-class BVAdminWebController(
+class BVAdminDashboardWebController(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val userStorage: BVUserStorage
 ) {
+    class UserWebView (
+            val name: String,
+            val enabled: Boolean
+    )
+
     @GetMapping
     fun index(model: Model): String? {
         model
                 .addAttribute("sources", sourceSecretsStorage.listSourceNames().map { mapSourceSetting(it) })
-                .addAttribute("userNames", userStorage.listUsers())
+                .addAttribute("users", userStorage.listUserNames().map(this::mapUserView))
         return BVTemplatePaths.ADMIN_DASHBOARD
     }
+
+    private fun mapUserView(userName: String): UserWebView =
+            userStorage.getUserSettings(userName).let { userSetting -> UserWebView(name = userName, enabled = userSetting.enabled) }
 
     private fun mapSourceSetting(sourceName: String): BVSourceSecretListWebController.SourceSettingView? =
             sourceSecretsStorage.getConfigByName(sourceName)

@@ -53,7 +53,7 @@ class BVExploreWebController(
     }
 
     private fun listUsers() =
-            userStorage.listUsers()
+            userStorage.listUserNames()
 
     private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
         return "${baseUrl}?report=${reportType.name.toLowerCase()}" +

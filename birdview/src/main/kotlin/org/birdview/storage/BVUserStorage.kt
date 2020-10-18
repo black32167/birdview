@@ -3,7 +3,7 @@ package org.birdview.storage
 import org.birdview.storage.model.BVUserSettings
 
 interface BVUserStorage {
-    fun listUsers(): List<String>
+    fun listUserNames(): List<String>
 
     fun create(userName:String, userSettings: BVUserSettings)
 

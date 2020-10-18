@@ -126,7 +126,6 @@ open class BVTaskService(
         false
     }
 
-    // @CacheEvict(value = ["bv"], allEntries = true)
     open fun invalidateCache() {
         docsMap.clear()
         usersRetrieved.clear()

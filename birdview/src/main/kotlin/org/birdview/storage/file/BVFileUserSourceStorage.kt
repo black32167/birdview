@@ -1,5 +1,6 @@
 package org.birdview.storage.file
 
+import org.birdview.BVCacheNames.USER_SOURCE_CACHE
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
@@ -17,11 +18,8 @@ class BVFileUserSourceStorage(
         private val bvFoldersConfig: BVFoldersConfig,
         private val jsonDeserializer: JsonDeserializer
 ): BVUserSourceStorage {
-    companion object {
-        const val CACHE_NAME = "userProfilesConfig"
-    }
 
-    @Cacheable(CACHE_NAME)
+    @Cacheable(USER_SOURCE_CACHE)
     override fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig =
             deserialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
 
@@ -36,12 +34,12 @@ class BVFileUserSourceStorage(
         Files.delete(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
     }
 
-    @CacheEvict(CACHE_NAME, allEntries = true)
+    @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     override fun create(bvUserName: String, sourceName: String, sourceUserName:String) {
         serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, false))
     }
 
-    @CacheEvict(CACHE_NAME, allEntries = true)
+    @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     override fun update(bvUserName: String, sourceName: String, userProfileSourceConfig: BVUserSourceConfig) {
         val file = getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName)
         Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)

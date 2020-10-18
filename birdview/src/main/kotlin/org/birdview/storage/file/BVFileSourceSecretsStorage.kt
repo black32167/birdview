@@ -1,5 +1,6 @@
 package org.birdview.storage.file
 
+import org.birdview.BVCacheNames.SOURCE_SECRET_CACHE_NAME
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -17,9 +18,6 @@ open class BVFileSourceSecretsStorage(
         open val bvFoldersConfig: BVFoldersConfig,
         open val jsonDeserializer: JsonDeserializer
 ): BVSourceSecretsStorage {
-    companion object {
-        const val CACHE_NAME = "sourcesConfig"
-    }
     private val log = LoggerFactory.getLogger(BVSourceSecretsStorage::class.java)
 
     override fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T> =
@@ -31,18 +29,18 @@ open class BVFileSourceSecretsStorage(
     override fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T? =
             getConfigsOfType(configClass).firstOrNull()
 
-    @Cacheable(CACHE_NAME)
+    @Cacheable(SOURCE_SECRET_CACHE_NAME)
     override fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
             getSourceConfigs().find { it.sourceName == sourceName }
 
-    @Cacheable(CACHE_NAME)
+    @Cacheable(SOURCE_SECRET_CACHE_NAME)
     override fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =
             getConfigByName(sourceName) as? T
 
     override fun listSourceNames(): List<String> =
             getSourceConfigs().map { it.sourceName }
 
-    @CacheEvict(CACHE_NAME, allEntries = true)
+    @CacheEvict(SOURCE_SECRET_CACHE_NAME, allEntries = true)
     override fun create(config: BVAbstractSourceConfig) {
         bvFoldersConfig.sourcesSharedSecretsConfigsFolder.also { folder->
             Files.createDirectories(folder)
@@ -50,7 +48,7 @@ open class BVFileSourceSecretsStorage(
         }
     }
 
-    @CacheEvict(CACHE_NAME, allEntries = true)
+    @CacheEvict(SOURCE_SECRET_CACHE_NAME, allEntries = true)
     override fun update(config: BVAbstractSourceConfig) {
             bvFoldersConfig.sourcesSharedSecretsConfigsFolder.resolve(config.sourceName).also { file ->
             Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
