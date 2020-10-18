@@ -21,10 +21,11 @@ open class BVWebSecurityConfiguration : WebSecurityConfigurerAdapter() {
 //                .and()
                 .authorizeRequests()
                     .antMatchers( "/**/*.js", "/**/*.css").permitAll()
+                    .mvcMatchers(BVWebPaths.SIGNUP).permitAll()
                     .antMatchers("/**").authenticated()
                     .antMatchers( "${BVWebPaths.ADMIN_ROOT}/**").hasRole(Roles.ADMIN)
                     .antMatchers("${BVWebPaths.USER_ROOT}/**").hasRole(Roles.USER)
-                    .mvcMatchers(BVWebPaths.SIGNUP).permitAll()
+
                 .and()
                 .formLogin().loginPage("/login").permitAll()//loginProcessingUrl("/login").
                 .and()
