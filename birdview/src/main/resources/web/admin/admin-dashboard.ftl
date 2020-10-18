@@ -1,3 +1,4 @@
+<#include '/links.ftl'/>
 <!DOCTYPE html>
 <html>
 
@@ -5,13 +6,12 @@
 <link rel="stylesheet" href="/css/bv.css"></link>
 <script src="js/jquery-3.5.1.min.js"></script>
 </head>
-
 <body>
     <div class="menu">
-        <a href="secrets/add-secret">Add secret</a>
+        <@add_secret_link />
 
         <div class="menu_right">
-            <#include "/logout-form.ftl">
+            <@logout_link />
         </div>
     </div>
 
@@ -26,13 +26,13 @@
     <#list sources as source>
         <tr>
         <td>
-            <a href="secrets/${source.type?lower_case}/edit-secret?sourceName=${source.name}">${source.name}</a>
+            <@edit_secret_link source />
         </td>
         <td>
             ${source.type}
         </td>
         <td>
-            <a href="secrets/delete?sourceName=${source.name}">X</a>
+            <@delete_secret_link source />
         </td>
         </tr>
     </#list>

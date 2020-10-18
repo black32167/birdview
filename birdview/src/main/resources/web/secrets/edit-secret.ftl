@@ -1,3 +1,4 @@
+<#include "/links.ftl">
 <!DOCTYPE html>
 <html>
 
@@ -7,12 +8,12 @@
 
 <body>
     <div class="menu">
-       <a href="/admin/secrets">< Settings</a>
+       <@admin_link />
     </div>
 
     <div>
     <div class="center">
-        <form action="/admin/secrets/${source.type}/update-secret" method="POST">
+        <form action="<@update_secret_post_link source.type />" method="POST">
             <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>

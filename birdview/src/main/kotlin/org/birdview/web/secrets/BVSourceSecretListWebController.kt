@@ -3,6 +3,7 @@ package org.birdview.web.secrets
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.web.BVTemplatePaths
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -14,7 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @Controller
 @RequestMapping(BVWebPaths.SECRETS)
-class BVSourceSecretListController(
+class BVSourceSecretListWebController(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val sources: List<BVTaskSource>
 ) {
@@ -22,38 +23,18 @@ class BVSourceSecretListController(
             val name: String,
             val type: SourceType)
 
-    private val sourcesTypesMap = sources.associateBy { it.getType() }
 
-    @GetMapping
-    fun index(model: Model): String? {
-        model
-                .addAttribute("sources", sourceSecretsStorage.listSourceNames().map { mapSourceSetting(it) })
-        return "secrets/list-secrets"
-    }
-
-    @GetMapping("/add-secret")
+    @GetMapping("add-secret")
     fun addSource(model: Model): String {
         model.addAttribute("sourceTypes", sources.map { it.getType().name.toLowerCase() })
 
-        return "secrets/add-secret"
+        return BVTemplatePaths.ADD_SECRET
     }
 
     @GetMapping("/delete")
     fun deleteSource(model: Model, @RequestParam("sourceName") sourceName: String): ModelAndView {
         sourceSecretsStorage.delete(sourceName)
 
-        return ModelAndView("redirect:${BVWebPaths.SECRETS}")
+        return ModelAndView("redirect:${BVWebPaths.ADMIN_ROOT}")
     }
-
-    private fun mapSourceSetting(sourceName: String): SourceSettingView? =
-            sourceSecretsStorage.getConfigByName(sourceName)
-                    ?.let { sourceConfig ->
-                        SourceSettingView(
-                                name = sourceConfig.sourceName,
-                                type = sourceConfig.sourceType
-                        )
-                    }
-
-    private fun getBaseUrl() =
-            ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
 }

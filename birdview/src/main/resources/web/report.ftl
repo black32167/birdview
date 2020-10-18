@@ -1,3 +1,4 @@
+<#include '/links.ftl'/>
 <!DOCTYPE html>
 <html>
 <head>
@@ -79,7 +80,7 @@
         |
         <a href="#" onclick="reindex()" class="refresh">Update</a>
         |
-        <#include "/logout-form.ftl">
+        <@logout_link />
     </div>
     </span>
 </td>

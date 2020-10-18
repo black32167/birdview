@@ -12,7 +12,7 @@ class BVRootController {
     @GetMapping
     fun navigateHome() =
             if (UserContext.isAdmin()) {
-                ModelAndView("redirect:${BVWebPaths.SECRETS}")
+                ModelAndView("redirect:${BVWebPaths.ADMIN_ROOT}")
             } else {
                 ModelAndView("redirect:${BVWebPaths.EXPLORE}")
             }

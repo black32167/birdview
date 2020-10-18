@@ -1,5 +1,5 @@
 <#macro addForm sourceType>
-<form id="${sourceType}-form" source="${sourceType}" action="/admin/secrets/${sourceType}/add-secret" method="POST">
+<form id="${sourceType}-form" source="${sourceType}" action="<@add_secret_post_link sourceType />" method="POST">
     <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
     <table>
     <#nested>
@@ -12,7 +12,7 @@
     </div>
 </form>
 </#macro>
-
+<#include "/links.ftl">
 <!DOCTYPE html>
 <html>
 
@@ -57,7 +57,7 @@ $(function(){
 
 <body>
     <div class="menu">
-       <a href="/admin/secrets">< Settings</a>
+       <@admin_link />
     </div>
 
     <div>
@@ -135,7 +135,6 @@ $(function(){
                 <td>
                     <input type="text" name="clientSecret">
                     <div class="helpline" >
-                    <!--a href="https://console.developers.google.com/projectcreate">Register</a> and <a href="https://console.developers.google.com/">Generate</a-->
                     </div>
                 </td>
             </tr>

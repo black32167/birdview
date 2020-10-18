@@ -45,7 +45,7 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
     }
 
     protected open fun getRedirectAfterSaveView(config:T): Any =
-            ModelAndView("redirect:${BVWebPaths.SECRETS}")
+            ModelAndView("redirect:${BVWebPaths.ADMIN_ROOT}")
 
     private fun saveConfig(config:T) {
         sourceSecretsStorage.create(config)
