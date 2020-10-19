@@ -7,6 +7,7 @@ import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.model.*
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
+import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVConcurrentUtils
@@ -92,10 +93,13 @@ open class BVTaskService(
         }
     }
 
-    open fun loadDocuments(bvUser: String):List<Future<*>> =
+    private fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceConfig> =
             userSourceStorage.listUserSources(bvUser)
                     .filter { sourceName -> isEnabled(bvUser = bvUser, sourceName = sourceName) }
                     .mapNotNull (sourceSecretsStorage::getConfigByName)
+
+    open fun loadDocuments(bvUser: String):List<Future<*>> =
+            listEnabledSourceConfigs(bvUser)
                     .map { source ->
                         val subtaskFutures = mutableListOf<Future<*>>()
                         CompletableFuture.runAsync(Runnable {
@@ -107,7 +111,7 @@ open class BVTaskService(
                                     }
 
                                     subtaskFutures.add(executor.submit {
-                                        loadReferredDocs(docChunk) { docChunk ->
+                                        loadReferredDocs(bvUser, docChunk) { docChunk ->
                                             docChunk.forEach { doc ->
                                                 doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
                                             }
@@ -233,9 +237,9 @@ open class BVTaskService(
         return docsMap.values.filter { docId -> docId.ids.find { missedDocsIds.contains(it.id) } != null }
     }
 
-    private fun loadReferredDocs(filteredDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit) {
+    private fun loadReferredDocs(bvUser: String, filteredDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit) {
         val missedDocsIds = getReferencedDocIds(filteredDocs)
-        loadDocs(missedDocsIds, chunkConsumer)
+        loadDocsByIds(bvUser, missedDocsIds, chunkConsumer)
     }
 
     private fun getReferencedDocIds(filteredDocs: List<BVDocument>): Set<String> {
@@ -244,18 +248,24 @@ open class BVTaskService(
         return referencedIds - materializedIds
     }
 
-    private fun loadDocs(missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
+    private fun loadDocsByIds(bvUser: String, missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
+        val sourceType2SourceNames: Map<SourceType, List<String>> =
+                listEnabledSourceConfigs(bvUser).groupBy ({ it.sourceType}, {it.sourceName})
         val type2Ids: Map<SourceType, List<String>> = missedDocsIds
                 .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
                     getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
                 }
+
         return type2Ids.entries.forEach { (sourceType, sourceIds) ->
+            val sourceNames = sourceType2SourceNames[sourceType]
             val sourceManager = getSourceManager(sourceType)
-            try {
-                sourceManager.loadByIds(sourceIds, chunkConsumer)
-            } catch (e: Exception) {
-                log.error("", e)
+            sourceNames?.forEach { sourceName ->
+                try {
+                    sourceManager.loadByIds(sourceName, sourceIds, chunkConsumer)
+                } catch (e: Exception) {
+                    log.error("", e)
+                }
             }
         }
     }

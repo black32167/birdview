@@ -52,11 +52,11 @@ open class JiraTaskService(
 
     override fun canHandleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
 
-    override fun loadByIds(keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
-        jiraConfigs.forEach { config ->
+    override fun loadByIds(sourceName: String, keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
+        sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java)?.also { config ->
             val client = jiraClientProvider.getJiraClient(config)
             client.findIssues(
-                    "key IN (${keyList.distinct().joinToString(",")})") { issues->
+                    "key IN (${keyList.distinct().joinToString(",")})") { issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })
             }
         }
