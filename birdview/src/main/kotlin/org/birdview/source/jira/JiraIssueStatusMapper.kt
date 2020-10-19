@@ -13,9 +13,10 @@ object JiraIssueStatusMapper {
     fun toJiraStatuses(documentStatus: BVDocumentStatus):List<String>? =
             docStatus2JiraStatuses[documentStatus]
 
-    fun toBVStatus(jiraStatus: String): BVDocumentStatus? =
+    fun toBVStatus(jiraStatus: String): BVDocumentStatus =
         docStatus2JiraStatuses
                 .entries
                 .firstOrNull{ it.value.contains(jiraStatus) }
                 ?.key
+                ?: BVDocumentStatus.PLANNED
 }
