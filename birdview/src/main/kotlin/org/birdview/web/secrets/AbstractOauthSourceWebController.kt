@@ -3,6 +3,7 @@ package org.birdview.web.secrets
 import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.remote.WebTargetFactory
+import org.birdview.web.BVWebPaths
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -17,7 +18,7 @@ abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
         sourceSecretsStorage: BVSourceSecretsStorage
 ): AbstractSourceWebController<T, F>(sourceSecretsStorage) {
     companion object {
-        const val CODE_ENDPOINT_PATH = "/code"
+        const val CODE_ENDPOINT_PATH = "code"
     }
     private val log = LoggerFactory.getLogger(AbstractOauthSourceWebController::class.java)
 
@@ -37,7 +38,7 @@ abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
             code != null -> exchangeAuthorizationCode(sourceName = source, authCode = code)
             else -> log.error("OAuth authentication error for source ${source}:no code provided!")
         }
-        return ModelAndView("redirect:/secrets")
+        return ModelAndView("redirect:${BVWebPaths.ADMIN_ROOT}")
     }
 
     override fun getRedirectAfterSaveView(config: T): Any =
@@ -73,5 +74,5 @@ abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
     }
 
     protected fun getRedirectCodeUrl(source: String) =
-            "${ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()}/${getControllerPath()}/${CODE_ENDPOINT_PATH}?source=${source}"
+            "${ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()}${getControllerPath()}/${CODE_ENDPOINT_PATH}?source=${source}"
 }
