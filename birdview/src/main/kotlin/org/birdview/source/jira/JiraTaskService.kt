@@ -13,9 +13,12 @@ import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraUser
 import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 import javax.inject.Named
 
 @Named
@@ -31,6 +34,7 @@ open class JiraTaskService(
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
     private val jiraConfigs: List<BVJiraConfig>
             get() = sourceSecretsStorage.getConfigsOfType(BVJiraConfig::class.java)
+    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("JiraTaskService"))
 
     override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         jiraConfigs.forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
@@ -45,7 +49,9 @@ open class JiraTaskService(
                 .getJiraClient(config)
                 .findIssues(jqlBuilder.getJql(user, updatedPeriod, config)) { jiraIssues->
                     chunkConsumer.invoke(
-                            jiraIssues.map { mapDocument( it, config) }
+                            jiraIssues
+                                    .map { executor.submit(Callable<BVDocument> { mapDocument( it, config) }) }
+                                    .map { it.get() }
                     )
                 }
     }
@@ -64,6 +70,9 @@ open class JiraTaskService(
 
     private fun mapDocument(issue: JiraIssue, config: BVJiraConfig): BVDocument {
         val description = issue.fields.description ?: ""
+        val issueLinks = jiraClientProvider.getJiraClient(config).getIssueLinks(issue.key)
+
+        //TODO: ^ transform to refIds, parallelize documents mapping
         try {
             return BVDocument(
                     ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
@@ -72,7 +81,8 @@ open class JiraTaskService(
                     created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
                     body = description,
-                    refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}"),
+                    refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}") +
+                            issueLinks.map { it._object.url },
                     groupIds = extractGroupIds(issue, config.sourceName),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),

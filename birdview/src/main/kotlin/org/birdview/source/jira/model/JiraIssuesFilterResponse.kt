@@ -51,7 +51,10 @@ data class JiraIssueFields (
     val creator: JiraUser?,
     val reporter: JiraUser?,
     val assignee: JiraUser?
+ //   val issuelinks: List<JiraIssueLink>?
 )
+
+//data class JiraIssueLink()
 
 data class JiraIssueStatus(val name:String)
 

@@ -4,6 +4,7 @@ import org.birdview.source.ItemsPage
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
+import org.birdview.source.jira.model.JiraRemoteLink
 import org.birdview.storage.BVJiraConfig
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
@@ -84,7 +85,15 @@ class JiraClient(
                 .also { response -> if(response.status != 200) {
                     throw RuntimeException("Error reading Jira tasks: ${response.readEntity(String::class.java)}")
                 } }
-                .let { it.readEntity(JiraIssue::class.java) }
+                .readEntity(JiraIssue::class.java)
+
+    fun getIssueLinks(issueKey: String): Array<JiraRemoteLink> =
+            getTarget().path("issue").path(issueKey).path("remotelink")
+                    .request()
+                    .get()
+                    .also(ResponseValidationUtils::validate)
+                    .readEntity(Array<JiraRemoteLink>::class.java)
+
 
     private fun getTarget(): WebTarget = getTargetFactory().getTarget("/rest/api/2")
 
