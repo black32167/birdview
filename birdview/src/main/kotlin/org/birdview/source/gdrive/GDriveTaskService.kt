@@ -52,7 +52,10 @@ open class GDriveTaskService(
 
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) = try {
         BVDocument(
-                ids = setOf(BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)),
+                ids = setOf(
+                        BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName),
+                        BVDocumentId(id = file.webViewLink, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)
+                ),
                 refsIds = BVFilters.filterIdsFromText(file.name),
                 title = BVFilters.removeIdsFromText(file.name),
                 updated = parseDate(file.modifiedTime),
