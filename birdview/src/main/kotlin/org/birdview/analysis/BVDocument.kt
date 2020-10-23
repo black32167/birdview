@@ -2,6 +2,7 @@ package org.birdview.analysis
 
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
+import org.birdview.source.SourceType
 import java.util.*
 
 data class BVDocument (
@@ -14,11 +15,11 @@ data class BVDocument (
         val closed: Date? = null,
         val httpUrl: String,
         var users: List<BVDocumentUser> = listOf(),
-        val subDocuments: MutableList<BVDocument> = mutableListOf(),
         val groupIds: Set<BVDocumentId> = emptySet(),
         val refsIds: Set<String> = emptySet(),
         val status: BVDocumentStatus?,
-        val operations: List<BVDocumentOperation> = emptyList()
+        val operations: List<BVDocumentOperation> = emptyList(),
+        val sourceType: SourceType
 ) {
     val lastOperations: List<BVDocumentOperation> = getLastUsersOperations(operations)
 
@@ -36,16 +37,6 @@ data class BVDocument (
         return lastUsersOperations
     }
 
-    val inferredIds: MutableSet<BVDocumentId> = mutableSetOf<BVDocumentId>()
-            .apply { addAll(ids) }
-
-    fun addDocument(task:BVDocument) {
-        subDocuments.add(task)
-        inferredIds.addAll(task.groupIds)
-    }
-
-    fun getLastUpdated(): Date? =
-            subDocuments.mapNotNull { it.updated }.min()
 }
 
 data class BVDocumentUser(

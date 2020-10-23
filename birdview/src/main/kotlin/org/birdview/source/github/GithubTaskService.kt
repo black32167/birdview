@@ -4,6 +4,7 @@ import org.birdview.analysis.*
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVDocIdTypes.GITHUB_ID
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
@@ -12,10 +13,8 @@ import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVFilters
 import java.util.*
-import java.util.concurrent.Executors
 import javax.inject.Named
 
 @Named
@@ -24,11 +23,6 @@ open class GithubTaskService(
         private val githubClientProvider: GithubClientProvider,
         private val githubQueryBuilder: GithubQueryBuilder
 ): BVTaskSource {
-    companion object {
-        const val GITHUB_ID = "githubId"
-    }
-    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
-
     override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         sourceSecretsStorage.getConfigsOfType(BVGithubConfig::class.java)
                 .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
@@ -66,7 +60,8 @@ open class GithubTaskService(
                 status = status,
                 operations = operations,
                 key = pr.url.replace(".*/".toRegex(), "#"),
-                users = extractUsers(pr, githubConfig, operations)
+                users = extractUsers(pr, githubConfig, operations),
+                sourceType = getType()
         )
     }
 

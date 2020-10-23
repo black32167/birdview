@@ -15,7 +15,7 @@ object DocumentTreeBuilder {
 
         // Create views
         val id2Nodes = mutableMapOf<String, BVDocumentViewTreeNode>()
-        val rootNodes = mutableListOf<BVDocumentViewTreeNode>()
+        val rootNodes = mutableSetOf<BVDocumentViewTreeNode>()
         _docs.forEach { doc ->
             val node = BVDocumentViewTreeNode(BVDocumentViewFactory.create(doc))
             doc.ids.forEach { docId->
@@ -52,7 +52,7 @@ object DocumentTreeBuilder {
             }
         }
 
-        return rootNodes
+        return rootNodes.toList().sortedByDescending { it.lastUpdated }
     }
 
     private fun getPriority(sourceType: SourceType): Int = when(sourceType) {

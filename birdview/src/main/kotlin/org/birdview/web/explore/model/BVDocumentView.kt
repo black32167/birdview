@@ -1,8 +1,8 @@
-package org.birdview.web.secrets
+package org.birdview.web.explore.model
 
-class BVDocumentView (
+data class BVDocumentView (
         val id: String,
-        val subDocuments: List<BVDocumentView>,
+        val ids: List<String>,
         val title: String,
         val updated: String?,
         val httpUrl: String,

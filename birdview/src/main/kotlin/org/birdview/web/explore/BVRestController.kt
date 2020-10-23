@@ -1,9 +1,9 @@
-package org.birdview.web
+package org.birdview.web.explore
 
 import org.birdview.BVTaskService
 import org.birdview.model.*
 import org.birdview.security.UserContext
-import org.birdview.web.secrets.BVDocumentView
+import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -26,7 +26,7 @@ class BVRestController(
     @GetMapping("documents")
     fun documents(
             documentRequest: DocumentRequest
-    ): List<BVDocumentView> {
+    ): Collection<BVDocumentViewTreeNode> {
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         val user = documentRequest.user.takeUnless { it == "" } ?: UserContext.getUserName()
         val tsRequest = BVDocumentFilter(
@@ -37,8 +37,12 @@ class BVRestController(
                 sourceType = documentRequest.sourceType,
                 representationType = documentRequest.representationType)
         val docs = taskService.getDocuments(tsRequest)
-                .map(BVDocumentViewFactory::create)
-        return docs
+        val docViews = DocumentTreeBuilder.buildTree(docs)
+
+        if (documentRequest.representationType == RepresentationType.LIST) {
+            docViews.forEach(HierarchyOptimizer::optimizeHierarchy)
+        }
+        return docViews
     }
 
     @GetMapping("documents/reindex")

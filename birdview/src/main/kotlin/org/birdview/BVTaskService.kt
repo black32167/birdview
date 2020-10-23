@@ -55,30 +55,8 @@ open class BVTaskService(
             return filteredDocs
         }
 
-        val allDocs = filteredDocs + getReferencedDocs(filteredDocs)
-
-        val linkedDocs = BVTimeUtil.logTime("Linking documents") {
-            linkDocs(allDocs)
-        }
-
-        if (filter.representationType == RepresentationType.LIST) {
-            return linkedDocs.map { it.copy(subDocuments = optimizeHierarchy(it.subDocuments)) }
-        }
-        return linkedDocs;
+        return filteredDocs + getReferencedDocs(filteredDocs)
     }
-
-    private fun optimizeHierarchy(docs: List<BVDocument>): MutableList<BVDocument> {
-        return docs.flatMap { optimizeDoc(it) }.toMutableList()
-    }
-
-    private fun optimizeDoc(doc: BVDocument): Iterable<BVDocument> =
-        if (doc.subDocuments.isEmpty()) {
-            listOf(doc)
-        } else if (doc.subDocuments.size < 3) {
-            optimizeHierarchy(doc.subDocuments)
-        } else {
-            listOf(doc.copy(subDocuments = optimizeHierarchy(doc.subDocuments)))
-        }
 
     private fun loadAsync(user: String) {
         usersRetrieved.computeIfAbsent(user ?: "") {
@@ -276,26 +254,4 @@ open class BVTaskService(
     private fun getSourceTypes(id: String): SourceType? =
             sourceManagersMap.values.find { it.canHandleId(id) }?.getType()
 
-    private fun linkDocs(_docs: List<BVDocument>): List<BVDocument> {
-        //FIXME (subDocuments)
-        val docs = _docs.map { it.copy(subDocuments = mutableListOf()) }.toMutableList()
-
-        val groupId2Group = docs
-                .flatMap { doc -> doc.ids.map { id -> id to doc } }
-                .groupBy({ entry -> entry.first.id }, { entry -> entry.second })
-
-        val collectionsIterator = docs.iterator()
-        while (collectionsIterator.hasNext()) {
-            collectionsIterator.next()
-                    .also { doc: BVDocument ->
-                        val parentDocs: List<BVDocument> = (doc.refsIds + doc.groupIds.map { it.id })
-                                .flatMap { refId -> (groupId2Group[refId] ?: emptyList<BVDocument>()) }
-                        if (parentDocs.isNotEmpty()) {
-                            parentDocs.forEach { it.subDocuments.add(doc) }
-                            collectionsIterator.remove()
-                        }
-                    }
-        }
-        return docs
-    }
 }

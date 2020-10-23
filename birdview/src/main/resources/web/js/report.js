@@ -2,8 +2,9 @@
 function applyTree(treeElement) {
     $(treeElement).treetable({ expandable: true })
 }
-function renderTable(rootElement, docs, parentId, level) {
-    docs.forEach( doc => {
+function renderTable(rootElement, nodes, parentId, level) {
+    nodes.forEach( node => {
+        var doc = node.doc
         var row = $('<tr>').attr('data-tt-id', doc.id)
         if(parent) {
             row.attr('data-tt-parent-id', parentId)
@@ -12,7 +13,7 @@ function renderTable(rootElement, docs, parentId, level) {
         // Title
         var titleCol = $('<td>')
             .html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
-            .addClass(doc.subDocuments.length == 0 ? 'title_leaf' : 'title')
+            .addClass(node.subNodes.length == 0 ? 'title_leaf' : 'title')
         row.append(titleCol)
 
         // Source
@@ -34,26 +35,27 @@ function renderTable(rootElement, docs, parentId, level) {
         rootElement.append(row)
 
         // Rendering subdocuments:
-        renderTable(rootElement, doc.subDocuments, doc.id, level+1)
+        renderTable(rootElement, node.subNodes, doc.id, level+1)
     })
 }
-function renderList(rootElement, docs) {
-    if(docs.length == 0) {
+function renderList(rootElement, nodes) {
+    if(nodes.length == 0) {
         return
     }
     var ul = $('<ul>')
-    docs.forEach(doc => {
+    nodes.forEach(node => {
+        var doc = node.doc
         var li = $('<li>')
             .html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
         ul.append(li)
 
         // Rendering subdocuments:
-        renderList(ul, doc.subDocuments)
+        renderList(ul, node.subNodes)
     })
     rootElement.append(ul)
 }
 
-function renderReport(docs) {
+function renderReport(nodes) {
     var representationType = $('#representation').val()
 
     var reportContainer = $('#reportContainer')
@@ -70,12 +72,12 @@ function renderReport(docs) {
 
             tableContainer.append(headerRow)
 
-            renderTable(tableContainer, docs, null, 0)
+            renderTable(tableContainer, nodes, null, 0)
             applyTree(tableContainer)
             reportContainer.append(tableContainer)
             break
         case "LIST":
-            renderList(reportContainer, docs)
+            renderList(reportContainer, nodes)
             //reportContainer.append(listContainer)
             break
     }
@@ -119,8 +121,8 @@ function refresh() {
         `&sourceType=${source}` +
         `&representationType=${representationType}` +
         `&userRole=${userRole}`)
-        .done(function( docs ) {
-             renderReport(docs)
+        .done(function( nodes ) {
+             renderReport(nodes)
          })
         .always(function() {
             showOverlay(false)

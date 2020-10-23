@@ -6,6 +6,7 @@ import org.birdview.analysis.BVDocumentUser
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVDocIdTypes.TRELLO_CARD_ID_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
@@ -22,7 +23,6 @@ open class TrelloTaskService(
         private val trelloQueryBuilder: TrelloQueryBuilder
 ) : BVTaskSource {
     companion object {
-        private const val TRELLO_CARD_ID_TYPE = "trelloCardId"
         private const val TRELLO_CARD_SHORTLINK_TYPE = "trelloCardShortLink"
         const val TRELLO_BOARD_TYPE = "trelloBoardId"
         private const val TRELLO_LABEL_TYPE = "trelloLabel"
@@ -58,7 +58,8 @@ open class TrelloTaskService(
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
                         key = "#${card.id}",
                         // TODO: load user by id to infer user name!
-                        users = extractUsers(card, trelloConfig.sourceName)
+                        users = extractUsers(card, trelloConfig.sourceName),
+                        sourceType = getType()
                 )
             }
 

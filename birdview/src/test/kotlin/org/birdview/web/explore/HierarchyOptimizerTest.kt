@@ -32,6 +32,16 @@ class HierarchyOptimizerTest {
         Assert.assertEquals(2, root.subNodes.size)
     }
 
+    @Test
+    fun oneLevelHoerarchyShouldNotBeOptimized() {
+        val root = node("parentId", listOf(
+                node("childrenId")))
+
+        HierarchyOptimizer.optimizeHierarchy(root)
+
+        Assert.assertEquals(1, root.subNodes.size)
+    }
+
     private fun node(id: String, subNodes: List<BVDocumentViewTreeNode> = listOf()): BVDocumentViewTreeNode =
             BVDocumentViewTreeNode(
                     BVDocumentView(

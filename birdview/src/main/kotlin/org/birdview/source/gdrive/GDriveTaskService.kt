@@ -6,6 +6,7 @@ import org.birdview.analysis.BVDocumentUser
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVDocIdTypes.GDRIVE_FILE_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
@@ -25,7 +26,6 @@ open class GDriveTaskService(
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
     companion object {
-        val GDRIVE_FILE_TYPE = "gDriveFile"
         private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
@@ -62,7 +62,8 @@ open class GDriveTaskService(
                 httpUrl = file.webViewLink,
                 status = BVDocumentStatus.PROGRESS,
                 key = "open",
-                users = extractUsers(file, config)
+                users = extractUsers(file, config),
+                sourceType = getType()
         )
     } catch (e:Exception) {
         log.error("", e)

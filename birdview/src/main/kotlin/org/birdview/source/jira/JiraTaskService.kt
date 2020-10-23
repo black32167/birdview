@@ -6,6 +6,7 @@ import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentUser
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVDocIdTypes.JIRA_KEY_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.jira.model.JiraChangelogItem
@@ -27,9 +28,6 @@ open class JiraTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
-    companion object {
-        const val JIRA_KEY_TYPE = "jiraKey"
-    }
     private val log = LoggerFactory.getLogger(JiraTaskService::class.java)
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
     private val jiraConfigs: List<BVJiraConfig>
@@ -87,7 +85,8 @@ open class JiraTaskService(
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),
                     key = issue.key,
-                    users = extractUsers(issue, config)
+                    users = extractUsers(issue, config),
+                    sourceType = getType()
             )
         } catch (e:Exception) {
             throw RuntimeException("Could not parse issue $issue", e)

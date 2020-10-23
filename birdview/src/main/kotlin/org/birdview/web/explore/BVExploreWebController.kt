@@ -1,9 +1,10 @@
-package org.birdview.web
+package org.birdview.web.explore
 
 import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserStorage
+import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
