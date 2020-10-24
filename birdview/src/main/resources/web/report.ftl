@@ -38,6 +38,7 @@
         <tr><td class="sign">Role:</td>
         <td>
             <select id="userRole" onchange="refresh()">
+                <option value="">ANY</option>
                 <#list userRoles as userRole>
                 <option value="${userRole}">${userRole}</option>
                 </#list>
@@ -85,7 +86,6 @@
     </span>
 </td>
 <td width="100%">
-    <!-- #import reportPath as report -->
     <div id="reportContainer">
     </div>
 </td>

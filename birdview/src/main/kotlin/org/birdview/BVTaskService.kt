@@ -148,7 +148,7 @@ open class BVTaskService(
         val userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
                 val filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, docUser.sourceName).sourceUserName
-                filteringUser == docUser.userName && userFilter.role == docUser.role
+                filteringUser == docUser.userName && userFilter.roles.contains(docUser.role)
         }
         if (!hasFilteredUser) {
             log.trace("Filtering out doc #{} (hasFilteredUser)", doc.title)
@@ -170,12 +170,12 @@ open class BVTaskService(
             getLastOperation(doc, userFilter) ?.created
 
     private fun getLastOperation(doc: BVDocument, userFilter: UserFilter): BVDocumentOperation? {
-        if (userFilter.role != UserRole.IMPLEMENTOR) {
+        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
             val filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, operation.sourceName).sourceUserName
-            filteringUser == operation.author && mapOperationTypeToRole(operation.type).contains(userFilter.role)
+            filteringUser == operation.author && mapOperationTypeToRole(operation.type).any { userFilter.roles.contains(it) }
         }
     }
 

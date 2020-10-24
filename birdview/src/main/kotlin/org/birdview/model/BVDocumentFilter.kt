@@ -19,7 +19,7 @@ enum class UserRole {
 
 data class UserFilter(
         val userAlias: String,
-        val role: UserRole
+        val roles: List<UserRole>
 )
 
 data class TimeIntervalFilter(

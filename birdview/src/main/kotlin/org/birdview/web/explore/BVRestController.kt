@@ -20,7 +20,7 @@ class BVRestController(
             val reportType: ReportType,
             val daysBack: Long,
             val sourceType: String?,
-            val userRole: UserRole = UserRole.CREATOR,
+            val userRole: UserRole?,
             var representationType: RepresentationType
     )
     @GetMapping("documents")
@@ -29,11 +29,12 @@ class BVRestController(
     ): Collection<BVDocumentViewTreeNode> {
         val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         val user = documentRequest.user.takeUnless { it == "" } ?: UserContext.getUserName()
+        val userRoles = documentRequest.userRole?.let { listOf(it) } ?: inferRolesFromReportType(documentRequest.reportType)
         val tsRequest = BVDocumentFilter(
                 reportType = documentRequest.reportType,
                 grouping = true,
                 updatedPeriod = TimeIntervalFilter(after = today.minusDays(documentRequest.daysBack)),
-                userFilter = UserFilter( userAlias = user, role = documentRequest.userRole),
+                userFilter = UserFilter( userAlias = user, roles = userRoles),
                 sourceType = documentRequest.sourceType,
                 representationType = documentRequest.representationType)
         val docs = taskService.getDocuments(tsRequest)
@@ -43,6 +44,11 @@ class BVRestController(
             docViews.forEach(HierarchyOptimizer::optimizeHierarchy)
         }
         return docViews
+    }
+
+    private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
+        ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR, UserRole.CREATOR)
+        ReportType.WORKED -> listOf(UserRole.IMPLEMENTOR)
     }
 
     @GetMapping("documents/reindex")
