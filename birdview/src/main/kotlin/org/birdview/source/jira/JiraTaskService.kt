@@ -70,7 +70,6 @@ open class JiraTaskService(
         val description = issue.fields.description ?: ""
         val issueLinks = jiraClientProvider.getJiraClient(config).getIssueLinks(issue.key)
 
-        //TODO: ^ transform to refIds, parallelize documents mapping
         try {
             return BVDocument(
                     ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
