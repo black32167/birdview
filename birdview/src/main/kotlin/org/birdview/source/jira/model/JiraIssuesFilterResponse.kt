@@ -50,12 +50,17 @@ data class JiraIssueFields (
     val watches: JiraWatcher?,
     val creator: JiraUser?,
     val reporter: JiraUser?,
-    val assignee: JiraUser?
+    val assignee: JiraUser?,
+    val priority: JiraIssuePriority?
  //   val issuelinks: List<JiraIssueLink>?
 )
 
 //data class JiraIssueLink()
 
+data class JiraIssuePriority (
+        val id: String,
+        val name: String
+)
 data class JiraIssueStatus(val name:String)
 
 data class JiraParentIssue (

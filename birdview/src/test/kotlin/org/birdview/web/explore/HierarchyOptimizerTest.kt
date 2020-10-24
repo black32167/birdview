@@ -1,5 +1,6 @@
 package org.birdview.web.explore
 
+import org.birdview.analysis.Priority
 import org.birdview.web.explore.model.BVDocumentView
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
@@ -53,7 +54,8 @@ class HierarchyOptimizerTest {
                         status = "BACKLOG",
                         id = id,
                         lastUpdater = "lastUpdater",
-                        sourceName = "sourceName"
+                        sourceName = "sourceName",
+                        priority = Priority.NORMAL
                     ),
                     subNodes.toMutableList(),
                     lastUpdated = Date()

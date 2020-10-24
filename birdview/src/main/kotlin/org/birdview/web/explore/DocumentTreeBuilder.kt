@@ -17,7 +17,7 @@ object DocumentTreeBuilder {
         val id2Nodes = mutableMapOf<String, BVDocumentViewTreeNode>()
         val rootNodes = mutableSetOf<BVDocumentViewTreeNode>()
         _docs.forEach { doc ->
-            val node = BVDocumentViewTreeNode(BVDocumentViewFactory.create(doc))
+            val node = BVDocumentViewTreeNode(doc = BVDocumentViewFactory.create(doc), lastUpdated = doc.updated)
             doc.ids.forEach { docId->
                 id2Nodes[docId.id] = node
                 rootNodes += node

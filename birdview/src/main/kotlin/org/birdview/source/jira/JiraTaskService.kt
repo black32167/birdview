@@ -1,9 +1,6 @@
 package org.birdview.source.jira
 
-import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
-import org.birdview.analysis.BVDocumentOperation
-import org.birdview.analysis.BVDocumentUser
+import org.birdview.analysis.*
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVDocIdTypes.JIRA_KEY_TYPE
@@ -85,12 +82,24 @@ open class JiraTaskService(
                     operations = extractOperations(issue, config),
                     key = issue.key,
                     users = extractUsers(issue, config),
-                    sourceType = getType()
+                    sourceType = getType(),
+                    priority = extractPriority(issue)
             )
         } catch (e:Exception) {
             throw RuntimeException("Could not parse issue $issue", e)
         }
     }
+
+    private fun extractPriority(issue: JiraIssue): Priority = issue.fields.priority?.id?.let { Integer.parseInt(it) }
+            ?.let { id ->
+                if (id < 3) {
+                    Priority.HIGH
+                } else if (id < 4) {
+                    Priority.NORMAL
+                } else {
+                    Priority.LOW
+                }
+            } ?: Priority.LOW
 
     private fun parseDate(dateTimeString:String?) =
             BVDateTimeUtils.parse(dateTimeString, JIRA_DATETIME_PATTERN)

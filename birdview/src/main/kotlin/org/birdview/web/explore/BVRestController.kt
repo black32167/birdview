@@ -38,7 +38,8 @@ class BVRestController(
                 sourceType = documentRequest.sourceType,
                 representationType = documentRequest.representationType)
         val docs = taskService.getDocuments(tsRequest)
-        val docViews = DocumentTreeBuilder.buildTree(docs)
+        val docViews = DocumentTreeBuilder.buildTree(docs).toMutableList()
+        HierarchySorter.sortHierarchy(docViews, documentRequest.reportType)
 
         if (documentRequest.representationType == RepresentationType.LIST) {
             docViews.forEach(HierarchyOptimizer::optimizeHierarchy)

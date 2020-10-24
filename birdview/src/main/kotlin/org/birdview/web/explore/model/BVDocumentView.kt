@@ -1,5 +1,7 @@
 package org.birdview.web.explore.model
 
+import org.birdview.analysis.Priority
+
 data class BVDocumentView (
         val id: String,
         val ids: List<String>,
@@ -9,5 +11,6 @@ data class BVDocumentView (
         val status: String,
         val sourceName: String,
         val key: String,
-        val lastUpdater: String?
+        val lastUpdater: String?,
+        val priority: Priority
 )

@@ -19,7 +19,8 @@ data class BVDocument (
         val refsIds: Set<String> = emptySet(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
-        val sourceType: SourceType
+        val sourceType: SourceType,
+        val priority: Priority = Priority.NORMAL
 ) {
     val lastOperations: List<BVDocumentOperation> = getLastUsersOperations(operations)
 
@@ -36,7 +37,12 @@ data class BVDocument (
         }
         return lastUsersOperations
     }
+}
 
+enum class Priority {
+    LOW,
+    NORMAL,
+    HIGH
 }
 
 data class BVDocumentUser(
