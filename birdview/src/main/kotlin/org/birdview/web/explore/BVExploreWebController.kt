@@ -29,21 +29,9 @@ class BVExploreWebController(
     ): String? {
         val baseUrl = getBaseUrl()
 
-        val tsRequest = buildTSRequest(
-                user ?: UserContext.getUserName(),
-                report)
-
         model.asMap().putAll(mapOf(
-                "reportLinks" to ReportType.values()
-                        .map {
-                            ReportLink(
-                                    reportUrl = reportUrl(it, tsRequest, baseUrl),
-                                    reportName = it.name.toLowerCase().capitalize())
-                        },
-                "user" to tsRequest.userFilter,
+                "user" to (user ?: UserContext.getUserName()),
                 "baseURL" to baseUrl,
-                "reportPath" to "report-${tsRequest.reportType}.ftl",
-                "format" to getFormat(tsRequest.reportType),
                 "reportTypes" to ReportType.values(),
                 "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
@@ -55,41 +43,6 @@ class BVExploreWebController(
 
     private fun listUsers() =
             userStorage.listUserNames()
-
-    private fun reportUrl(reportType: ReportType, tsRequest: BVDocumentFilter, baseUrl: String): String {
-        return "${baseUrl}?report=${reportType.name.toLowerCase()}" +
-                (tsRequest.userFilter.takeIf { it.role == UserRole.IMPLEMENTOR }
-                        ?.userAlias
-                        ?.let { "&user=${it}" } ?: "")
-    }
-
-    private fun buildTSRequest(user: String?, report: String?) : BVDocumentFilter {
-        val sourceType = null
-        val reportType = report
-                ?.toUpperCase()
-                ?.let { ReportType.valueOf(it) }
-                ?: ReportType.WORKED
-        val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
-        return when(reportType) {
-            ReportType.PLANNED -> BVDocumentFilter(
-                    reportType = reportType,
-                    grouping = true,
-                    updatedPeriod = TimeIntervalFilter(),
-                    userFilter = UserFilter( userAlias = user ?: UserContext.getUserName(), role = UserRole.IMPLEMENTOR),
-                    sourceType = sourceType)
-            ReportType.WORKED -> BVDocumentFilter(
-                    reportType = reportType,
-                    grouping = true,
-                    updatedPeriod = TimeIntervalFilter(after = today.minusDays(10)),
-                    userFilter = UserFilter( userAlias = user ?: UserContext.getUserName(), role = UserRole.IMPLEMENTOR),
-                    sourceType = sourceType)
-        }
-    }
-
-    private fun getFormat(reportType: ReportType): String = "long"/*when(reportType) {
-        ReportType.LAST_DAY -> "brief"
-        else -> "long"
-    }*/
 
     private fun getBaseUrl() =
             ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
