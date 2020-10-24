@@ -8,6 +8,7 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
+import org.birdview.source.jira.model.JiraRemoteLink
 import org.birdview.source.jira.model.JiraUser
 import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -75,8 +76,7 @@ open class JiraTaskService(
                     created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
                     body = description,
-                    refsIds = BVFilters.filterIdsFromText("${description} ${issue.fields.summary}") +
-                            issueLinks.map { it._object.url },
+                    refsIds = extractRefsIds(issue, issueLinks),
                     groupIds = extractGroupIds(issue, config.sourceName),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),
@@ -89,6 +89,11 @@ open class JiraTaskService(
             throw RuntimeException("Could not parse issue $issue", e)
         }
     }
+
+    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>): Set<String> =
+        BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
+                issueLinks.map { it._object.url } +
+                extractParentIds(issue)
 
     private fun extractPriority(issue: JiraIssue): Priority = issue.fields.priority?.id?.let { Integer.parseInt(it) }
             ?.let { id ->
@@ -138,6 +143,8 @@ open class JiraTaskService(
             sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java) != null
 
     private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
-            (issue.fields.customfield_10007?.let { setOf(BVDocumentId(it, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>()) +
-                    (issue.fields.parent?.let{ setOf(BVDocumentId(it.key, JIRA_KEY_TYPE, sourceName)) } ?: emptySet<BVDocumentId>())
+            extractParentIds(issue).map { BVDocumentId(it, JIRA_KEY_TYPE, sourceName) }.toSet()
+
+    private fun extractParentIds(issue: JiraIssue):Set<String> =
+            listOfNotNull(issue.fields.customfield_10007, issue.fields.parent?.key).toSet()
 }
