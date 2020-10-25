@@ -39,7 +39,7 @@ class BVRestController(
                 userFilter = UserFilter( userAlias = user, roles = userRoles),
                 sourceType = documentRequest.sourceType,
                 representationType = documentRequest.representationType)
-        userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
+  //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
         val docs = taskService.getDocuments(tsRequest)
         val docViews = DocumentTreeBuilder.buildTree(docs).toMutableList()
         HierarchySorter.sortHierarchy(docViews, documentRequest.reportType)
