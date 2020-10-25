@@ -1,54 +1,21 @@
 package org.birdview
 
 import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
-import org.birdview.analysis.BVDocumentOperation
-import org.birdview.analysis.BVDocumentOperationType
-import org.birdview.model.*
-import org.birdview.source.BVTaskSource
-import org.birdview.source.SourceType
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVUserSourceStorage
-import org.birdview.utils.BVConcurrentUtils
+import org.birdview.model.BVDocumentFilter
+import org.birdview.storage.BVDocumentStorage
+import org.birdview.utils.BVDocumentUtils.getReferencedDocIds
 import org.birdview.utils.BVTimeUtil
-import org.slf4j.LoggerFactory
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.chrono.ChronoZonedDateTime
-import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
 import javax.inject.Named
-import kotlin.NoSuchElementException
 
 @Named
 open class BVTaskService(
-        sourceManagers: List<BVTaskSource>,
-        val userSourceStorage: BVUserSourceStorage,
-        val sourceSecretsStorage: BVSourceSecretsStorage
+        private val documentStorage: BVDocumentStorage
 ) {
-    private val sourceManagersMap = sourceManagers.map { it.getType() to it }.toMap()
-
-    private val log = LoggerFactory.getLogger(BVTaskService::class.java)
-    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
-    // id -> doc
-    private val docsMap = ConcurrentHashMap<BVDocumentId, BVDocument>()
-    private val usersRetrieved = ConcurrentHashMap<String, Boolean>()
-
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
-        loadAsync(filter.userFilter.userAlias)
         BVTimeUtil.printStats()
 
         val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
-            docsMap
-                    .values
-                    .filter { doc ->
-                        filterDocument(doc, filter)
-                    }
-                    .toMutableList()
+            documentStorage.findDocuments(filter)
         }
 
         if (filter.sourceType != "") {
@@ -58,200 +25,8 @@ open class BVTaskService(
         return filteredDocs + getReferencedDocs(filteredDocs)
     }
 
-    private fun loadAsync(user: String) {
-        usersRetrieved.computeIfAbsent(user ?: "") {
-            loadDocuments(user).forEach{
-                try {
-                    it.get()
-                } catch (e: java.lang.Exception) {
-                    log.error("", e)
-                }
-            }
-            true
-        }
-    }
-
-    private fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceConfig> =
-            userSourceStorage.listUserSources(bvUser)
-                    .filter { sourceName -> isEnabled(bvUser = bvUser, sourceName = sourceName) }
-                    .mapNotNull (sourceSecretsStorage::getConfigByName)
-
-    open fun loadDocuments(bvUser: String):List<Future<*>> =
-            listEnabledSourceConfigs(bvUser)
-                    .map { source ->
-                        val subtaskFutures = mutableListOf<Future<*>>()
-                        CompletableFuture.runAsync(Runnable {
-                            BVTimeUtil.logTime("Loading data from ${source.sourceType}") {
-                                val sourceManager = getSourceManager(source.sourceType)
-                                sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
-                                    docChunk.forEach { doc ->
-                                        doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
-                                    }
-
-                                    subtaskFutures.add(executor.submit {
-                                        loadReferredDocs(bvUser, docChunk) { docChunk ->
-                                            docChunk.forEach { doc ->
-                                                doc.ids.firstOrNull()?.also { id -> docsMap[id] = doc }
-                                            }
-                                        }
-                                    })
-                                }
-                                subtaskFutures.forEach { it.get() }
-                            }
-                        }, executor)
-                    }
-
-    private fun isEnabled(bvUser: String, sourceName: String): Boolean = try {
-        userSourceStorage.getSourceProfile(bvUser = bvUser, sourceName = sourceName).enabled
-    } catch (exception: java.lang.Exception) {
-        log.warn("Error reading source '${sourceName}' config for user '${bvUser}'")
-        false
-    }
-
-    open fun invalidateCache() {
-        docsMap.clear()
-        usersRetrieved.clear()
-    }
-
-    open fun filterDocument(doc: BVDocument, filter: BVDocumentFilter): Boolean {
-        if(filter.sourceType != "" && filter.sourceType?.let { filterSource -> doc.ids.any { it.sourceName == filterSource }} == false) {
-            return false
-        }
-
-        val docUpdated = inferDocUpdated(doc, filter.userFilter)
-        if (filter.updatedPeriod.after != null) {
-            if (docUpdated == null || filter.updatedPeriod.after > docUpdated) {
-                log.trace("Filtering out doc #{} (updatedPeriod.after)", doc.title)
-                return false
-            }
-        }
-
-        if (filter.updatedPeriod.before != null) {
-            if (docUpdated == null || filter.updatedPeriod.before <= docUpdated) {
-                log.trace("Filtering out doc #{} (updatedPeriod.before)", doc.title)
-                return false
-            }
-        }
-
-        val inferredDocStatus = inferDocStatus(doc)
-        val targetDocumentStatuses = getTargetDocStatuses(filter.reportType)
-        if (!targetDocumentStatuses.contains(inferredDocStatus)) {
-            log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
-            return false
-        }
-
-        if (!targetDocumentStatuses.contains(doc.status)) {
-            log.trace("Filtering out doc #{} (doc.status)", doc.title)
-            return false
-        }
-
-        val userFilter = filter.userFilter
-        val hasFilteredUser = doc.users.any { docUser ->
-                val filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, docUser.sourceName).sourceUserName
-                filteringUser == docUser.userName && userFilter.roles.contains(docUser.role)
-        }
-        if (!hasFilteredUser) {
-            log.trace("Filtering out doc #{} (hasFilteredUser)", doc.title)
-            return false
-        }
-
-        log.trace("Including doc #{}", doc.title)
-        return true
-    }
-
-    open fun inferDocUpdated(doc: BVDocument, userFilter: UserFilter): ChronoZonedDateTime<*>? {
-        val date = getLastOperationDate(doc, userFilter)
-                ?: getDocDate(doc)
-
-        return date?.toInstant()?.atZone(ZoneId.of("UTC"))
-    }
-
-    open fun getLastOperationDate(doc: BVDocument, userFilter: UserFilter): Date? =
-            getLastOperation(doc, userFilter) ?.created
-
-    private fun getLastOperation(doc: BVDocument, userFilter: UserFilter): BVDocumentOperation? {
-        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
-            return null
-        }
-        return doc.lastOperations.firstOrNull { operation ->
-            val filteringUser = userSourceStorage.getSourceProfile(userFilter.userAlias, operation.sourceName).sourceUserName
-            filteringUser == operation.author && mapOperationTypeToRole(operation.type).any { userFilter.roles.contains(it) }
-        }
-    }
-
-    private fun mapOperationTypeToRole(type: BVDocumentOperationType): Set<UserRole> =
-        when (type) {
-            BVDocumentOperationType.COLLABORATE -> setOf(UserRole.IMPLEMENTOR)
-            else -> setOf(UserRole.WATCHER)
-        }
-
-    private fun getDocDate(doc: BVDocument): Date? =
-            if(doc.closed != null && doc.closed < doc.updated) {
-                doc.closed //doc.closed
-            } else {
-                doc.updated
-            }
-
-    private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
-        val parentStatuses = doc.refsIds
-                .map { key -> getDocByStringKey(key)?.status }
-        if (parentStatuses.isNotEmpty() && parentStatuses.all { it == BVDocumentStatus.DONE }) {
-            return BVDocumentStatus.DONE
-        }
-        return doc.status
-    }
-
-    private fun getDocByStringKey(key: String): BVDocument? =
-            docsMap.values.find { doc -> doc.ids.any { it.id == key } }
-
-    private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
-        ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
-        ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
-    }
-
     // TODO: non-optimal
     private fun getReferencedDocs(filteredDocs: List<BVDocument>): List<BVDocument> {
-        val missedDocsIds = getReferencedDocIds(filteredDocs)
-        return docsMap.values.filter { docId -> docId.ids.find { missedDocsIds.contains(it.id) } != null }
+        return documentStorage.getDocuments(getReferencedDocIds(filteredDocs))
     }
-
-    private fun loadReferredDocs(bvUser: String, filteredDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val missedDocsIds = getReferencedDocIds(filteredDocs)
-        loadDocsByIds(bvUser, missedDocsIds, chunkConsumer)
-    }
-
-    private fun getReferencedDocIds(filteredDocs: List<BVDocument>): Set<String> {
-        val materializedIds = filteredDocs.flatMap { it.ids }.map { it.id }.toSet()
-        val referencedIds = (filteredDocs.flatMap { it.refsIds } + filteredDocs.flatMap { it.groupIds }.map { it.id }).toSet()
-        return referencedIds - materializedIds
-    }
-
-    private fun loadDocsByIds(bvUser: String, missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val sourceType2SourceNames: Map<SourceType, List<String>> =
-                listEnabledSourceConfigs(bvUser).groupBy ({ it.sourceType}, {it.sourceName})
-        val type2Ids: Map<SourceType, List<String>> = missedDocsIds
-                .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
-                    getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
-                    acc
-                }
-
-        return type2Ids.entries.forEach { (sourceType, sourceIds) ->
-            val sourceNames = sourceType2SourceNames[sourceType]
-            val sourceManager = getSourceManager(sourceType)
-            sourceNames?.forEach { sourceName ->
-                try {
-                    sourceManager.loadByIds(sourceName, sourceIds, chunkConsumer)
-                } catch (e: Exception) {
-                    log.error("", e)
-                }
-            }
-        }
-    }
-
-    private fun getSourceManager(sourceType: SourceType) =
-            sourceManagersMap[sourceType] ?: throw NoSuchElementException("Unknown source type ${sourceType}")
-
-    private fun getSourceTypes(id: String): SourceType? =
-            sourceManagersMap.values.find { it.canHandleId(id) }?.getType()
-
 }

@@ -4,6 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.model.*
+import org.birdview.storage.BVSourceUserNameResolver
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.chrono.ChronoZonedDateTime
@@ -12,7 +13,7 @@ import java.util.function.Predicate
 
 class BVDocumentPredicate(
         private val filter: BVDocumentFilter,
-        private val source2Alias: Map<String, String>
+        private val sourceUserNameResolver: BVSourceUserNameResolver
 ): Predicate<BVDocument> {
     private val log = LoggerFactory.getLogger(BVDocumentFilter::class.java)
 
@@ -50,7 +51,7 @@ class BVDocumentPredicate(
 
         val userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
-            source2Alias[docUser.sourceName]
+            sourceUserNameResolver.resolve(filter.userFilter.userAlias, docUser.sourceName)
                     ?.let { sourceFilteringUserName->
                         sourceFilteringUserName == docUser.userName && userFilter.roles.contains(docUser.role)
                     } ?: false
@@ -79,7 +80,7 @@ class BVDocumentPredicate(
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
-            source2Alias[operation.sourceName]
+            sourceUserNameResolver.resolve(filter.userFilter.userAlias, operation.sourceName)
                     ?.let { sourceFilteringUserName->
                         sourceFilteringUserName == operation.author && mapOperationTypeToRole(operation.type).any { userFilter.roles.contains(it) }
                     } ?: false

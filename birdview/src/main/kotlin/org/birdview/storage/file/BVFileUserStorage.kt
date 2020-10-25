@@ -10,6 +10,7 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.stream.Collectors
 import javax.inject.Named
 
@@ -18,6 +19,8 @@ class BVFileUserStorage (
         private val bvFoldersConfig: BVFoldersConfig,
         private val jsonDeserializer: JsonDeserializer
 ) : BVUserStorage {
+    private val userCreatedListeners = CopyOnWriteArrayList<BVUserStorage.UserChangedListener>()
+
     companion object {
         val userSettingsFile = "user.json"
     }
@@ -41,6 +44,10 @@ class BVFileUserStorage (
     override fun updateUserStatus(userName: String, enabled: Boolean) {
         val userSettings = getUserSettings(userName)
         update(userName, userSettings.copy(enabled = enabled))
+    }
+
+    override fun addUserCreatedListener(userChangedListener: BVUserStorage.UserChangedListener) {
+        userCreatedListeners.add(userChangedListener)
     }
 
     @Cacheable(USER_NAMES_CACHE)

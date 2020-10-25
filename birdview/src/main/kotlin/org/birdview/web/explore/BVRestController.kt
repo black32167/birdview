@@ -3,6 +3,7 @@ package org.birdview.web.explore
 import org.birdview.BVTaskService
 import org.birdview.model.*
 import org.birdview.security.UserContext
+import org.birdview.user.BVUserDataUpdater
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -13,7 +14,8 @@ import java.time.temporal.ChronoUnit
 @RestController()
 @RequestMapping("/rest")
 class BVRestController(
-        private val taskService: BVTaskService
+        private val taskService: BVTaskService,
+        private val userUpdater: BVUserDataUpdater
 ) {
     class DocumentRequest(
             val user: String?,
@@ -37,6 +39,7 @@ class BVRestController(
                 userFilter = UserFilter( userAlias = user, roles = userRoles),
                 sourceType = documentRequest.sourceType,
                 representationType = documentRequest.representationType)
+        userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
         val docs = taskService.getDocuments(tsRequest)
         val docViews = DocumentTreeBuilder.buildTree(docs).toMutableList()
         HierarchySorter.sortHierarchy(docViews, documentRequest.reportType)
@@ -54,6 +57,6 @@ class BVRestController(
 
     @GetMapping("documents/reindex")
     fun reindexDocuments() {
-        taskService.invalidateCache()
+        userUpdater.refreshUser(UserContext.getUserName())
     }
 }
