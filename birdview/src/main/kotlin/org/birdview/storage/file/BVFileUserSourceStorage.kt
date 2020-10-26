@@ -16,7 +16,7 @@ import javax.inject.Named
 @Named
 class BVFileUserSourceStorage(
         private val bvFoldersConfig: BVFoldersConfig,
-        private val jsonDeserializer: JsonDeserializer,
+        private val jsonDeserializer: JsonDeserializer
 ): BVUserSourceStorage {
 
     @Cacheable(USER_SOURCE_CACHE)

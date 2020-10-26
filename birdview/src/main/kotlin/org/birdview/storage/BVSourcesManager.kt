@@ -7,7 +7,7 @@ import javax.inject.Named
 @Named
 class BVSourcesManager (
         private val sourceSecretsStorage: BVSourceSecretsStorage,
-        sourceManagers: List<BVTaskSource>,
+        sourceManagers: List<BVTaskSource>
 ) {
     private val sourceManagersMap = sourceManagers.associateBy { it.getType() }
 
