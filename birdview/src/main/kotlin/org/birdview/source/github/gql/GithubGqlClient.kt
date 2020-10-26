@@ -4,6 +4,7 @@ import org.apache.tomcat.util.http.fileupload.util.Streams
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubResponse
 import org.birdview.source.github.gql.model.GqlGithubSearchContainer
+import org.birdview.source.github.gql.model.GqlGithubUser
 import org.birdview.storage.BVGithubConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
@@ -56,6 +57,21 @@ class GithubGqlClient (
                 cursor = pageInfo.endCursor
             } while (pageInfo.hasNextPage)
         }
+    }
+
+    fun getUserByEmail(email: String): String? {
+        val gqlQuery = javaClass
+                .getResourceAsStream("/github/gql/search-user.gql")
+                .let(Streams::asString)
+                .let {
+                    interpolate(it, mapOf("query" to "${email} in:email"))
+                }
+        val response = getTarget()
+                .request()
+                .post(Entity.json(GQL(gqlQuery)))
+                .also(ResponseValidationUtils::validate)
+                .readEntity(object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubUser>>>() {})
+        return response.data?.search?.edges?.firstOrNull()?.node?.login
     }
 
     private fun interpolate(queryTemplate: String, parameters: Map<String, String>):String {

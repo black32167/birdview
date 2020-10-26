@@ -17,7 +17,8 @@ class BVSignupWebController (
 ) {
     class SignupFormData(
             val user: String,
-            val password: String
+            val password: String,
+            val email: String
     )
 
     @GetMapping
@@ -27,7 +28,11 @@ class BVSignupWebController (
 
     @PostMapping
     fun signup(@ModelAttribute formData: SignupFormData): ModelAndView {
-        userStorage.create(formData.user, BVUserSettings(PasswordUtils.hash(formData.password)))
+        userStorage.create(
+                formData.user,
+                BVUserSettings(
+                        passwordHash = PasswordUtils.hash(formData.password),
+                        email = formData.email))
         return ModelAndView("redirect:${BVWebPaths.LOGIN}")
     }
 }

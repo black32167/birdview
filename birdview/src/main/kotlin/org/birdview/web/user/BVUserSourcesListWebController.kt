@@ -1,6 +1,7 @@
 package org.birdview.web.user
 
 import org.birdview.security.UserContext
+import org.birdview.storage.BVSourcesManager
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
@@ -19,7 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 class BVUserSourcesListWebController (
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val userSourceStorage: BVUserSourceStorage,
-        private val userStorage: BVUserSourceStorage
+        private val userStorage: BVUserSourceStorage,
+        private val sourcesManager: BVSourcesManager
 ) {
     class CreateUserSourceFormData (
             val sourceName: String,
@@ -69,6 +71,13 @@ class BVUserSourcesListWebController (
     @PostMapping("{sourceName}")
     fun update(@PathVariable("sourceName") sourceName:String,
                formDataUpdate:UpdateUserSourceFormData): String {
+        val sourceManager = sourcesManager.getBySourceName(sourceName)
+
+        if(sourceManager != null) {
+            val resolved = sourceManager.resolveSourceUserId(sourceName, formDataUpdate.sourceUserName)
+            println(resolved)
+        }
+
         userSourceStorage.update(
                 bvUserName = currentUserName(),
                 sourceName = sourceName,

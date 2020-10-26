@@ -13,6 +13,10 @@
             <td><input type="text" name="user"></td>
         </tr>
         <tr>
+            <td class="sign">Email:</td>
+            <td><input type="text" name="email"></td>
+        </tr>
+        <tr>
             <td class="sign">Password:</td>
             <td><input type="password" name="password"></td>
         </tr>

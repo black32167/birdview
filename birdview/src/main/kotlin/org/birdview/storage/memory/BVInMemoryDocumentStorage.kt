@@ -15,7 +15,6 @@ class BVInMemoryDocumentStorage(
 ): BVDocumentStorage {
     // id -> doc
     private val docsMap = ConcurrentHashMap<BVDocumentId, BVDocument>()
-    private val usersRetrieved = ConcurrentHashMap<String, Boolean>()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
         val predicate = BVDocumentPredicate(filter, object : BVSourceUserNameResolver {

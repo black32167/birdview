@@ -21,7 +21,8 @@ import javax.inject.Named
 open class GithubTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val githubClientProvider: GithubClientProvider,
-        private val githubQueryBuilder: GithubQueryBuilder
+        private val githubQueryBuilder: GithubQueryBuilder,
+        private val secretsStorage: BVSourceSecretsStorage
 ): BVTaskSource {
     override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
         sourceSecretsStorage.getConfigsOfType(BVGithubConfig::class.java)
@@ -40,6 +41,13 @@ open class GithubTaskService(
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
             chunkConsumer.invoke(docs)
         }
+    }
+
+    override fun resolveSourceUserId(sourceName:String, email: String):String {
+        val githubConfig = secretsStorage.getConfigByName(sourceName, BVGithubConfig::class.java)!!
+        val client = githubClientProvider.getGithubGqlClient(githubConfig)
+        val userName = client.getUserByEmail(email)
+        return userName ?: email
     }
 
     private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVGithubConfig): BVDocument {

@@ -16,7 +16,7 @@ import javax.inject.Named
 @Named
 class BVFileUserSourceStorage(
         private val bvFoldersConfig: BVFoldersConfig,
-        private val jsonDeserializer: JsonDeserializer
+        private val jsonDeserializer: JsonDeserializer,
 ): BVUserSourceStorage {
 
     @Cacheable(USER_SOURCE_CACHE)
@@ -36,7 +36,7 @@ class BVFileUserSourceStorage(
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     override fun create(bvUserName: String, sourceName: String, sourceUserName:String) {
-        serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, true))
+        serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, "" != sourceUserName))
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)

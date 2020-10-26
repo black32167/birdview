@@ -3,11 +3,16 @@ package org.birdview.storage.file
 import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
 import org.birdview.config.BVFoldersConfig
+import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVSourcesManager
+import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSettings
 import org.birdview.utils.JsonDeserializer
+import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import java.lang.Exception
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
@@ -17,18 +22,45 @@ import javax.inject.Named
 @Named
 class BVFileUserStorage (
         private val bvFoldersConfig: BVFoldersConfig,
-        private val jsonDeserializer: JsonDeserializer
+        private val jsonDeserializer: JsonDeserializer,
+        private val sourceSecretsStorage: BVSourceSecretsStorage,
+        private val sourcesManager: BVSourcesManager,
+        private val userSourceStorage: BVUserSourceStorage
 ) : BVUserStorage {
+    private val log = LoggerFactory.getLogger(BVFileUserStorage::class.java)
     private val userCreatedListeners = CopyOnWriteArrayList<BVUserStorage.UserChangedListener>()
 
     companion object {
         val userSettingsFile = "user.json"
     }
     @CacheEvict(USER_NAMES_CACHE, allEntries = true)
-    override fun create(userName:String, userSettings: BVUserSettings) {
-        val userSettingsFile = getUserSettingsFile(userName)
+    override fun create(bvUserName:String, userSettings: BVUserSettings) {
+        val userSettingsFile = getUserSettingsFile(bvUserName)
         Files.createDirectories(userSettingsFile.parent)
         serialize(userSettingsFile, userSettings)
+
+        // Try to create user data sources
+        try {
+            sourceSecretsStorage.listSourceNames()
+                    .forEach { sourceName ->
+                        val sourceUserId = sourcesManager.getBySourceName(sourceName)
+                                ?.let { sourceManager ->
+                                    userSettings.email
+                                            ?.let { email ->
+                                                sourceManager.resolveSourceUserId(sourceName = sourceName, email = email)
+                                            }
+                                } ?: ""
+
+                        userSourceStorage.create(
+                                bvUserName = bvUserName,
+                                sourceName = sourceName,
+                                sourceUserName = sourceUserId
+                        )
+
+                    }
+        } catch (e: Exception) {
+            log.error("Error creating source links", e)
+        }
     }
 
     @CacheEvict(USER_SETTINGS_CACHE, allEntries = true)

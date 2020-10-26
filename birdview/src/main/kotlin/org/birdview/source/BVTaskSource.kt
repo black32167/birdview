@@ -9,5 +9,6 @@ interface BVTaskSource {
     fun canHandleId(id: String): Boolean = false
     fun loadByIds(sourceName: String, keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
     }
+    fun resolveSourceUserId(sourceName:String, email: String):String = email
     fun isAuthenticated(sourceName: String): Boolean
 }

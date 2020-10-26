@@ -2,12 +2,8 @@ package org.birdview.user.document
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
-import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVDocumentStorage
-import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDocumentUtils.getReferencedDocIds
 import org.birdview.utils.BVTimeUtil
@@ -20,13 +16,12 @@ import javax.inject.Named
 
 @Named
 class BVDocumentsLoader (
-        sourceManagers: List<BVTaskSource>,
         private val documentStorage: BVDocumentStorage,
         private val userSourceStorage: BVUserSourceStorage,
-        private val sourceSecretsStorage: BVSourceSecretsStorage
+        private val sourceSecretsStorage: BVSourceSecretsStorage,
+        private val sourcesManager: BVSourcesManager
 ) {
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)
-    private val sourceManagersMap = sourceManagers.map { it.getType() to it }.toMap()
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
 
     fun loadDocuments(bvUser: String):List<Future<*>> =
@@ -35,7 +30,7 @@ class BVDocumentsLoader (
                         val subtaskFutures = mutableListOf<Future<*>>()
                         CompletableFuture.runAsync(Runnable {
                             BVTimeUtil.logTime("Loading data from ${source.sourceType}") {
-                                val sourceManager = getSourceManager(source.sourceType)
+                                val sourceManager = sourcesManager.getBySourceType(source.sourceType)
                                 sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
                                     docChunk.forEach { doc ->
                                         doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
@@ -64,13 +59,13 @@ class BVDocumentsLoader (
                 listEnabledSourceConfigs(bvUser).groupBy ({ it.sourceType}, {it.sourceName})
         val type2Ids: Map<SourceType, List<String>> = missedDocsIds
                 .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
-                    getSourceTypes(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
+                    sourcesManager.guessSourceTypesByDocumentId(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
                 }
 
         return type2Ids.entries.forEach { (sourceType, sourceIds) ->
             val sourceNames = sourceType2SourceNames[sourceType]
-            val sourceManager = getSourceManager(sourceType)
+            val sourceManager = sourcesManager.getBySourceType(sourceType)
             sourceNames?.forEach { sourceName ->
                 try {
                     sourceManager.loadByIds(sourceName, sourceIds, chunkConsumer)
@@ -80,13 +75,6 @@ class BVDocumentsLoader (
             }
         }
     }
-
-    private fun getSourceManager(sourceType: SourceType) =
-            sourceManagersMap[sourceType] ?: throw NoSuchElementException("Unknown source type ${sourceType}")
-
-    private fun getSourceTypes(id: String): SourceType? =
-            sourceManagersMap.values.find { it.canHandleId(id) }?.getType()
-
 
     private fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceConfig> =
             userSourceStorage.listUserSources(bvUser)

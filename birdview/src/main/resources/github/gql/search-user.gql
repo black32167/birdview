@@ -1,0 +1,16 @@
+{
+    search(query: "$query", type:USER, first: 2) {
+      pageInfo {
+          endCursor
+          hasNextPage
+      }
+      edges {
+          cursor
+          node {
+            ... on User {
+              login
+            }
+          }
+      }
+    }
+}

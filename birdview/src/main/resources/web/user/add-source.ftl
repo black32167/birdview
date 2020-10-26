@@ -22,7 +22,7 @@
                 </td>
             </tr>
             <tr>
-                <td class="sign">User alias:</td>
+                <td class="sign">User Id:</td>
                 <td><input type="text" name="sourceUserName"></td>
             </tr>
         </table>
