@@ -36,7 +36,7 @@ class BVFileUserSourceStorage(
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     override fun create(bvUserName: String, sourceName: String, sourceUserName:String) {
-        serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, false))
+        serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, true))
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
