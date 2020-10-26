@@ -3,14 +3,14 @@
 SCRIPT_DIR="${BASH_SOURCE%/*}"
 . "${SCRIPT_DIR}/include.sh"
 
-MODUE_DIR="${SCRIPT_DIR}/../../birdview"
+MODUE_DIR="${SCRIPT_DIR%/*/*}/birdview"
 
 mbuild() {
   mvn clean install -DskipTests -pl "${MODUE_DIR}"
 }
 
 dbuild() {
-	local CTX_DIR="${MODUE_DIR}/target/birdview-dist"
+	local CTX_DIR="$(cd ${MODUE_DIR} && pwd)/target/birdview-dist"
 	local DOCKER_FILE="${MODUE_DIR}/docker/Dockerfile"
 
   mbuild
