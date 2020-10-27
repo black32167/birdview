@@ -12,5 +12,7 @@ interface BVUserSourceStorage {
     fun listUserSources(userName: String): List<String>
 
     fun delete(bvUserName: String, sourceName: String)
+
+    fun deleteAll(bvUserName: String)
 }
 

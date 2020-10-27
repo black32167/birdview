@@ -20,9 +20,11 @@ class BVFileUserSourceStorage(
 ): BVUserSourceStorage {
 
     @Cacheable(USER_SOURCE_CACHE)
+    @Synchronized
     override fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig =
             deserialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
 
+    @Synchronized
     override fun listUserSources(userName: String): List<String> =
             Files.list(getUserSourcesFolder(userName))
                     .map { it.toFile() }
@@ -30,16 +32,28 @@ class BVFileUserSourceStorage(
                     .map { it.name.substringBeforeLast(".") }
                     .collect(toList())
 
+    @Synchronized
+    @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     override fun delete(bvUserName: String, sourceName: String) {
         Files.delete(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
     }
 
+    @Synchronized
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
+    override fun deleteAll(bvUserName: String) {
+        listUserSources(bvUserName).forEach { sourceName ->
+            Files.delete(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
+        }
+    }
+
+    @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
+    @Synchronized
     override fun create(bvUserName: String, sourceName: String, sourceUserName:String) {
         serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, "" != sourceUserName))
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
+    @Synchronized
     override fun update(bvUserName: String, sourceName: String, userProfileSourceConfig: BVUserSourceConfig) {
         val file = getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName)
         Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)

@@ -13,6 +13,9 @@
 <#macro delete_secret_link source>
    <a href="/admin/secrets/delete?sourceName=${source.name}">X</a>
 </#macro>
+<#macro delete_user userName>
+    <a href="/admin/user/delete?user=${userName}">X</a>
+</#macro>
 
 <#macro logout_link>
     <form style="display:inline" action="/logout" method="POST">

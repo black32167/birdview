@@ -16,6 +16,7 @@ import java.lang.Exception
 import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.stream.Collectors
 import javax.inject.Named
@@ -72,15 +73,18 @@ class BVFileUserStorage (
     }
 
     @CacheEvict(USER_SETTINGS_CACHE, allEntries = true)
+    @Synchronized
     override fun update(userName:String, userSettings: BVUserSettings) {
         serialize(getUserSettingsFile(userName), userSettings)
     }
 
     @Cacheable(USER_SETTINGS_CACHE)
+    @Synchronized
     override fun getUserSettings(userName: String): BVUserSettings =
             deserialize(getUserSettingsFile(userName))
 
     @CacheEvict(USER_SETTINGS_CACHE, allEntries = true)
+    @Synchronized
     override fun updateUserStatus(userName: String, enabled: Boolean) {
         val userSettings = getUserSettings(userName)
         update(userName, userSettings.copy(enabled = enabled))
@@ -90,7 +94,17 @@ class BVFileUserStorage (
         userCreatedListeners.add(userChangedListener)
     }
 
+    @CacheEvict(cacheNames = [USER_SETTINGS_CACHE, USER_NAMES_CACHE], allEntries = true)
+    @Synchronized
+    override fun delete(bvUserName: String) {
+        userSourceStorage.deleteAll(bvUserName)
+        Files.walk(bvFoldersConfig.getUserConfigFolder(bvUserName))
+                .sorted(Comparator.reverseOrder())
+                .forEach(Files::delete)
+    }
+
     @Cacheable(USER_NAMES_CACHE)
+    @Synchronized
     override fun listUserNames(): List<String> = Files.list(bvFoldersConfig.usersConfigFolder)
             .filter { Files.isDirectory(it) }
             .map { it.fileName.toString() }

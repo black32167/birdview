@@ -23,4 +23,6 @@ interface BVUserStorage {
     fun updateUserStatus(userName: String, enabled: Boolean)
 
     fun addUserCreatedListener(userChangedListener: UserChangedListener)
+
+    fun delete(bvUserName: String)
 }

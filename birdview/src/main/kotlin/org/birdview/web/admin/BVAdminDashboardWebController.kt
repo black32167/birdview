@@ -5,11 +5,14 @@ import org.birdview.storage.BVUserStorage
 import org.birdview.web.BVTemplatePaths
 import org.birdview.web.BVWebPaths
 import org.birdview.web.secrets.BVSourceSecretListWebController
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import java.lang.Exception
 
 
 @Controller
@@ -18,6 +21,8 @@ class BVAdminDashboardWebController(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val userStorage: BVUserStorage
 ) {
+    private val log = LoggerFactory.getLogger(BVAdminDashboardWebController::class.java)
+
     class UserWebView (
             val name: String,
             val enabled: Boolean
@@ -34,6 +39,16 @@ class BVAdminDashboardWebController(
     @PostMapping("user/update")
     fun updateUserState(userForm: UserWebView):String {
         userStorage.updateUserStatus(userForm.name, userForm.enabled)
+        return "redirect:${BVWebPaths.ADMIN_ROOT}"
+    }
+
+    @GetMapping("user/delete")
+    fun deleteUser(@RequestParam("user") user:String):String {
+        try {
+            userStorage.delete(user)
+        } catch (e: Exception) {
+            log.error("", e);
+        }
         return "redirect:${BVWebPaths.ADMIN_ROOT}"
     }
 

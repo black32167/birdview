@@ -52,6 +52,7 @@ var csrf_token = "${_csrf.token}"
         <tr>
             <th>User</th>
             <th>Enabled</th>
+            <th></th>
         </tr>
         <#list users as user>
                 <tr>
@@ -67,6 +68,7 @@ var csrf_token = "${_csrf.token}"
                     <input type="checkbox" user="${user.name}" name="enabled" ${checkedHint}
                         onchange="updateUserState(this.getAttribute('user'), this.checked)">
                 </td>
+                <td><@delete_user user.name /></td>
                 </tr>
             </#list>
         </table>
