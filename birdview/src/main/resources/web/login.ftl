@@ -4,10 +4,10 @@
 </head>
 <body>
     <div class="center">
-    <!-- #if RequestParameters.error??>
-        <p>Invalid login.</p>
-    </#if -->
     <h1 class="center">Login</h1>
+    <#if errorMessage??>
+    <div class="error">${errorMessage}</div>
+    </#if>
     <form name='f' action="/login" method='POST'>
         <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <table>
