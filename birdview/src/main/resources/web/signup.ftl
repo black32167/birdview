@@ -5,6 +5,9 @@
 </head>
 <body>
     <h1 class="center">Sign Up</h1>
+    <#if errorMessage??>
+    <div class="error">${errorMessage}</div>
+    </#if>
     <form class="center" action="/signup" method="POST">
         <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <table>

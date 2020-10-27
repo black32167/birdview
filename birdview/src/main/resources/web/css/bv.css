@@ -5,7 +5,10 @@ html, body {
 #tableContainer {
     font-size: 18pt;
 }
-
+.error {
+    text-align: center;
+    color: red;
+}
 .panel {
     border: 1px solid gray;
     border-radius: 10px;

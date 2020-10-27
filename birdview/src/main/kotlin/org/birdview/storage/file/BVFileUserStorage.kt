@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import java.lang.Exception
+import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
@@ -33,10 +34,17 @@ class BVFileUserStorage (
     companion object {
         val userSettingsFile = "user.json"
     }
+
+    // TODO: not transactional
     @CacheEvict(USER_NAMES_CACHE, allEntries = true)
     override fun create(bvUserName:String, userSettings: BVUserSettings) {
         val userSettingsFile = getUserSettingsFile(bvUserName)
+        if (Files.exists(userSettingsFile)) {
+            throw BVUserStorage.UserStorageException("User already exists")
+        }
+
         Files.createDirectories(userSettingsFile.parent)
+
         serialize(userSettingsFile, userSettings)
 
         // Try to create user data sources
