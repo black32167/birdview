@@ -4,7 +4,7 @@ import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.web.BVTemplatePaths
 import org.birdview.web.BVWebPaths
-import org.birdview.web.secrets.BVSourceSecretListWebController
+import org.birdview.web.secrets.BVSourceSecretWebController
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -57,10 +57,10 @@ class BVAdminDashboardWebController(
                     .let { userSetting ->
                         UserWebView(name = userName, enabled = userSetting.enabled) }
 
-    private fun mapSourceSetting(sourceName: String): BVSourceSecretListWebController.SourceSettingView? =
+    private fun mapSourceSetting(sourceName: String): BVSourceSecretWebController.SourceSettingView? =
             sourceSecretsStorage.getConfigByName(sourceName)
                     ?.let { sourceConfig ->
-                        BVSourceSecretListWebController.SourceSettingView(
+                        BVSourceSecretWebController.SourceSettingView(
                                 name = sourceConfig.sourceName,
                                 type = sourceConfig.sourceType
                         )

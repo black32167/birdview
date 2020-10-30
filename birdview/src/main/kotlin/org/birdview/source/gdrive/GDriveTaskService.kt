@@ -11,6 +11,7 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
+import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVDateTimeUtils
@@ -29,7 +30,7 @@ open class GDriveTaskService(
         private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
-    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
         try {
             sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->

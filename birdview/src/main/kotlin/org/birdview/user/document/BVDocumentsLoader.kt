@@ -26,12 +26,12 @@ class BVDocumentsLoader (
 
     fun loadDocuments(bvUser: String):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)
-                    .map { source ->
+                    .map { sourceConfig ->
                         val subtaskFutures = mutableListOf<Future<*>>()
                         CompletableFuture.runAsync(Runnable {
-                            BVTimeUtil.logTime("Loading data from ${source.sourceType}") {
-                                val sourceManager = sourcesManager.getBySourceType(source.sourceType)
-                                sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))) { docChunk ->
+                            BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType}") {
+                                val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
+                                sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1)), sourceConfig) { docChunk ->
                                     docChunk.forEach { doc ->
                                         doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
                                     }

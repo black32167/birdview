@@ -11,6 +11,7 @@ import org.birdview.source.github.GithubUtils.parseDate
 import org.birdview.source.github.gql.model.GqlGithubEvent
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
+import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVFilters
@@ -24,17 +25,12 @@ open class GithubTaskService(
         private val githubQueryBuilder: GithubQueryBuilder,
         private val secretsStorage: BVSourceSecretsStorage
 ): BVTaskSource {
-    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
-        sourceSecretsStorage.getConfigsOfType(BVGithubConfig::class.java)
-                .forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
-    }
-
-    private fun getTasks(
+    override fun getTasks(
             user: String,
             updatedPeriod: TimeIntervalFilter,
-            githubConfig: BVGithubConfig,
+            sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
-
+        val githubConfig = sourceConfig as BVGithubConfig
         val gqlClient = githubClientProvider.getGithubGqlClient(githubConfig)
         val githubQuery = githubQueryBuilder.getFilterQueries(user, updatedPeriod, githubConfig)
         gqlClient.getPullRequests(githubQuery) { prs ->

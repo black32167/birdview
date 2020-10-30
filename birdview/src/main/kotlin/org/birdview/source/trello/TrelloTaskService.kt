@@ -10,6 +10,7 @@ import org.birdview.source.BVDocIdTypes.TRELLO_CARD_ID_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
+import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVTrelloConfig
 import org.birdview.utils.BVDateTimeUtils
@@ -29,15 +30,12 @@ open class TrelloTaskService(
         private const val TRELLO_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
-    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit): Unit =
-                sourceSecretsStorage.getConfigsOfType(BVTrelloConfig::class.java)
-                    .forEach { config-> getTasks(user, updatedPeriod, config, chunkConsumer) }
-
-    private fun getTasks(
+    override fun getTasks(
             user: String,
             updatedPeriod: TimeIntervalFilter,
-            trelloConfig: BVTrelloConfig,
+            sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
+        val trelloConfig = sourceConfig as BVTrelloConfig
         val query = trelloQueryBuilder.getQueries(user, updatedPeriod, trelloConfig)
 
         trelloClientProvider.getTrelloClient(trelloConfig).getCards(query) { cards->

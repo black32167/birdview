@@ -32,7 +32,8 @@ interface BVSourceSecretsStorage {
     JsonSubTypes.Type(value = BVTrelloConfig::class, name = "trello"),
     JsonSubTypes.Type(value = BVGithubConfig::class, name = "github"),
     JsonSubTypes.Type(value = BVGDriveConfig::class, name = "gdrive"),
-    JsonSubTypes.Type(value = BVSlackConfig::class, name = "slack")
+    JsonSubTypes.Type(value = BVSlackConfig::class, name = "slack"),
+    JsonSubTypes.Type(value = BVConfluenceConfig::class, name = "confluence")
 )
 abstract class BVAbstractSourceConfig (
         val sourceType: SourceType,
@@ -57,6 +58,13 @@ class BVJiraConfig (
         user: String,
         val token: String
 ): BVAbstractSourceConfig(SourceType.JIRA, sourceName, user)
+
+class BVConfluenceConfig (
+        sourceName: String = "confluence",
+        val baseUrl: String,
+        user: String,
+        val token: String
+): BVAbstractSourceConfig(SourceType.CONFLUENCE, sourceName, user)
 
 class BVTrelloConfig (
         sourceName: String = "trello",

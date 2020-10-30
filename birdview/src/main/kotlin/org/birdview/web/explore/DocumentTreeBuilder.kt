@@ -58,7 +58,7 @@ object DocumentTreeBuilder {
     private fun getPriority(sourceType: SourceType): Int = when(sourceType) {
         SourceType.JIRA, SourceType.TRELLO -> 1
         SourceType.SLACK -> 2
-        SourceType.GDRIVE -> 3
+        SourceType.GDRIVE, SourceType.CONFLUENCE -> 3
         SourceType.GITHUB -> 4
     }
 }

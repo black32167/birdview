@@ -15,7 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @Controller
 @RequestMapping(BVWebPaths.SECRETS)
-class BVSourceSecretListWebController(
+class BVSourceSecretWebController(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val sources: List<BVTaskSource>
 ) {

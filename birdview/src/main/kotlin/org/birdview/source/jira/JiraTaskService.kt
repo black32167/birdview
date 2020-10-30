@@ -10,12 +10,12 @@ import org.birdview.source.jira.model.JiraChangelogItem
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraRemoteLink
 import org.birdview.source.jira.model.JiraUser
+import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
-import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import javax.inject.Named
@@ -26,27 +26,21 @@ open class JiraTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
-    private val log = LoggerFactory.getLogger(JiraTaskService::class.java)
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-    private val jiraConfigs: List<BVJiraConfig>
-            get() = sourceSecretsStorage.getConfigsOfType(BVJiraConfig::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("JiraTaskService"))
 
-    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, chunkConsumer: (List<BVDocument>) -> Unit) {
-        jiraConfigs.forEach { config -> getTasks(user, updatedPeriod, config, chunkConsumer) }
-    }
-
-    private fun getTasks(
+    override fun getTasks(
             user: String,
             updatedPeriod: TimeIntervalFilter,
-            config: BVJiraConfig,
+            sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
+        val jiraConfig = sourceConfig as BVJiraConfig
         jiraClientProvider
-                .getJiraClient(config)
-                .findIssues(jqlBuilder.getJql(user, updatedPeriod, config)) { jiraIssues->
+                .getJiraClient(jiraConfig)
+                .findIssues(jqlBuilder.getJql(user, updatedPeriod, jiraConfig)) { jiraIssues->
                     chunkConsumer.invoke(
                             jiraIssues
-                                    .map { executor.submit(Callable<BVDocument> { mapDocument( it, config) }) }
+                                    .map { executor.submit(Callable<BVDocument> { mapDocument( it, jiraConfig) }) }
                                     .map { it.get() }
                     )
                 }
