@@ -30,12 +30,12 @@ open class GDriveTaskService(
         private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
-    override fun getTasks(user: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
         try {
             sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->
                         clientProvider.getGoogleApiClient(config)
-                                .getFiles(gDriveQueryBuilder.getQuery(user, updatedPeriod, config.sourceName)) { files ->
+                                .getFiles(gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)) { files ->
                                     chunkConsumer.invoke(files.map { file -> toBVDocument(file, config) })
                                 }
                     }

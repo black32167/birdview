@@ -31,12 +31,12 @@ open class TrelloTaskService(
     }
 
     override fun getTasks(
-            user: String,
+            bvUser: String,
             updatedPeriod: TimeIntervalFilter,
             sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
         val trelloConfig = sourceConfig as BVTrelloConfig
-        val query = trelloQueryBuilder.getQueries(user, updatedPeriod, trelloConfig)
+        val query = trelloQueryBuilder.getQueries(bvUser, updatedPeriod, trelloConfig)
 
         trelloClientProvider.getTrelloClient(trelloConfig).getCards(query) { cards->
             val listsMap = trelloClientProvider.getTrelloClient(trelloConfig)

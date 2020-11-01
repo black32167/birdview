@@ -18,7 +18,7 @@ class SlackTaskService(
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(SlackTaskService::class.java)
     override fun getTasks(
-            user: String,
+            bvUser: String,
             updatedPeriod: TimeIntervalFilter,
             sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {

@@ -30,14 +30,14 @@ open class JiraTaskService(
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("JiraTaskService"))
 
     override fun getTasks(
-            user: String,
+            bvUser: String,
             updatedPeriod: TimeIntervalFilter,
             sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
         val jiraConfig = sourceConfig as BVJiraConfig
         jiraClientProvider
                 .getJiraClient(jiraConfig)
-                .findIssues(jqlBuilder.getJql(user, updatedPeriod, jiraConfig)) { jiraIssues->
+                .findIssues(jqlBuilder.getJql(bvUser, updatedPeriod, jiraConfig)) { jiraIssues->
                     chunkConsumer.invoke(
                             jiraIssues
                                     .map { executor.submit(Callable<BVDocument> { mapDocument( it, jiraConfig) }) }
@@ -112,7 +112,6 @@ open class JiraTaskService(
     private fun mapDocumentUser(jiraUser: JiraUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             jiraUser?.emailAddress
                     ?.let { emailAddress -> BVDocumentUser(emailAddress, userRole, sourceName) }
-
 
     private fun extractOperations(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentOperation> =
         issue.changelog

@@ -26,13 +26,13 @@ open class GithubTaskService(
         private val secretsStorage: BVSourceSecretsStorage
 ): BVTaskSource {
     override fun getTasks(
-            user: String,
+            bvUser: String,
             updatedPeriod: TimeIntervalFilter,
             sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
         val githubConfig = sourceConfig as BVGithubConfig
         val gqlClient = githubClientProvider.getGithubGqlClient(githubConfig)
-        val githubQuery = githubQueryBuilder.getFilterQueries(user, updatedPeriod, githubConfig)
+        val githubQuery = githubQueryBuilder.getFilterQueries(bvUser, updatedPeriod, githubConfig)
         gqlClient.getPullRequests(githubQuery) { prs ->
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
             chunkConsumer.invoke(docs)
