@@ -18,7 +18,7 @@ class JqlBuilder(
                                 userClause,
                                 getIssueUpdateAfterClause(updatedPeriod.after),
                                 getIssueUpdateBeforeClause(updatedPeriod.before)
-                        ).joinToString(" and ") + " order by updatedDate DESC"
+                        ).joinToString(" AND ") + " ORDER BY updatedDate DESC"
                     }
 
     private fun getIssueUpdateAfterClause(after: ZonedDateTime?): String? =
