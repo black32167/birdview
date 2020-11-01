@@ -2,16 +2,10 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
-import org.birdview.analysis.BVDocumentOperation
-import org.birdview.analysis.BVDocumentUser
 import org.birdview.model.BVDocumentStatus
 import org.birdview.source.SourceType
 import org.junit.Assert
 import org.junit.Test
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import java.util.*
 
 class DocumentTreeBuilderTest {

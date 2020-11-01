@@ -8,7 +8,6 @@ import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory
-import java.lang.Exception
 import java.lang.Integer.min
 import javax.ws.rs.client.WebTarget
 

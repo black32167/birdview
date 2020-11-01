@@ -1,6 +1,8 @@
 package org.birdview.web.explore
 
-import org.birdview.model.*
+import org.birdview.model.ReportType
+import org.birdview.model.RepresentationType
+import org.birdview.model.UserRole
 import org.birdview.security.UserContext
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserStorage
@@ -11,8 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 @Controller
 @RequestMapping(BVWebPaths.EXPLORE)

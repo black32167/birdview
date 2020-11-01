@@ -1,7 +1,6 @@
 package org.birdview.web.secrets
 
 import org.birdview.storage.BVConfluenceConfig
-import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller

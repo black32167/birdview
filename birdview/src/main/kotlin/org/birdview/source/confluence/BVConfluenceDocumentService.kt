@@ -8,7 +8,6 @@ import org.birdview.source.BVDocIdTypes
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.confluence.model.ConfluenceSearchItem
-import org.birdview.source.jira.JiraIssueStatusMapper
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVConfluenceConfig
 import org.birdview.storage.BVSourceSecretsStorage

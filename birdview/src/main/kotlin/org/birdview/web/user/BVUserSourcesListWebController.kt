@@ -1,8 +1,8 @@
 package org.birdview.web.user
 
 import org.birdview.security.UserContext
-import org.birdview.storage.BVSourcesManager
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVSourcesManager
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
 import org.birdview.web.BVWebPaths

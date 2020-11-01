@@ -12,11 +12,8 @@ import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
-import java.lang.Exception
-import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.stream.Collectors
 import javax.inject.Named
