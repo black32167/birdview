@@ -30,8 +30,16 @@ class ConfluenceClient(val config: BVConfluenceConfig) {
                             .queryParam("start", startAt)
                             .queryParam("limit", documentsPerPage)
                             .queryParam("cql", cql)
+                            .queryParam("expand", "content.history" +
+                                    ",content.history.contributors.publishers" +
+                                    ",content.history.contributors.publishers.users" +
+                                    ",content.metadata.comments") //TODO: << how to extract comments?
                             .request()
                             .get()
+//                            .also {
+//                                val stringResponse = it.readEntity(String::class.java)
+//                                println(stringResponse)
+//                            }
                             .also(ResponseValidationUtils::validate)
                     val searchResult = response.readEntity(ConfluenceSearchPageResponseSearchResult::class.java)
                     chunkConsumer(searchResult.results)

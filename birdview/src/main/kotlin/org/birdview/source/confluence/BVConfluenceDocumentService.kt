@@ -30,7 +30,7 @@ class BVConfluenceDocumentService (
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
         val cql = "type=page AND contributor=\"${confluenceUser}\"" +
                 (updatedPeriod.after?.let { after -> " AND lastmodified >= \"${formatDate(after)}\" " } ?: "") +
-                " ORDER BY lastmodified"
+                " ORDER BY lastmodified DESC"
         client.findDocuments(cql) { confluenceDocuments ->
             chunkConsumer(confluenceDocuments.map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) })
         }
