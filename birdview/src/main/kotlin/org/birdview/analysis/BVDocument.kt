@@ -58,6 +58,7 @@ enum class BVDocumentOperationType {
 class BVDocumentOperation (
         val description: String,
         val author: String,
+        val authorDisplayName: String? = null,
         val created: Date?,
         val sourceName: String,
         val type: BVDocumentOperationType = BVDocumentOperationType.COMMENT

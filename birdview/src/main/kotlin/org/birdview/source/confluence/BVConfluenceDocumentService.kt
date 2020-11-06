@@ -71,14 +71,17 @@ class BVConfluenceDocumentService (
         val creationOperation = BVDocumentOperation(
                 description = "",
                 author = history.createdBy.accountId,
+                authorDisplayName = history.createdBy.run { email?:displayName },
                 created = parseDate(history.createdDate),
                 sourceName = sourceName,
                 type = BVDocumentOperationType.COLLABORATE
         )
-        val modificationOperations = history.contributors.publishers.userAccountIds.map { contributorAccountId ->
+        val modificationOperations = history.contributors.publishers.users.map { user ->
+            val contributorAccountId = user.accountId
             BVDocumentOperation(
                     description = "",
                     author = contributorAccountId,
+                    authorDisplayName = user.run { email?:displayName },
                     created = parseDate(confluenceDocument.lastModified),
                     sourceName = sourceName,
                     type = BVDocumentOperationType.COLLABORATE

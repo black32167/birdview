@@ -19,7 +19,8 @@ object BVDocumentViewFactory {
                     title = doc.title,
                     updated = BVDateTimeUtils.format(doc.updated, "dd-MM-yyyy"),
                     key = doc.key,
-                    lastUpdater = doc.operations.firstOrNull()?.author,
+                    lastUpdater = doc.operations.firstOrNull()
+                            ?.run { authorDisplayName?:author },
                     priority = doc.priority
             )
 
