@@ -11,9 +11,9 @@
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.3.61</kotlin.version>
+        <kotlin.version>1.4.10</kotlin.version>
         <jersey.version>2.29</jersey.version>
-        <junit-version>4.8.1</junit-version>
+        <junit-version>4.12</junit-version>
         <lucene.version>8.5.1</lucene.version>
         <springboot.version>2.3.2.RELEASE</springboot.version>
     </properties>
@@ -50,12 +50,6 @@
     </build>
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.12</version>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
@@ -168,5 +162,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
 </project>
