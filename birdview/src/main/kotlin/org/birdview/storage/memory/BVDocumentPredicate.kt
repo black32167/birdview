@@ -4,20 +4,26 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.model.*
+import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVSourceUserNameResolver
+import org.birdview.storage.BVUserSourceStorage
 import org.slf4j.LoggerFactory
+import java.time.Instant
 import java.time.ZoneId
 import java.time.chrono.ChronoZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 import java.util.*
 import java.util.function.Predicate
+import javax.inject.Named
 
+@Named
 class BVDocumentPredicate(
-        private val filter: BVDocumentFilter,
-        private val sourceUserNameResolver: BVSourceUserNameResolver
-): Predicate<BVDocument> {
+        private val userSourceStorage: BVUserSourceStorage
+) {
     private val log = LoggerFactory.getLogger(BVDocumentFilter::class.java)
 
-    override fun test(doc: BVDocument): Boolean {
+    fun test(doc: BVDocument, filter: BVDocumentFilter): Boolean {
         if(filter.sourceType != "" && filter.sourceType?.let { filterSource -> doc.ids.any { it.sourceName == filterSource }} == false) {
             return false
         }
@@ -37,7 +43,7 @@ class BVDocumentPredicate(
             }
         }
 
-        val inferredDocStatus = doc.status//inferDocStatus(doc)
+        val inferredDocStatus = doc.status
         val targetDocumentStatuses = getTargetDocStatuses(filter.reportType)
         if (!targetDocumentStatuses.contains(inferredDocStatus)) {
             log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
@@ -51,7 +57,7 @@ class BVDocumentPredicate(
 
         val userFilter = filter.userFilter
         val hasFilteredUser = doc.users.any { docUser ->
-            sourceUserNameResolver.resolve(filter.userFilter.userAlias, docUser.sourceName)
+            resolveUserName(filter.userFilter.userAlias, docUser.sourceName)
                     ?.let { sourceFilteringUserName->
                         sourceFilteringUserName == docUser.userName && userFilter.roles.contains(docUser.role)
                     } ?: false
@@ -64,6 +70,9 @@ class BVDocumentPredicate(
         log.trace("Including doc #{}", doc.title)
         return true
     }
+
+    private fun resolveUserName(bvUser:String, sourceName: String) =
+            userSourceStorage.getSourceProfile(bvUser, sourceName).sourceUserName
 
     private fun inferDocUpdated(doc: BVDocument, userFilter: UserFilter): ChronoZonedDateTime<*>? {
         val date = getLastOperationDate(doc, userFilter)
@@ -80,7 +89,7 @@ class BVDocumentPredicate(
             return null
         }
         return doc.lastOperations.firstOrNull { operation ->
-            sourceUserNameResolver.resolve(filter.userFilter.userAlias, operation.sourceName)
+            resolveUserName(userFilter.userAlias, operation.sourceName)
                     ?.let { sourceFilteringUserName->
                         sourceFilteringUserName == operation.author && mapOperationTypeToRole(operation.type).any { userFilter.roles.contains(it) }
                     } ?: false
@@ -99,18 +108,6 @@ class BVDocumentPredicate(
             } else {
                 doc.updated
             }
-//
-//    private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
-//        val parentStatuses = doc.refsIds
-//                .map { key -> getDocByStringKey(key)?.status }
-//        if (parentStatuses.isNotEmpty() && parentStatuses.all { it == BVDocumentStatus.DONE }) {
-//            return BVDocumentStatus.DONE
-//        }
-//        return doc.status
-//    }
-//
-//    private fun getDocByStringKey(key: String): BVDocument? =
-//            docsMap.values.find { doc -> doc.ids.any { it.id == key } }
 
     private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
         ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)

@@ -1,7 +1,7 @@
 package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
-import org.birdview.source.SourceType
+import org.birdview.source.BVDocumentsRelation
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 object DocumentTreeBuilder {
     fun buildTree(_docs: List<BVDocument>): List<BVDocumentViewTreeNode> {
@@ -30,35 +30,24 @@ object DocumentTreeBuilder {
             refsIds.forEach { refId->
                 id2Docs[refId]
                         ?.also { referncedDoc ->
-                            val parentNode:BVDocumentViewTreeNode?
-                            val childNode:BVDocumentViewTreeNode?
-                            if (getPriority(referncedDoc.sourceType) <= getPriority(doc.sourceType)) {
-                                parentNode = id2Nodes[refId]
-                                childNode = id2Nodes[doc.ids.first().id]
-                            } else {
-                                parentNode = id2Nodes[doc.ids.first().id]
-                                childNode = id2Nodes[refId]
-                            }
-                            if (parentNode != null && childNode != null) {
-                                parentNode.subNodes.add(childNode)
-                                val parentNodeLastUpdated = parentNode.lastUpdated
-                                if (parentNodeLastUpdated == null ||
-                                        parentNodeLastUpdated.before(childNode.lastUpdated)) {
-                                    parentNode.lastUpdated = childNode.lastUpdated
+                            BVDocumentsRelation.from(referncedDoc, doc) ?.also { relation->
+                                val parentNode = id2Nodes[relation.parent.ids.first().id]
+                                val childNode = id2Nodes[relation.child.ids.first().id]
+
+                                if (parentNode != null && childNode != null) {
+                                    parentNode.subNodes.add(childNode)
+                                    val parentNodeLastUpdated = parentNode.lastUpdated
+                                    if (parentNodeLastUpdated == null ||
+                                            parentNodeLastUpdated.before(childNode.lastUpdated)) {
+                                        parentNode.lastUpdated = childNode.lastUpdated
+                                    }
+                                    rootNodes.remove(childNode)
                                 }
-                                rootNodes.remove(childNode)
                             }
                         }
             }
         }
 
         return rootNodes.toList().sortedByDescending { it.lastUpdated }
-    }
-
-    private fun getPriority(sourceType: SourceType): Int = when(sourceType) {
-        SourceType.JIRA, SourceType.TRELLO -> 1
-        SourceType.SLACK -> 2
-        SourceType.GDRIVE, SourceType.CONFLUENCE -> 3
-        SourceType.GITHUB -> 4
     }
 }

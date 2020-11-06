@@ -4,5 +4,6 @@ enum class BVDocumentStatus {
     DONE,
     PROGRESS,
     PLANNED,
-    BACKLOG
+    BACKLOG,
+    INHERITED // inerited from parent entity
 }

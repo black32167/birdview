@@ -13,6 +13,7 @@ import org.birdview.storage.BVConfluenceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVDateTimeUtils
+import org.birdview.utils.BVFilters
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
@@ -48,20 +49,42 @@ class BVConfluenceDocumentService (
                 created = null,
                 httpUrl = docUrl,
                 body = confluenceDocument.excerpt ?: "",
-                refsIds = setOf(), //TODO
+                refsIds = extractRefs(confluenceDocument),
                 groupIds = setOf(), //TODO
-                status = BVDocumentStatus.PROGRESS, // TODO
-                operations = listOf(BVDocumentOperation(
-                        description = "modified",
-                        sourceName = sourceName,
-                        author = confluenceUser,
-                        created = lastModified,
-                        type = BVDocumentOperationType.COLLABORATE)), //TODO: will overwrite other users
+                status = BVDocumentStatus.INHERITED, // TODO
+                operations = extractOperations(confluenceDocument, sourceName),
                 key = "open",
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO: will overwrite other users
                 sourceType = getType(),
                 priority = Priority.LOW
         )
+    }
+
+    private fun extractRefs(confluenceDocument: ConfluenceSearchItem): Set<String> {
+        val idsFromExcerpt = confluenceDocument.excerpt ?.let { BVFilters.filterIdsFromText(it) } ?: emptySet()
+        val idsFromTitle = BVFilters.filterIdsFromText(confluenceDocument.title)
+        return idsFromExcerpt + idsFromTitle
+    }
+
+    private fun extractOperations(confluenceDocument: ConfluenceSearchItem, sourceName: String): List<BVDocumentOperation> {
+        val history = confluenceDocument.content.history
+        val creationOperation = BVDocumentOperation(
+                description = "",
+                author = history.createdBy.accountId,
+                created = parseDate(history.createdDate),
+                sourceName = sourceName,
+                type = BVDocumentOperationType.COLLABORATE
+        )
+        val modificationOperations = history.contributors.publishers.userAccountIds.map { contributorAccountId ->
+            BVDocumentOperation(
+                    description = "",
+                    author = contributorAccountId,
+                    created = parseDate(confluenceDocument.lastModified),
+                    sourceName = sourceName,
+                    type = BVDocumentOperationType.COLLABORATE
+            )
+        }
+        return modificationOperations + creationOperation
     }
 
     override fun getType(): SourceType = SourceType.CONFLUENCE
