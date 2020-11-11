@@ -1,5 +1,6 @@
 package org.birdview.analysis
 
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
 import org.birdview.source.SourceType
@@ -16,7 +17,7 @@ data class BVDocument (
         val httpUrl: String,
         var users: List<BVDocumentUser> = listOf(),
         val groupIds: Set<BVDocumentId> = emptySet(),
-        val refsIds: Set<String> = emptySet(),
+        val refs: List<BVDocumentRef> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
         val sourceType: SourceType,

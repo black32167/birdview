@@ -1,6 +1,7 @@
 package org.birdview.source
 
 import org.birdview.analysis.BVDocument
+import org.birdview.model.BVRefDirection
 import java.util.*
 
 class BVDocumentsRelation (
@@ -15,16 +16,21 @@ class BVDocumentsRelation (
             SourceType.GITHUB -> 4
         }
 
-        fun from(doc1: BVDocument, doc2: BVDocument): BVDocumentsRelation? {
-            val sourceTypePriorityDiff = signInt(getPriority(doc1.sourceType) - getPriority(doc2.sourceType))
-            val diff = sourceTypePriorityDiff.takeIf { it != 0 }
-                    ?: signLong(millis(doc1.created) - millis(doc2.created))
-            return when(diff) {
-                -1 -> BVDocumentsRelation(doc1, doc2)
-                1 -> BVDocumentsRelation(doc2, doc1)
-                else  -> null
+        fun from(referncedDoc: BVDocument, doc: BVDocument, refDirection: BVRefDirection): BVDocumentsRelation? =
+            when (refDirection) {
+                BVRefDirection.UNSPECIFIED -> {
+                    val sourceTypePriorityDiff = signInt(getPriority(referncedDoc.sourceType) - getPriority(doc.sourceType))
+                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
+                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
+                    when(diff) {
+                        -1 -> BVDocumentsRelation(referncedDoc, doc)
+                        1 -> BVDocumentsRelation(doc, referncedDoc)
+                        else  -> null
+                    }
+                }
+                BVRefDirection.PAREN -> BVDocumentsRelation(referncedDoc, doc)
+                BVRefDirection.CHILD -> BVDocumentsRelation(doc, referncedDoc)
             }
-        }
 
         private fun signInt(x: Int): Int =
                 signLong(x.toLong())

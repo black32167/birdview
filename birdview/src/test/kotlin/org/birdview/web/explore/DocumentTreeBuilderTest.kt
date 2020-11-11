@@ -2,6 +2,7 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.source.SourceType
 import org.junit.Assert
@@ -16,8 +17,8 @@ class DocumentTreeBuilderTest {
         val GRANDCHILDREN_ID = "grandChildrenId"
         val docs = listOf(
                 doc(listOf(PARENT_ID), SourceType.JIRA),
-                doc(listOf(CHILDREN_ID), SourceType.JIRA, setOf(PARENT_ID)),
-                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, setOf(CHILDREN_ID))
+                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(BVDocumentRef(PARENT_ID, sourceName = "sourceName"))),
+                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(BVDocumentRef(CHILDREN_ID, sourceName = "sourceName")))
         )
         val views = DocumentTreeBuilder.buildTree(docs)
         Assert.assertEquals(1, views.size)
@@ -48,7 +49,7 @@ class DocumentTreeBuilderTest {
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
     }
 
-    private fun doc(ids: List<String>, sourceType: SourceType, refIds: Set<String> = setOf(), updated:Date = Date()): BVDocument =
+    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:Date = Date()): BVDocument =
             BVDocument(
                     ids = ids.map { BVDocumentId(it, "type", "sourceName") }.toSet(),
                     title = ids.first(),
@@ -60,6 +61,6 @@ class DocumentTreeBuilderTest {
                     httpUrl = "httpUrl",
                     status = BVDocumentStatus.BACKLOG,
                     sourceType = sourceType,
-                    refsIds = refIds
+                    refs = refIds
             )
 }

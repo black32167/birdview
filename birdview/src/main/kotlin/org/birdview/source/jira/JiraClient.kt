@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response
 
 class JiraClient(
         private val jiraConfig: BVJiraConfig) {
+    private val API_SUFFIX  = "/rest/api/2"
     private val log = LoggerFactory.getLogger(JiraClient::class.java)
     private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
@@ -47,6 +48,21 @@ class JiraClient(
             }
             startAt = page?.continuation
         } while (startAt != null)
+    }
+
+    fun loadByKeys(issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
+        val issues = issueKeys
+                .map { "${getApiRootUrl()}/issue/${it}" }
+                .map { executor.submit(Callable { loadIssue(it) }) }
+                .mapNotNull { future ->
+                    try {
+                        future.get()
+                    } catch (e:Exception) {
+                        log.error("", e)
+                        null
+                    }
+                }
+        chunkConsumer(issues)
     }
 
     private fun postIssuesSearch(jiraIssuesRequest: JiraIssuesFilterRequest) =
@@ -95,11 +111,13 @@ class JiraClient(
                     .readEntity(Array<JiraRemoteLink>::class.java)
 
 
-    private fun getTarget(): WebTarget = getTargetFactory().getTarget("/rest/api/2")
+    private fun getTarget(): WebTarget = getTargetFactory().getTarget(API_SUFFIX)
+
+    private fun getApiRootUrl() = "${jiraConfig.baseUrl}/${API_SUFFIX}"
 
     private fun getTargetFactory() = getTargetFactory(jiraConfig.baseUrl)
 
-    private fun getTargetFactory(url: String) = WebTargetFactory(url) {
+    private fun getTargetFactory(url: String) = WebTargetFactory(url, enableLogging = false) {
         BasicAuth(jiraConfig.user, jiraConfig.token)
     }
 }

@@ -3,6 +3,7 @@ package org.birdview.source.trello
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -51,7 +52,7 @@ open class TrelloTaskService(
                         created = parseDate(card.dateLastActivity),
                         httpUrl = card.url,
                         body = card.desc,
-                        refsIds = BVFilters.filterIdsFromText("${card.desc} ${card.name}"),
+                        refs = BVFilters.filterIdsFromText("${card.desc} ${card.name}").map { BVDocumentRef(it, sourceName = trelloConfig.sourceName) },
                         groupIds = extractGroupIds(card, trelloConfig.sourceName),
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
                         key = "#${card.id}",

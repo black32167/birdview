@@ -1,6 +1,7 @@
 package org.birdview.source.confluence
 
 import org.birdview.analysis.*
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -49,7 +50,7 @@ class BVConfluenceDocumentService (
                 created = null,
                 httpUrl = docUrl,
                 body = confluenceDocument.excerpt ?: "",
-                refsIds = extractRefs(confluenceDocument),
+                refs = extractRefs(confluenceDocument, sourceName),
                 groupIds = setOf(), //TODO
                 status = BVDocumentStatus.INHERITED, // TODO
                 operations = extractOperations(confluenceDocument, sourceName),
@@ -60,10 +61,10 @@ class BVConfluenceDocumentService (
         )
     }
 
-    private fun extractRefs(confluenceDocument: ConfluenceSearchItem): Set<String> {
+    private fun extractRefs(confluenceDocument: ConfluenceSearchItem, sourceName:String): List<BVDocumentRef> {
         val idsFromExcerpt = confluenceDocument.excerpt ?.let { BVFilters.filterIdsFromText(it) } ?: emptySet()
         val idsFromTitle = BVFilters.filterIdsFromText(confluenceDocument.title)
-        return idsFromExcerpt + idsFromTitle
+        return (idsFromExcerpt + idsFromTitle).map { BVDocumentRef(it, sourceName = sourceName) }
     }
 
     private fun extractOperations(confluenceDocument: ConfluenceSearchItem, sourceName: String): List<BVDocumentOperation> {

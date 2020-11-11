@@ -1,6 +1,7 @@
 package org.birdview.source.github
 
 import org.birdview.analysis.*
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -59,7 +60,7 @@ open class GithubTaskService(
                 created = parseDate(pr.createdAt),
                 closed = extractClosed(operations, status),
                 httpUrl = pr.url,
-                refsIds = BVFilters.filterIdsFromText(pr.headRefName, pr.title, description),
+                refs = BVFilters.filterIdsFromText(pr.headRefName, pr.title, description).map { BVDocumentRef(it, sourceName = githubConfig.sourceName) },
                 groupIds = setOf(),
                 status = status,
                 operations = operations,

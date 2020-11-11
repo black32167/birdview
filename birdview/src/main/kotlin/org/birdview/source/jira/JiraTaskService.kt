@@ -1,6 +1,7 @@
 package org.birdview.source.jira
 
 import org.birdview.analysis.*
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVDocIdTypes.JIRA_KEY_TYPE
@@ -51,8 +52,8 @@ open class JiraTaskService(
     override fun loadByIds(sourceName: String, keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
         sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java)?.also { config ->
             val client = jiraClientProvider.getJiraClient(config)
-            client.findIssues(
-                    "key IN (${keyList.distinct().joinToString(",")})") { issues ->
+            client.loadByKeys(keyList.distinct()) {
+                issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })
             }
         }
@@ -70,8 +71,8 @@ open class JiraTaskService(
                     created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
                     body = description,
-                    refsIds = extractRefsIds(issue, issueLinks),
-                    groupIds = extractGroupIds(issue, config.sourceName),
+                    refs = extractRefsIds(issue, issueLinks, config.sourceName),
+                    groupIds = extractParentIds(issue, config.sourceName),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),
                     key = issue.key,
@@ -84,10 +85,12 @@ open class JiraTaskService(
         }
     }
 
-    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>): Set<String> =
-        BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
+    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>, sourceName: String): List<BVDocumentRef> {
+        val ids = BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
                 issueLinks.map { it._object.url } +
                 extractParentIds(issue)
+        return ids.map { BVDocumentRef(it, sourceName = sourceName) }
+    }
 
     private fun extractPriority(issue: JiraIssue): Priority = issue.fields.priority?.id?.let { Integer.parseInt(it) }
             ?.let { id ->
@@ -135,7 +138,7 @@ open class JiraTaskService(
     override fun isAuthenticated(sourceName: String): Boolean =
             sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java) != null
 
-    private fun extractGroupIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
+    private fun extractParentIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
             extractParentIds(issue).map { BVDocumentId(it, JIRA_KEY_TYPE, sourceName) }.toSet()
 
     private fun extractParentIds(issue: JiraIssue):Set<String> =

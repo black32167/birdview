@@ -41,12 +41,19 @@ class BVInMemoryDocumentStorage(
             }
 
     override fun getDocumentParent(doc: BVDocument): BVDocument? =
-        doc.refsIds
+        doc.refs
+                .map { it.ref }
                 .mapNotNull { refId:String -> docsMap[refId] }
                 .firstOrNull { candidteParent -> isParent(candidteParent, doc) }
 
     private fun isParent(candidateParent: BVDocument, doc: BVDocument) =
-        BVDocumentsRelation.from(candidateParent, doc)?.parent === candidateParent
+            doc.refs
+                    .filter { ref -> candidateParent.ids.any { parentId-> parentId.id == ref.ref && parentId.sourceName == ref.sourceName} }
+                    .any { ref->
+                        BVDocumentsRelation.from(candidateParent, doc, ref.refDirection)?.parent === candidateParent
+                    }
+
+
 
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
         if (doc.status == BVDocumentStatus.INHERITED) {
