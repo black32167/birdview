@@ -5,26 +5,51 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.source.SourceType
+import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Test
+import java.lang.AssertionError
 import java.util.*
 
 class DocumentTreeBuilderTest {
     @Test
-    fun testTreeBuilder() {
+    fun testSimpleTreeBuilt() {
         val PARENT_ID = "parentId"
         val CHILDREN_ID = "childrenId"
         val GRANDCHILDREN_ID = "grandChildrenId"
         val docs = listOf(
                 doc(listOf(PARENT_ID), SourceType.JIRA),
-                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(BVDocumentRef(PARENT_ID, sourceName = "sourceName"))),
-                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(BVDocumentRef(CHILDREN_ID, sourceName = "sourceName")))
+                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID))),
+                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID)))
         )
         val views = DocumentTreeBuilder.buildTree(docs)
         Assert.assertEquals(1, views.size)
         Assert.assertEquals(1, views.first().subNodes.size)
         Assert.assertEquals(1, views.first().subNodes[0].subNodes.size)
         Assert.assertEquals(0, views.first().subNodes[0].subNodes[0].subNodes.size)
+    }
+
+    @Test
+    fun testCycleDetection() {
+        val docs = listOf(
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
+                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt")))
+        )
+        val tree = DocumentTreeBuilder.buildTree(docs)
+
+        tree.forEach { assertNoCycles(it, mutableSetOf()) }
+    }
+
+    private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {
+        if (visited.contains(node)) {
+            throw AssertionError("Cycle detected")
+        }
+        visited.add(node)
+        node.subNodes.forEach {
+            assertNoCycles(it, visited);
+        }
+        visited.remove(node)
     }
 
     @Test
@@ -63,4 +88,6 @@ class DocumentTreeBuilderTest {
                     sourceType = sourceType,
                     refs = refIds
             )
+
+    private fun docRef(ref: String) = BVDocumentRef(ref, sourceName = "sourceName")
 }

@@ -99,7 +99,7 @@ class JiraClient(
                 .request()
                 .get()
                 .also { response -> if(response.status != 200) {
-                    throw RuntimeException("Error reading Jira tasks: ${response.readEntity(String::class.java)}")
+                    throw RuntimeException("Error loading Jira issue (${url}):\n${response.readEntity(String::class.java)}")
                 } }
                 .readEntity(JiraIssue::class.java)
 
@@ -113,7 +113,7 @@ class JiraClient(
 
     private fun getTarget(): WebTarget = getTargetFactory().getTarget(API_SUFFIX)
 
-    private fun getApiRootUrl() = "${jiraConfig.baseUrl}/${API_SUFFIX}"
+    private fun getApiRootUrl() = "${jiraConfig.baseUrl}${API_SUFFIX}"
 
     private fun getTargetFactory() = getTargetFactory(jiraConfig.baseUrl)
 

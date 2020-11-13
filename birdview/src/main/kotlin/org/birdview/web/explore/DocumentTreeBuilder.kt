@@ -29,25 +29,26 @@ object DocumentTreeBuilder {
         _docs.forEach { doc ->
             val refsIds:List<BVDocumentRef> = doc.refs// + doc.groupIds.map { it.id }
             refsIds.forEach { ref->
-                id2Docs[ref.ref]
-                        ?.also { referncedDoc ->
-                            BVDocumentsRelation.from(referncedDoc, doc, ref.refDirection) ?.also { relation->
-                                val parentNode = id2Nodes[relation.parent.ids.first().id]
-                                val childNode = id2Nodes[relation.child.ids.first().id]
+                val referncedDoc = id2Docs[ref.ref]
+                if (referncedDoc != null) {
+                    val relation = BVDocumentsRelation.from(referncedDoc, doc, ref.refDirection)
+                    if (relation != null) {
+                        val parentNode = id2Nodes[relation.parent.ids.first().id]
+                        val childNode = id2Nodes[relation.child.ids.first().id]
 
-                                if (parentNode != null && childNode != null) {
-                                    parentNode.subNodes.add(childNode)
-                                    val parentNodeLastUpdated = parentNode.lastUpdated
-                                    if (parentNodeLastUpdated == null ||
-                                            parentNodeLastUpdated.before(childNode.lastUpdated)) {
-                                        parentNode.lastUpdated = childNode.lastUpdated
-                                    }
-                                    rootNodes.remove(childNode)
-                                }
+                        if (parentNode != null && childNode != null) {
+                            parentNode.subNodes.add(childNode)
+                            val parentNodeLastUpdated = parentNode.lastUpdated
+                            if (parentNodeLastUpdated == null ||
+                                    parentNodeLastUpdated.before(childNode.lastUpdated)) {
+                                parentNode.lastUpdated = childNode.lastUpdated
                             }
+                            rootNodes.remove(childNode)
                         }
+                    }
+                    }
+                }
             }
-        }
 
         return rootNodes.toList().sortedByDescending { it.lastUpdated }
     }

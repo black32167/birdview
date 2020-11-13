@@ -2,6 +2,7 @@ package org.birdview.source.jira
 
 import org.birdview.analysis.*
 import org.birdview.model.BVDocumentRef
+import org.birdview.model.BVRefDirection
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVDocIdTypes.JIRA_KEY_TYPE
@@ -89,6 +90,12 @@ open class JiraTaskService(
         val ids = BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
                 issueLinks.map { it._object.url } +
                 extractParentIds(issue)
+        issue.fields.issuelinks?.map {jiraIssueLink->
+            val direction = when(jiraIssueLink.type.outward.toLowerCase()) {
+                "blocks" -> BVRefDirection.CHILD
+                else -> BVRefDirection.UNSPECIFIED
+            }
+        }
         return ids.map { BVDocumentRef(it, sourceName = sourceName) }
     }
 

@@ -25,7 +25,7 @@ class BVDocumentsRelation (
                     when(diff) {
                         -1 -> BVDocumentsRelation(referncedDoc, doc)
                         1 -> BVDocumentsRelation(doc, referncedDoc)
-                        else  -> null
+                        else  -> BVDocumentsRelation(doc, referncedDoc)
                     }
                 }
                 BVRefDirection.PAREN -> BVDocumentsRelation(referncedDoc, doc)
