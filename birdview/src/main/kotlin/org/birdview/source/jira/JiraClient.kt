@@ -58,7 +58,7 @@ class JiraClient(
                     try {
                         future.get()
                     } catch (e:Exception) {
-                        log.error("", e)
+                        log.error(e.message)
                         null
                     }
                 }
@@ -82,7 +82,7 @@ class JiraClient(
                                     try {
                                         future.get()
                                     } catch (e:Exception) {
-                                        log.error("", e)
+                                        log.error(e.message)
                                         null
                                     }
                                 }

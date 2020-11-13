@@ -92,7 +92,17 @@ open class JiraTaskService(
                 extractParentIds(issue)
         issue.fields.issuelinks?.map {jiraIssueLink->
             val direction = when(jiraIssueLink.type.outward.toLowerCase()) {
-                "blocks" -> BVRefDirection.CHILD
+                "blocks" -> BVRefDirection.PAREN
+                "depends on" -> BVRefDirection.CHILD
+                "relates on" -> BVRefDirection.CHILD
+                "relates to" -> BVRefDirection.PAREN
+                "has to be done before" -> BVRefDirection.PAREN
+                "contributes to" -> BVRefDirection.PAREN
+                "duplicates" -> BVRefDirection.PAREN
+                "clones" -> BVRefDirection.PAREN
+                "split to" -> BVRefDirection.PAREN
+                "resolves" -> BVRefDirection.PAREN
+                "has to be finished together with" -> BVRefDirection.PAREN
                 else -> BVRefDirection.UNSPECIFIED
             }
         }
