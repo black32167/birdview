@@ -46,17 +46,16 @@ class BVConfluenceDocumentService (
         return BVDocument(
                 ids = setOf(BVDocumentId(id = docUrl, type = BVDocIdTypes.CONFLUENCE_PAGE_URL_TYPE, sourceName = sourceName)),
                 title = confluenceDocument.title,
+                key = "open",
+                body = confluenceDocument.excerpt ?: "",
                 updated = lastModified,
                 created = null,
                 httpUrl = docUrl,
-                body = confluenceDocument.excerpt ?: "",
-                refs = extractRefs(confluenceDocument, sourceName),
-                groupIds = setOf(), //TODO
-                status = BVDocumentStatus.INHERITED, // TODO
+                users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
+                refs = extractRefs(confluenceDocument, sourceName), // TODO
+                status = BVDocumentStatus.INHERITED,
                 operations = extractOperations(confluenceDocument, sourceName),
-                key = "open",
-                users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO: will overwrite other users
-                sourceType = getType(),
+                sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW
         )
     }

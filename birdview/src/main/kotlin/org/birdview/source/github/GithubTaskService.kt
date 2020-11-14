@@ -55,17 +55,16 @@ open class GithubTaskService(
         return BVDocument(
                 ids = setOf(BVDocumentId(id = pr.id, type = GITHUB_ID, sourceName = githubConfig.sourceName)),
                 title = title,
+                key = pr.url.replace(".*/".toRegex(), "#"),
                 body = description,
                 updated = parseDate(pr.updatedAt),
                 created = parseDate(pr.createdAt),
                 closed = extractClosed(operations, status),
                 httpUrl = pr.url,
+                users = extractUsers(pr, githubConfig, operations),
                 refs = BVFilters.filterIdsFromText(pr.headRefName, pr.title, description).map { BVDocumentRef(it, sourceName = githubConfig.sourceName) },
-                groupIds = setOf(),
                 status = status,
                 operations = operations,
-                key = pr.url.replace(".*/".toRegex(), "#"),
-                users = extractUsers(pr, githubConfig, operations),
                 sourceType = getType()
         )
     }

@@ -115,6 +115,4 @@ class GithubClient (
         ?.let { config-> WebTargetFactory(url) {
             BasicAuth(config.user, config.token)
         }.getTarget("") }
-
-
 }

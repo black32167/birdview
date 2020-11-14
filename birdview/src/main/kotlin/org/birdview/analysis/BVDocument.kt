@@ -6,7 +6,7 @@ import org.birdview.model.UserRole
 import org.birdview.source.SourceType
 import java.util.*
 
-data class BVDocument (
+data class BVDocument(
         val ids: Set<BVDocumentId>,
         var title: String,
         val key: String,
@@ -16,7 +16,6 @@ data class BVDocument (
         val closed: Date? = null,
         val httpUrl: String,
         var users: List<BVDocumentUser> = listOf(),
-        val groupIds: Set<BVDocumentId> = emptySet(),
         val refs: List<BVDocumentRef> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),

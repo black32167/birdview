@@ -68,16 +68,15 @@ open class JiraTaskService(
             return BVDocument(
                     ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
                     title = issue.fields.summary,
+                    key = issue.key,
+                    body = description,
                     updated = parseDate(issue.fields.updated),
                     created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
-                    body = description,
+                    users = extractUsers(issue, config),
                     refs = extractRefsIds(issue, issueLinks, config.sourceName),
-                    groupIds = extractParentIds(issue, config.sourceName),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),
-                    key = issue.key,
-                    users = extractUsers(issue, config),
                     sourceType = getType(),
                     priority = extractPriority(issue)
             )

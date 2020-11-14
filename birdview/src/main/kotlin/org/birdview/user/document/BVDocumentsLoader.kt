@@ -31,20 +31,24 @@ class BVDocumentsLoader (
                         CompletableFuture.runAsync(Runnable {
                             BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType}") {
                                 val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
-                                sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1)), sourceConfig) { docChunk ->
-                                    docChunk.forEach { doc ->
-                                        doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
-                                    }
-
-                                    subtaskFutures.add(executor.submit {
-                                        loadReferredDocs(bvUser, docChunk) { docChunk ->
-                                            docChunk.forEach { doc ->
-                                                doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
-                                            }
+                                try {
+                                    sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1)), sourceConfig) { docChunk ->
+                                        docChunk.forEach { doc ->
+                                            doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
                                         }
-                                    })
+
+                                        subtaskFutures.add(executor.submit {
+                                            loadReferredDocs(bvUser, docChunk) { docChunk ->
+                                                docChunk.forEach { doc ->
+                                                    doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
+                                                }
+                                            }
+                                        })
+                                    }
+                                    subtaskFutures.forEach { it.get() }
+                                } catch (e: Exception) {
+                                    log.error("Error loading documents for ${sourceConfig.sourceType}", e)
                                 }
-                                subtaskFutures.forEach { it.get() }
                             }
                         }, executor)
                     }

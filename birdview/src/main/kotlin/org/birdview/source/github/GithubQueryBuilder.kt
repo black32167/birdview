@@ -30,7 +30,6 @@ class GithubQueryBuilder(
         return "involves:${user}"
     }
 
-
     private fun getGithubUser(bvUser: String, githubConfig: BVGithubConfig): String =
             userSourceStorage.getSourceProfile(bvUser, githubConfig.sourceName).sourceUserName
 }

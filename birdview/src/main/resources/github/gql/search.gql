@@ -9,18 +9,20 @@
           node {
             ... on PullRequest {
                 author {
+                    __typename
                     login
                 }
                 assignees (last: 5) {
                   nodes {
+                    __typename
                     login
                   }
                 }
                 reviewRequests (last: 5) {
                     nodes {
                         requestedReviewer {
-                            __typename
                             ... on User {
+                                __typename
                               login
                             }
                         }
@@ -67,18 +69,23 @@
                         }
                         ... on IssueComment {
                             author {
-                                login
+                                ... on User {
+                                    __typename
+                                    login
+                                }
                             }
                             publishedAt
                         }
                         ... on PullRequestReview {
                             author {
+                                __typename
                                 login
                             }
                             createdAt
                         }
                         ... on MergedEvent {
                             actor {
+                                __typename
                                 login
                             }
                             createdAt

@@ -13,7 +13,7 @@ import org.birdview.analysis.BVDocumentOperationType
         defaultImpl = GqlGithubEvent::class
 )
 @JsonSubTypes(
-        JsonSubTypes.Type(value = IssueComment::class, name = "IssueComment"),
+        JsonSubTypes.Type(value = GqlGithubIssueComment::class, name = "IssueComment"),
         JsonSubTypes.Type(value = PullRequestCommit::class, name = "PullRequestCommit"),
         JsonSubTypes.Type(value = PullRequestReview::class, name = "PullRequestReview"),
         JsonSubTypes.Type(value = MergedEvent::class, name = "MergedEvent")
@@ -35,17 +35,17 @@ class PullRequestCommit(
     override val user = commit.committer?.name
 }
 
-class IssueComment(
-        val author: GqlGithubUser,
+class GqlGithubIssueComment(
+        val author: GqlGithubActor,
         val publishedAt: String
 ) : GqlGithubEvent("IssueComment") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.COMMENT
     override val timestamp = publishedAt
-    override val user = author.login
+    override val user = (author as? GqlGithubUserActor)?.login
 }
 
 class PullRequestReview(
-        val author: GqlGithubActor,
+        val author: GqlGithubUserActor,
         val createdAt: String
 ) : GqlGithubEvent("PullRequestReview") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.COMMENT
@@ -54,7 +54,7 @@ class PullRequestReview(
 }
 
 class MergedEvent(
-        val actor: GqlGithubActor,
+        val actor: GqlGithubUserActor,
         val createdAt: String
 ) : GqlGithubEvent("MergedEvent") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.COMMENT

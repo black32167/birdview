@@ -4,17 +4,11 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.model.*
-import org.birdview.storage.BVDocumentStorage
-import org.birdview.storage.BVSourceUserNameResolver
 import org.birdview.storage.BVUserSourceStorage
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import java.time.ZoneId
 import java.time.chrono.ChronoZonedDateTime
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 import java.util.*
-import java.util.function.Predicate
 import javax.inject.Named
 
 @Named

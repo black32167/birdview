@@ -73,9 +73,9 @@ class DocumentTreeBuilderTest {
                     created = updated,
                     closed = updated,
                     httpUrl = "httpUrl",
+                    refs = refIds,
                     status = BVDocumentStatus.BACKLOG,
-                    sourceType = sourceType,
-                    refs = refIds
+                    sourceType = sourceType
             )
 
     private fun docRef(ref: String) = BVDocumentRef(ref, sourceName = "sourceName")

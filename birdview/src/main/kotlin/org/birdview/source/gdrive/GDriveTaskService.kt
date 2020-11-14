@@ -58,13 +58,13 @@ open class GDriveTaskService(
                         BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName),
                         BVDocumentId(id = file.webViewLink, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)
                 ),
-                refs = BVFilters.filterIdsFromText(file.name).map { BVDocumentRef(it, sourceName = config.sourceName) },
                 title = BVFilters.removeIdsFromText(file.name),
+                key = "open",
                 updated = parseDate(file.modifiedTime),
                 httpUrl = file.webViewLink,
-                status = BVDocumentStatus.PROGRESS,
-                key = "open",
                 users = extractUsers(file, config),
+                refs = BVFilters.filterIdsFromText(file.name).map { BVDocumentRef(it, sourceName = config.sourceName) },
+                status = BVDocumentStatus.PROGRESS,
                 sourceType = getType()
         )
     } catch (e:Exception) {

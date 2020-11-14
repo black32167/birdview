@@ -48,16 +48,15 @@ open class TrelloTaskService(
                 BVDocument(
                         ids = extractIds(card, trelloConfig.sourceName),
                         title = card.name,
+                        key = "#${card.id}",
+                        body = card.desc,
                         updated = parseDate(card.dateLastActivity),
                         created = parseDate(card.dateLastActivity),
                         httpUrl = card.url,
-                        body = card.desc,
-                        refs = BVFilters.filterIdsFromText("${card.desc} ${card.name}").map { BVDocumentRef(it, sourceName = trelloConfig.sourceName) },
-                        groupIds = extractGroupIds(card, trelloConfig.sourceName),
-                        status = mapStatus(listsMap[card.idList]?.name ?: ""),
-                        key = "#${card.id}",
-                        // TODO: load user by id to infer user name!
                         users = extractUsers(card, trelloConfig.sourceName),
+                        refs = BVFilters.filterIdsFromText("${card.desc} ${card.name}").map { BVDocumentRef(it, sourceName = trelloConfig.sourceName) },
+                        status = mapStatus(listsMap[card.idList]?.name ?: ""),
+                        // TODO: load user by id to infer user name!
                         sourceType = getType()
                 )
             }

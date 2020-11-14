@@ -6,7 +6,7 @@ class GqlGithubPullRequest (
         val title: String,
         val state: String,
         val bodyText: String?,
-        val author: GqlGithubActor?,
+        val author: GqlGithubUserActor?,
         val updatedAt: String,
         val createdAt: String,
         val baseRefName: String,
