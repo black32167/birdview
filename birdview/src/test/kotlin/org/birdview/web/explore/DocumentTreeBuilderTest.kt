@@ -30,7 +30,7 @@ class DocumentTreeBuilderTest {
     }
 
     @Test
-    fun testCycleDetection() {
+    fun testCyclicDependenciesDoNotCreateCycleInTree() {
         val docs = listOf(
                 doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
@@ -39,17 +39,6 @@ class DocumentTreeBuilderTest {
         val tree = DocumentTreeBuilder.buildTree(docs)
 
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
-    }
-
-    private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {
-        if (visited.contains(node)) {
-            throw AssertionError("Cycle detected")
-        }
-        visited.add(node)
-        node.subNodes.forEach {
-            assertNoCycles(it, visited);
-        }
-        visited.remove(node)
     }
 
     @Test
@@ -90,4 +79,15 @@ class DocumentTreeBuilderTest {
             )
 
     private fun docRef(ref: String) = BVDocumentRef(ref, sourceName = "sourceName")
+
+    private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {
+        if (visited.contains(node)) {
+            throw AssertionError("Cycle detected")
+        }
+        visited.add(node)
+        node.subNodes.forEach {
+            assertNoCycles(it, visited);
+        }
+        visited.remove(node)
+    }
 }
