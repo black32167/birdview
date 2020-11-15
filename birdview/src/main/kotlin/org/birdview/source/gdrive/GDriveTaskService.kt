@@ -1,8 +1,6 @@
 package org.birdview.source.gdrive
 
-import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
-import org.birdview.analysis.BVDocumentUser
+import org.birdview.analysis.*
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
@@ -65,11 +63,26 @@ open class GDriveTaskService(
                 users = extractUsers(file, config),
                 refs = BVFilters.filterIdsFromText(file.name).map { BVDocumentRef(it, sourceName = config.sourceName) },
                 status = BVDocumentStatus.PROGRESS,
-                sourceType = getType()
+                sourceType = getType(),
+                operations = extractOperations(file, config.sourceName)
         )
     } catch (e:Exception) {
         log.error("", e)
         throw e
+    }
+
+    private fun extractOperations(file: GDriveFile, sourceName:String): List<BVDocumentOperation> {
+        val lastModification = file.lastModifyingUser?.let { user->
+            BVDocumentOperation(
+                    description = "edit",
+                    author = user.emailAddress ?: "",
+                    authorDisplayName = user.displayName,
+                    created = parseDate(file.modifiedTime),
+                    sourceName = sourceName,
+                    type = BVDocumentOperationType.COLLABORATE
+            )
+        }
+        return listOfNotNull(lastModification)
     }
 
     private fun extractUsers(file: GDriveFile, config: BVGDriveConfig): List<BVDocumentUser> {
