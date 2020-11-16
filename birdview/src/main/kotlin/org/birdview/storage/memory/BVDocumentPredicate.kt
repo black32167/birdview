@@ -22,7 +22,14 @@ class BVDocumentPredicate(
             return false
         }
 
-        val docUpdated = inferDocUpdated(doc, filter.userFilter)
+        val docUpdated = if (filter.reportType == ReportType.WORKED)
+            getLastUserUpdateDate(doc, filter.userFilter)
+        else {
+            if (isDocEverModifiedByUser(doc, filter.userFilter.userAlias))
+                toInstant(doc.updated)
+            else null
+        }
+
         if (filter.updatedPeriod.after != null) {
             if (docUpdated == null || filter.updatedPeriod.after > docUpdated) {
                 log.trace("Filtering out doc #{} (updatedPeriod.after)", doc.title)
@@ -49,17 +56,6 @@ class BVDocumentPredicate(
             return false
         }
 
-        val userFilter = filter.userFilter
-        val hasFilteredUser = doc.users.any { docUser ->
-            resolveUserName(filter.userFilter.userAlias, docUser.sourceName)
-                    ?.let { sourceFilteringUserName->
-                        sourceFilteringUserName == docUser.userName && userFilter.roles.contains(docUser.role)
-                    } ?: false
-        }
-        if (!hasFilteredUser) {
-            log.trace("Filtering out doc #{} (hasFilteredUser)", doc.title)
-            return false
-        }
 
         log.trace("Including doc #{}", doc.title)
         return true
@@ -68,24 +64,50 @@ class BVDocumentPredicate(
     private fun resolveUserName(bvUser:String, sourceName: String) =
             userSourceStorage.getSourceProfile(bvUser, sourceName).sourceUserName
 
-    private fun inferDocUpdated(doc: BVDocument, userFilter: UserFilter): ChronoZonedDateTime<*>? {
-        val date = getLastOperationDate(doc, userFilter)
-                ?: getDocDate(doc)
+    private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter): ChronoZonedDateTime<*>? {
+        val date = getLastUserOperation(doc, userFilter.userAlias) ?.created
+               // ?: getDocDate(doc)
 
-        return date?.toInstant()?.atZone(ZoneId.of("UTC"))
+        return toInstant(date)
     }
 
-    private  fun getLastOperationDate(doc: BVDocument, userFilter: UserFilter): Date? =
-            getLastOperation(doc, userFilter) ?.created
+    private fun toInstant(date: Date?): ChronoZonedDateTime<*>? =
+        date?.toInstant()?.atZone(ZoneId.of("UTC"))
 
-    private fun getLastOperation(doc: BVDocument, userFilter: UserFilter): BVDocumentOperation? {
-        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
-            return null
-        }
+    private fun getLastOperationForRoles(doc: BVDocument, bvUser:String, roles: List<UserRole>): BVDocumentOperation? {
+//        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
+//            return null
+//        }
         return doc.lastOperations.firstOrNull { operation ->
-            resolveUserName(userFilter.userAlias, operation.sourceName)
+            resolveUserName(bvUser, operation.sourceName)
                     ?.let { sourceFilteringUserName->
-                        sourceFilteringUserName == operation.author && mapOperationTypeToRole(operation.type).any { userFilter.roles.contains(it) }
+                        sourceFilteringUserName == operation.author && mapOperationTypeToRole(operation.type).any { roles.contains(it) }
+                    } ?: false
+        }
+    }
+
+    private fun isDocEverModifiedByUser(doc: BVDocument, bvUser: String): Boolean {
+        val hasFilteredUser = doc.users.any { docUser ->
+            resolveUserName(bvUser, docUser.sourceName)
+                    ?.let { sourceFilteringUserName ->
+                        sourceFilteringUserName == docUser.userName
+                    } ?: false
+        }
+
+        return if (hasFilteredUser)
+            return true
+        else
+            getLastUserOperation(doc, bvUser) != null
+    }
+
+    private fun getLastUserOperation(doc: BVDocument, bvUser:String): BVDocumentOperation? {
+//        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
+//            return null
+//        }
+        return doc.lastOperations.firstOrNull { operation ->
+            resolveUserName(bvUser, operation.sourceName)
+                    ?.let { sourceFilteringUserName->
+                        sourceFilteringUserName == operation.author
                     } ?: false
         }
     }
