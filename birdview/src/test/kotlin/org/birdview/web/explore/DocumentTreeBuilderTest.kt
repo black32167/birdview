@@ -4,9 +4,12 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
+import org.birdview.model.BVRefDirection
 import org.birdview.source.SourceType
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.lang.AssertionError
 import java.util.*
@@ -38,8 +41,35 @@ class DocumentTreeBuilderTest {
         )
         val tree = DocumentTreeBuilder.buildTree(docs)
 
+        assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }
+
+    @Test
+    fun testDirectedCyclicDependenciesDoNotCreateCycleInTree() {
+        val docs = listOf(
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
+                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefDirection.CHILD)))
+        )
+        val tree = DocumentTreeBuilder.buildTree(docs)
+
+        assertTrue(tree.isEmpty())
+    }
+
+    @Test
+    fun testDirectedBackwardDependency() {
+        val docs = listOf(
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
+                doc(listOf("id2"), SourceType.JIRA, listOf()),
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefDirection.CHILD)))
+        )
+        val tree = DocumentTreeBuilder.buildTree(docs)
+
+        assertFalse(tree.isEmpty())
+        tree.forEach { assertNoCycles(it, mutableSetOf()) }
+    }
+
 
     @Test
     fun testTreeBuilderMultipleIds() {
@@ -75,10 +105,10 @@ class DocumentTreeBuilderTest {
                     httpUrl = "httpUrl",
                     refs = refIds,
                     status = BVDocumentStatus.BACKLOG,
-                    sourceType = sourceType
-            )
+                    sourceType = sourceType)
 
-    private fun docRef(ref: String) = BVDocumentRef(ref, sourceName = "sourceName")
+    private fun docRef(ref: String, direction: BVRefDirection = BVRefDirection.UNSPECIFIED) =
+            BVDocumentRef(ref, refDirection = direction, sourceName = "sourceName")
 
     private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {
         if (visited.contains(node)) {

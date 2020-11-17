@@ -58,6 +58,7 @@ data class JiraIssueFields (
 data class JiraIssueLink(
         val id: String,
         val type: JiraIssueLinkType,
+        val inwardIssue: JiraLinkedIssue?,
         val outwardIssue: JiraLinkedIssue?
 )
 

@@ -86,26 +86,34 @@ open class JiraTaskService(
     }
 
     private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>, sourceName: String): List<BVDocumentRef> {
-        val ids = BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
-                issueLinks.map { it._object.url } +
-                extractParentIds(issue)
-        issue.fields.issuelinks?.map {jiraIssueLink->
-            val direction = when(jiraIssueLink.type.outward.toLowerCase()) {
-                "blocks" -> BVRefDirection.PAREN
-                "depends on" -> BVRefDirection.CHILD
-                "relates on" -> BVRefDirection.CHILD
-                "relates to" -> BVRefDirection.PAREN
-                "has to be done before" -> BVRefDirection.PAREN
-                "contributes to" -> BVRefDirection.PAREN
-                "duplicates" -> BVRefDirection.PAREN
-                "clones" -> BVRefDirection.PAREN
-                "split to" -> BVRefDirection.PAREN
-                "resolves" -> BVRefDirection.PAREN
-                "has to be finished together with" -> BVRefDirection.PAREN
-                else -> BVRefDirection.UNSPECIFIED
-            }
-        }
-        return ids.map { BVDocumentRef(it, sourceName = sourceName) }
+        val textIds = (BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
+                issueLinks.map { it._object.url })
+                .map { BVDocumentRef(it, sourceName = sourceName)  }
+        val issueLinkIds = issue.fields.issuelinks?.mapNotNull { jiraIssueLink->
+            val direction = mapDirection(jiraIssueLink.type.outward.toLowerCase())
+            val referencedIssue = jiraIssueLink.run { outwardIssue ?: inwardIssue }
+            referencedIssue?.self
+                    ?.let { issueUrl -> BVDocumentRef(issueUrl, direction, sourceName) }
+        } ?: listOf()
+        val parentIds = listOfNotNull(issue.fields.customfield_10007, issue.fields.parent?.key)
+                .map { BVDocumentRef(it, refDirection = BVRefDirection.PAREN, sourceName = sourceName)  }
+
+        return issueLinkIds + textIds + parentIds
+    }
+
+    private fun mapDirection(directionToken: String) = when(directionToken) {
+        "blocks" -> BVRefDirection.PAREN
+        "depends on" -> BVRefDirection.CHILD
+        "relates on" -> BVRefDirection.CHILD
+        "relates to" -> BVRefDirection.PAREN
+        "has to be done before" -> BVRefDirection.PAREN
+        "contributes to" -> BVRefDirection.PAREN
+        "duplicates" -> BVRefDirection.PAREN
+        "clones" -> BVRefDirection.PAREN
+        "split to" -> BVRefDirection.PAREN
+        "resolves" -> BVRefDirection.PAREN
+        "has to be finished together with" -> BVRefDirection.PAREN
+        else -> BVRefDirection.UNSPECIFIED
     }
 
     private fun extractPriority(issue: JiraIssue): Priority = issue.fields.priority?.id?.let { Integer.parseInt(it) }
@@ -154,9 +162,4 @@ open class JiraTaskService(
     override fun isAuthenticated(sourceName: String): Boolean =
             sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java) != null
 
-    private fun extractParentIds(issue: JiraIssue, sourceName: String): Set<BVDocumentId> =
-            extractParentIds(issue).map { BVDocumentId(it, JIRA_KEY_TYPE, sourceName) }.toSet()
-
-    private fun extractParentIds(issue: JiraIssue):Set<String> =
-            listOfNotNull(issue.fields.customfield_10007, issue.fields.parent?.key).toSet()
 }
