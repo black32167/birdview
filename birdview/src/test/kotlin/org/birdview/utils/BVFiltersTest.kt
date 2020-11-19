@@ -18,7 +18,7 @@ class BVFiltersTest {
     @Test
     fun shouldExtractSmartLink() {
         val text = "some text [$ref|$ref|smart-link]" +
-                " wit smartlink"
+                " with smartlink"
         val ids = BVFilters.filterIdsFromText(text)
         assertFalse(ids.isEmpty())
         assertEquals(ref, ids.first())
