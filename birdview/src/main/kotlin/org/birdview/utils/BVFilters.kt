@@ -1,5 +1,8 @@
 package org.birdview.utils
 
+import org.birdview.model.RefInfo
+import org.birdview.source.SourceType
+
 object BVFilters {
     val JIRA_KEY_REGEX = "[A-Z]+-\\d+".toRegex()
     private val EMPTY_BRACKETS = "\\[\\] *".toRegex()
@@ -7,13 +10,21 @@ object BVFilters {
     private val ALPHANUMERIC_ID = "([0-9]+[a-zA-Z]+[0-9a-zA-Z]*|[a-zA-Z]+[0-9]+[0-9a-zA-Z]*)".toRegex()
     private var URL = "https?://[-a-zA-Z0-9+&@#/%?=~_:,.;]*[-a-zA-Z0-9+&@#/%=~_]".toRegex()
 
+    private val idPatterns = listOf(
+            SourceType.JIRA to JIRA_KEY_REGEX,
+            SourceType.UNDEFINED to UUID1,
+            SourceType.UNDEFINED to ALPHANUMERIC_ID,
+            SourceType.UNDEFINED to URL)
 
-    private val idPatterns = listOf(JIRA_KEY_REGEX, UUID1, ALPHANUMERIC_ID, URL)
-
-    fun filterIdsFromText(vararg texts: String): Set<String> {
+    fun filterRefsFromText(vararg texts: String): Set<RefInfo> {
         return texts.asSequence()
                 .map { text -> idPatterns
-                        .flatMap { pattern -> pattern.findAll(text).map { it.value }.toList() }
+                        .flatMap { (sourceType, pattern) ->
+                            pattern.findAll(text)
+                                    .map { it.value }
+                                    .map { RefInfo(it, sourceType) }
+                                    .toList()
+                        }
                         .toSet()
                 }
                 .firstOrNull { it.isNotEmpty() }
@@ -21,7 +32,7 @@ object BVFilters {
     }
 
     fun removeIdsFromText(text: String): String {
-        return idPatterns.foldRight(text) { pattern, acc-> acc.replace(pattern, "") }
+        return idPatterns.foldRight(text) { (_, pattern), acc-> acc.replace(pattern, "") }
                 .trim()
                 .capitalize()
                 .replace(EMPTY_BRACKETS, "")

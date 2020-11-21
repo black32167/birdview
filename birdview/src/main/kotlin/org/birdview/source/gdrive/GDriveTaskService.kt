@@ -1,7 +1,7 @@
 package org.birdview.source.gdrive
 
 import org.birdview.analysis.*
-import org.birdview.model.BVDocumentRef
+import org.birdview.model.BVDocumentRelation
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -61,7 +61,7 @@ open class GDriveTaskService(
                 updated = parseDate(file.modifiedTime),
                 httpUrl = file.webViewLink,
                 users = extractUsers(file, config),
-                refs = BVFilters.filterIdsFromText(file.name).map { BVDocumentRef(it, sourceName = config.sourceName) },
+                relations = BVFilters.filterRefsFromText(file.name).map { BVDocumentRelation(it, sourceName = config.sourceName) },
                 status = BVDocumentStatus.PROGRESS,
                 sourceType = getType(),
                 operations = extractOperations(file, config.sourceName)

@@ -1,17 +1,11 @@
 package org.birdview.source.jira
 
 import org.birdview.analysis.*
-import org.birdview.model.BVDocumentRef
-import org.birdview.model.BVRefDirection
-import org.birdview.model.TimeIntervalFilter
-import org.birdview.model.UserRole
+import org.birdview.model.*
 import org.birdview.source.BVDocIdTypes.JIRA_KEY_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
-import org.birdview.source.jira.model.JiraChangelogItem
-import org.birdview.source.jira.model.JiraIssue
-import org.birdview.source.jira.model.JiraRemoteLink
-import org.birdview.source.jira.model.JiraUser
+import org.birdview.source.jira.model.*
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -74,46 +68,59 @@ open class JiraTaskService(
                     created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
                     users = extractUsers(issue, config),
-                    refs = extractRefsIds(issue, issueLinks, config.sourceName),
+                    relations = extractRefsIds(issue, issueLinks, config.sourceName),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),
                     sourceType = getType(),
-                    priority = extractPriority(issue)
+                    priority = extractPriority(issue),
+                    sourceName = config.sourceName
+
             )
         } catch (e:Exception) {
             throw RuntimeException("Could not parse issue $issue", e)
         }
     }
 
-    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>, sourceName: String): List<BVDocumentRef> {
-        val textIds = (BVFilters.filterIdsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}") +
-                issueLinks.map { it._object.url })
-                .map { BVDocumentRef(it, sourceName = sourceName)  }
+    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>, sourceName: String): List<BVDocumentRelation> {
+        val textIds = BVFilters.filterRefsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}")
+                .map(this::relationFromRef)
+        val issueExternalLinks = issueLinks.map { it._object.url }
+                .flatMap { BVFilters.filterRefsFromText(it) }
+                .map(this::relationFromRef)
         val issueLinkIds = issue.fields.issuelinks?.mapNotNull { jiraIssueLink->
-            val direction = mapDirection(jiraIssueLink.type.outward.toLowerCase())
-            val referencedIssue = jiraIssueLink.run { outwardIssue ?: inwardIssue }
-            referencedIssue?.self
-                    ?.let { issueUrl -> BVDocumentRef(issueUrl, direction, sourceName) }
+            mapIssueLink(jiraIssueLink)
         } ?: listOf()
         val parentIds = listOfNotNull(issue.fields.customfield_10007, issue.fields.parent?.key)
-                .map { BVDocumentRef(it, refDirection = BVRefDirection.PAREN, sourceName = sourceName)  }
-
-        return issueLinkIds + textIds + parentIds
+                .map { BVHierarchyRelation(RefInfo(it, SourceType.JIRA), BVRefDir.IN)  }
+        return issueExternalLinks + issueLinkIds + textIds + parentIds
     }
 
-    private fun mapDirection(directionToken: String) = when(directionToken) {
-        "blocks" -> BVRefDirection.PAREN
-        "depends on" -> BVRefDirection.CHILD
-        "relates on" -> BVRefDirection.CHILD
-        "relates to" -> BVRefDirection.PAREN
-        "has to be done before" -> BVRefDirection.PAREN
-        "contributes to" -> BVRefDirection.PAREN
-        "duplicates" -> BVRefDirection.PAREN
-        "clones" -> BVRefDirection.PAREN
-        "split to" -> BVRefDirection.PAREN
-        "resolves" -> BVRefDirection.PAREN
-        "has to be finished together with" -> BVRefDirection.PAREN
-        else -> BVRefDirection.UNSPECIFIED
+    private fun relationFromRef(refInfo: RefInfo): BVDocumentRelation =
+            if (refInfo.sourceType == SourceType.JIRA) {
+                BVRelatedRelation(refInfo)
+            } else {
+                BVHierarchyRelation(refInfo, BVRefDir.OUT)
+            }
+
+    private fun mapIssueLink(jiraIssueLink: JiraIssueLink): BVDocumentRelation? {
+        val referencedIssue = jiraIssueLink.run { outwardIssue ?: inwardIssue }
+                ?: return null
+
+        val issueUrl = referencedIssue.self
+
+        val outwardToken = jiraIssueLink.type.outward.toLowerCase()
+        val refInfo = RefInfo(issueUrl, SourceType.JIRA)
+        return when (outwardToken) {
+            "blocks", "contributes to", "split to", "resolves", "has to be done before", "has to be finished together with" ->
+                BVHierarchyRelation(refInfo, BVRefDir.IN)
+            "depends on" ->
+                BVHierarchyRelation(refInfo, BVRefDir.OUT)
+            "relates on", "relates to" ->
+                BVRelatedRelation(refInfo)
+            "duplicates", "clones"->
+                BVAlternativeRelation(refInfo)
+            else -> BVRelatedRelation(refInfo)
+        }
     }
 
     private fun extractPriority(issue: JiraIssue): Priority = issue.fields.priority?.id?.let { Integer.parseInt(it) }

@@ -3,7 +3,7 @@ package org.birdview.source.trello
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
-import org.birdview.model.BVDocumentRef
+import org.birdview.model.BVDocumentRelation
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -54,7 +54,7 @@ open class TrelloTaskService(
                         created = parseDate(card.dateLastActivity),
                         httpUrl = card.url,
                         users = extractUsers(card, trelloConfig.sourceName),
-                        refs = BVFilters.filterIdsFromText("${card.desc} ${card.name}").map { BVDocumentRef(it, sourceName = trelloConfig.sourceName) },
+                        relations = BVFilters.filterRefsFromText("${card.desc} ${card.name}").map { BVDocumentRelation(it, sourceName = trelloConfig.sourceName) },
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
                         // TODO: load user by id to infer user name!
                         sourceType = getType()

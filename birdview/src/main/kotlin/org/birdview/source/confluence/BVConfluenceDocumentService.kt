@@ -1,7 +1,7 @@
 package org.birdview.source.confluence
 
 import org.birdview.analysis.*
-import org.birdview.model.BVDocumentRef
+import org.birdview.model.BVDocumentRelation
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
@@ -52,7 +52,7 @@ class BVConfluenceDocumentService (
                 created = null,
                 httpUrl = docUrl,
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
-                refs = extractRefs(confluenceDocument, sourceName), // TODO
+                relations = extractRefs(confluenceDocument, sourceName), // TODO
                 status = BVDocumentStatus.INHERITED,
                 operations = extractOperations(confluenceDocument, sourceName),
                 sourceType = getType(), //TODO: will overwrite other users
@@ -60,10 +60,10 @@ class BVConfluenceDocumentService (
         )
     }
 
-    private fun extractRefs(confluenceDocument: ConfluenceSearchItem, sourceName:String): List<BVDocumentRef> {
-        val idsFromExcerpt = confluenceDocument.excerpt ?.let { BVFilters.filterIdsFromText(it) } ?: emptySet()
-        val idsFromTitle = BVFilters.filterIdsFromText(confluenceDocument.title)
-        return (idsFromExcerpt + idsFromTitle).map { BVDocumentRef(it, sourceName = sourceName) }
+    private fun extractRefs(confluenceDocument: ConfluenceSearchItem, sourceName:String): List<BVDocumentRelation> {
+        val idsFromExcerpt = confluenceDocument.excerpt ?.let { BVFilters.filterRefsFromText(it) } ?: emptySet()
+        val idsFromTitle = BVFilters.filterRefsFromText(confluenceDocument.title)
+        return (idsFromExcerpt + idsFromTitle).map { BVDocumentRelation(it, sourceName = sourceName) }
     }
 
     private fun extractOperations(confluenceDocument: ConfluenceSearchItem, sourceName: String): List<BVDocumentOperation> {

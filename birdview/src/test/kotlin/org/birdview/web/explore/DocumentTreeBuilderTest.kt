@@ -2,9 +2,8 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
-import org.birdview.model.BVDocumentRef
+import org.birdview.model.BVDocumentRelation
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.BVRefDirection
 import org.birdview.source.SourceType
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
@@ -50,7 +49,7 @@ class DocumentTreeBuilderTest {
         val docs = listOf(
                 doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefDirection.CHILD)))
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefType.CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs)
 
@@ -62,7 +61,7 @@ class DocumentTreeBuilderTest {
         val docs = listOf(
                 doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
                 doc(listOf("id2"), SourceType.JIRA, listOf()),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefDirection.CHILD)))
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefType.CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs)
 
@@ -93,7 +92,7 @@ class DocumentTreeBuilderTest {
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
     }
 
-    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:Date = Date()): BVDocument =
+    private fun doc(ids: List<String>, sourceType: SourceType, relationIds: List<BVDocumentRelation> = listOf(), updated:Date = Date()): BVDocument =
             BVDocument(
                     ids = ids.map { BVDocumentId(it, "type", "sourceName") }.toSet(),
                     title = ids.first(),
@@ -103,12 +102,12 @@ class DocumentTreeBuilderTest {
                     created = updated,
                     closed = updated,
                     httpUrl = "httpUrl",
-                    refs = refIds,
+                    relations = relationIds,
                     status = BVDocumentStatus.BACKLOG,
                     sourceType = sourceType)
 
-    private fun docRef(ref: String, direction: BVRefDirection = BVRefDirection.UNSPECIFIED) =
-            BVDocumentRef(ref, refDirection = direction, sourceName = "sourceName")
+    private fun docRef(ref: String, type: BVRefType = BVRefType.UNSPECIFIED) =
+            BVDocumentRelation(ref, refType = type, sourceName = "sourceName")
 
     private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {
         if (visited.contains(node)) {

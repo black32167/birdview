@@ -1,6 +1,6 @@
 package org.birdview.analysis
 
-import org.birdview.model.BVDocumentRef
+import org.birdview.model.BVDocumentRelation
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
 import org.birdview.source.SourceType
@@ -16,10 +16,11 @@ data class BVDocument(
         val closed: Date? = null,
         val httpUrl: String,
         var users: List<BVDocumentUser> = listOf(),
-        val refs: List<BVDocumentRef> = emptyList(),
+        val relations: List<BVDocumentRelation> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
         val sourceType: SourceType,
+        val sourceName: String,
         val priority: Priority = Priority.NORMAL
 ) {
     val lastOperations: List<BVDocumentOperation> = getLastUsersOperations(operations)
