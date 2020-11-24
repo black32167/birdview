@@ -1,11 +1,10 @@
 package org.birdview.source.gdrive
 
 import org.birdview.analysis.*
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
-import org.birdview.source.BVDocIdTypes.GDRIVE_FILE_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
@@ -53,18 +52,19 @@ open class GDriveTaskService(
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) = try {
         BVDocument(
                 ids = setOf(
-                        BVDocumentId(id = file.id, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName),
-                        BVDocumentId(id = file.webViewLink, type = GDRIVE_FILE_TYPE, sourceName = config.sourceName)
+                        BVDocumentId(id = file.id),
+                        BVDocumentId(id = file.webViewLink)
                 ),
                 title = BVFilters.removeIdsFromText(file.name),
                 key = "open",
                 updated = parseDate(file.modifiedTime),
                 httpUrl = file.webViewLink,
                 users = extractUsers(file, config),
-                relations = BVFilters.filterRefsFromText(file.name).map { BVDocumentRelation(it, sourceName = config.sourceName) },
+                refs = BVFilters.filterRefsFromText(file.name).map { BVDocumentRef(it) },
                 status = BVDocumentStatus.PROGRESS,
                 sourceType = getType(),
-                operations = extractOperations(file, config.sourceName)
+                operations = extractOperations(file, config.sourceName),
+                sourceName = config.sourceName
         )
     } catch (e:Exception) {
         log.error("", e)
@@ -100,7 +100,7 @@ open class GDriveTaskService(
     private fun mapDocumentUser(user: GDriveUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             mapDocumentUser(user ?.emailAddress, sourceName, userRole)
     private fun mapDocumentUser(email: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            email ?.let { email -> BVDocumentUser(userName = email, role = userRole, sourceName = sourceName) }
+            email ?.let { BVDocumentUser(userName = it, role = userRole, sourceName = sourceName) }
 
     private fun parseDate(dateString: String) = BVDateTimeUtils.parse(dateString, GDRIVE_DATETIME_PATTERN)
 }

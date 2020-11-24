@@ -1,6 +1,6 @@
 package org.birdview.utils
 
-import org.birdview.model.RefInfo
+import org.birdview.analysis.BVDocumentId
 import org.birdview.source.SourceType
 
 object BVFilters {
@@ -16,13 +16,13 @@ object BVFilters {
             SourceType.UNDEFINED to ALPHANUMERIC_ID,
             SourceType.UNDEFINED to URL)
 
-    fun filterRefsFromText(vararg texts: String): Set<RefInfo> {
+    fun filterRefsFromText(vararg texts: String): Set<BVDocumentId> {
         return texts.asSequence()
                 .map { text -> idPatterns
                         .flatMap { (sourceType, pattern) ->
                             pattern.findAll(text)
                                     .map { it.value }
-                                    .map { RefInfo(it, sourceType) }
+                                    .map { BVDocumentId(it, sourceType = sourceType) }
                                     .toList()
                         }
                         .toSet()

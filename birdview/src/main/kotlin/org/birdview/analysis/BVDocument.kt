@@ -1,12 +1,12 @@
 package org.birdview.analysis
 
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
 import org.birdview.source.SourceType
 import java.util.*
 
-data class BVDocument(
+data class BVDocument (
         val ids: Set<BVDocumentId>,
         var title: String,
         val key: String,
@@ -16,7 +16,7 @@ data class BVDocument(
         val closed: Date? = null,
         val httpUrl: String,
         var users: List<BVDocumentUser> = listOf(),
-        val relations: List<BVDocumentRelation> = emptyList(),
+        val refs: List<BVDocumentRef> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
         val sourceType: SourceType,
@@ -46,7 +46,7 @@ enum class Priority {
     HIGH
 }
 
-data class BVDocumentUser(
+data class BVDocumentUser (
         val userName: String,
         val role: UserRole,
         val sourceName: String
@@ -66,6 +66,6 @@ class BVDocumentOperation (
 )
 
 data class BVDocumentId(
-        val id:String,
-        val type:String,
-        val sourceName:String)
+        val id: String,
+        val sourceType: SourceType? = null
+)

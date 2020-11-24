@@ -1,11 +1,10 @@
 package org.birdview.source.confluence
 
 import org.birdview.analysis.*
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
-import org.birdview.source.BVDocIdTypes
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.confluence.model.ConfluenceSearchItem
@@ -44,7 +43,7 @@ class BVConfluenceDocumentService (
         val lastModified = parseDate(confluenceDocument.lastModified)
         val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument.url.trimStart('/')}"
         return BVDocument(
-                ids = setOf(BVDocumentId(id = docUrl, type = BVDocIdTypes.CONFLUENCE_PAGE_URL_TYPE, sourceName = sourceName)),
+                ids = setOf(BVDocumentId(id = docUrl)),
                 title = confluenceDocument.title,
                 key = "open",
                 body = confluenceDocument.excerpt ?: "",
@@ -52,18 +51,19 @@ class BVConfluenceDocumentService (
                 created = null,
                 httpUrl = docUrl,
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
-                relations = extractRefs(confluenceDocument, sourceName), // TODO
+                refs = extractRefs(confluenceDocument), // TODO
                 status = BVDocumentStatus.INHERITED,
                 operations = extractOperations(confluenceDocument, sourceName),
                 sourceType = getType(), //TODO: will overwrite other users
-                priority = Priority.LOW
+                priority = Priority.LOW,
+                sourceName = sourceName
         )
     }
 
-    private fun extractRefs(confluenceDocument: ConfluenceSearchItem, sourceName:String): List<BVDocumentRelation> {
+    private fun extractRefs(confluenceDocument: ConfluenceSearchItem): List<BVDocumentRef> {
         val idsFromExcerpt = confluenceDocument.excerpt ?.let { BVFilters.filterRefsFromText(it) } ?: emptySet()
         val idsFromTitle = BVFilters.filterRefsFromText(confluenceDocument.title)
-        return (idsFromExcerpt + idsFromTitle).map { BVDocumentRelation(it, sourceName = sourceName) }
+        return (idsFromExcerpt + idsFromTitle).map { BVDocumentRef(it) }
     }
 
     private fun extractOperations(confluenceDocument: ConfluenceSearchItem, sourceName: String): List<BVDocumentOperation> {

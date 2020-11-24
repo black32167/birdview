@@ -2,8 +2,9 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
+import org.birdview.model.RelativeHierarchyPosition
 import org.birdview.source.SourceType
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
@@ -49,7 +50,7 @@ class DocumentTreeBuilderTest {
         val docs = listOf(
                 doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefType.CHILD)))
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs)
 
@@ -61,7 +62,7 @@ class DocumentTreeBuilderTest {
         val docs = listOf(
                 doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
                 doc(listOf("id2"), SourceType.JIRA, listOf()),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", BVRefType.CHILD)))
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs)
 
@@ -92,9 +93,9 @@ class DocumentTreeBuilderTest {
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
     }
 
-    private fun doc(ids: List<String>, sourceType: SourceType, relationIds: List<BVDocumentRelation> = listOf(), updated:Date = Date()): BVDocument =
+    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:Date = Date()): BVDocument =
             BVDocument(
-                    ids = ids.map { BVDocumentId(it, "type", "sourceName") }.toSet(),
+                    ids = ids.map { BVDocumentId(it) }.toSet(),
                     title = ids.first(),
                     key = "key",
                     body = "body",
@@ -102,12 +103,13 @@ class DocumentTreeBuilderTest {
                     created = updated,
                     closed = updated,
                     httpUrl = "httpUrl",
-                    relations = relationIds,
+                    refs = refIds,
                     status = BVDocumentStatus.BACKLOG,
-                    sourceType = sourceType)
+                    sourceType = sourceType,
+                    sourceName = "sourceName")
 
-    private fun docRef(ref: String, type: BVRefType = BVRefType.UNSPECIFIED) =
-            BVDocumentRelation(ref, refType = type, sourceName = "sourceName")
+    private fun docRef(ref: String, type: RelativeHierarchyPosition = RelativeHierarchyPosition.UNSPECIFIED) =
+            BVDocumentRef(BVDocumentId(ref), type)
 
     private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {
         if (visited.contains(node)) {

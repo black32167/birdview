@@ -34,13 +34,13 @@ class BVDocumentsLoader (
                                 try {
                                     sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1)), sourceConfig) { docChunk ->
                                         docChunk.forEach { doc ->
-                                            doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
+                                            doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id.id, doc) }
                                         }
 
                                         subtaskFutures.add(executor.submit {
                                             loadReferredDocs(bvUser, docChunk) { docChunk ->
                                                 docChunk.forEach { doc ->
-                                                    doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id, doc) }
+                                                    doc.ids.firstOrNull()?.also { id -> documentStorage.updateDocument(id.id, doc) }
                                                 }
                                             }
                                         })

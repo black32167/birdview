@@ -11,11 +11,8 @@ object BVDocumentViewFactory {
                     id = UUID.randomUUID().toString(),
                     ids = doc.ids.map { it.id },
                     httpUrl = doc.httpUrl,
-                    sourceName = doc.ids
-                            .firstOrNull()
-                            ?.sourceName
-                            ?: "???",
-                    status = doc.status?.let { it.name } ?: "???",
+                    sourceName = doc.sourceName,
+                    status = doc.status?.name ?: "???",
                     title = doc.title,
                     updated = BVDateTimeUtils.format(doc.updated, "dd-MM-yyyy"),
                     key = doc.key,

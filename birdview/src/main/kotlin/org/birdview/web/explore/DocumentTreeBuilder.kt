@@ -1,7 +1,7 @@
 package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.source.BVDocumentsRelation
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 object DocumentTreeBuilder {
@@ -27,11 +27,13 @@ object DocumentTreeBuilder {
 
         // Link documents
         _docs.forEach { doc ->
-            val refsIds:List<BVDocumentRelation> = doc.relations// + doc.groupIds.map { it.id }
-            refsIds.forEach { ref->
-                val referncedDoc = id2Docs[ref.ref]
+            val refs:List<BVDocumentRef> = doc.refs// + doc.groupIds.map { it.id }
+            refs.forEach { ref->
+                val referncedDoc = id2Docs[ref.docId.id]
                 if (referncedDoc != null) {
-                    val relation = BVDocumentsRelation.from(referncedDoc, doc, ref.refType)
+                    ref.hierarchyPosition
+
+                    val relation = BVDocumentsRelation.from(referncedDoc, doc, ref)
                     if (relation != null) {
                         val parentNode = id2Nodes[relation.parent.ids.first().id]
                         val childNode = id2Nodes[relation.child.ids.first().id]

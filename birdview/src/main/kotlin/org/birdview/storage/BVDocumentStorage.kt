@@ -7,6 +7,6 @@ import org.birdview.model.BVDocumentFilter
 interface BVDocumentStorage {
     fun findDocuments(filter: BVDocumentFilter): List<BVDocument>
     fun getDocuments(searchingDocsIds: Set<String>): List<BVDocument>
-    fun updateDocument(id: BVDocumentId, doc: BVDocument)
+    fun updateDocument(id: String, doc: BVDocument)
     fun getDocumentParent(doc: BVDocument): BVDocument?
 }

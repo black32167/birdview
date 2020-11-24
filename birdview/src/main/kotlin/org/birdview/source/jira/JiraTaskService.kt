@@ -2,7 +2,6 @@ package org.birdview.source.jira
 
 import org.birdview.analysis.*
 import org.birdview.model.*
-import org.birdview.source.BVDocIdTypes.JIRA_KEY_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.jira.model.*
@@ -60,7 +59,7 @@ open class JiraTaskService(
 
         try {
             return BVDocument(
-                    ids = setOf(BVDocumentId(id = issue.key, type = JIRA_KEY_TYPE, sourceName = config.sourceName)),
+                    ids = setOf(BVDocumentId(id = issue.key)),
                     title = issue.fields.summary,
                     key = issue.key,
                     body = description,
@@ -68,58 +67,50 @@ open class JiraTaskService(
                     created = parseDate(issue.fields.created),
                     httpUrl = "${config.baseUrl}/browse/${issue.key}",
                     users = extractUsers(issue, config),
-                    relations = extractRefsIds(issue, issueLinks, config.sourceName),
+                    refs = extractRefsIds(issue, issueLinks),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(issue, config),
                     sourceType = getType(),
                     priority = extractPriority(issue),
                     sourceName = config.sourceName
-
             )
         } catch (e:Exception) {
             throw RuntimeException("Could not parse issue $issue", e)
         }
     }
 
-    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>, sourceName: String): List<BVDocumentRelation> {
+    private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>): List<BVDocumentRef> {
         val textIds = BVFilters.filterRefsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}")
-                .map(this::relationFromRef)
+                .map(::BVDocumentRef)
         val issueExternalLinks = issueLinks.map { it._object.url }
                 .flatMap { BVFilters.filterRefsFromText(it) }
-                .map(this::relationFromRef)
+                .map(::BVDocumentRef)
         val issueLinkIds = issue.fields.issuelinks?.mapNotNull { jiraIssueLink->
             mapIssueLink(jiraIssueLink)
         } ?: listOf()
         val parentIds = listOfNotNull(issue.fields.customfield_10007, issue.fields.parent?.key)
-                .map { BVHierarchyRelation(RefInfo(it, SourceType.JIRA), BVRefDir.IN)  }
+                .map { BVDocumentRef(BVDocumentId(it, SourceType.JIRA), RelativeHierarchyPosition.LINK_TO_PARENT)  }
         return issueExternalLinks + issueLinkIds + textIds + parentIds
     }
 
-    private fun relationFromRef(refInfo: RefInfo): BVDocumentRelation =
-            if (refInfo.sourceType == SourceType.JIRA) {
-                BVRelatedRelation(refInfo)
-            } else {
-                BVHierarchyRelation(refInfo, BVRefDir.OUT)
-            }
-
-    private fun mapIssueLink(jiraIssueLink: JiraIssueLink): BVDocumentRelation? {
+    private fun mapIssueLink(jiraIssueLink: JiraIssueLink): BVDocumentRef? {
         val referencedIssue = jiraIssueLink.run { outwardIssue ?: inwardIssue }
                 ?: return null
 
         val issueUrl = referencedIssue.self
 
         val outwardToken = jiraIssueLink.type.outward.toLowerCase()
-        val refInfo = RefInfo(issueUrl, SourceType.JIRA)
+        val refInfo = BVDocumentId(issueUrl)
         return when (outwardToken) {
             "blocks", "contributes to", "split to", "resolves", "has to be done before", "has to be finished together with" ->
-                BVHierarchyRelation(refInfo, BVRefDir.IN)
+                BVDocumentRef(refInfo, RelativeHierarchyPosition.LINK_TO_PARENT)
             "depends on" ->
-                BVHierarchyRelation(refInfo, BVRefDir.OUT)
+                BVDocumentRef(refInfo, RelativeHierarchyPosition.LINK_TO_CHILD)
             "relates on", "relates to" ->
-                BVRelatedRelation(refInfo)
+                BVDocumentRef(refInfo)
             "duplicates", "clones"->
-                BVAlternativeRelation(refInfo)
-            else -> BVRelatedRelation(refInfo)
+                BVDocumentRef(refInfo)
+            else -> BVDocumentRef(refInfo)
         }
     }
 

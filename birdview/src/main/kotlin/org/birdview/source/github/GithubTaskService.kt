@@ -1,11 +1,10 @@
 package org.birdview.source.github
 
 import org.birdview.analysis.*
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
-import org.birdview.source.BVDocIdTypes.GITHUB_ID
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
@@ -53,7 +52,7 @@ open class GithubTaskService(
         val operations = extractOperations(pr, sourceName = githubConfig.sourceName)
         val status = mapStatus(pr.state)
         return BVDocument(
-                ids = setOf(BVDocumentId(id = pr.id, type = GITHUB_ID, sourceName = githubConfig.sourceName)),
+                ids = setOf(BVDocumentId(id = pr.id)),
                 title = title,
                 key = pr.url.replace(".*/".toRegex(), "#"),
                 body = description,
@@ -62,10 +61,12 @@ open class GithubTaskService(
                 closed = extractClosed(operations, status),
                 httpUrl = pr.url,
                 users = extractUsers(pr, githubConfig, operations),
-                relations = BVFilters.filterRefsFromText(pr.headRefName, pr.title, description).map { BVDocumentRelation(it, sourceName = githubConfig.sourceName) },
+                refs = BVFilters.filterRefsFromText(pr.headRefName, pr.title, description)
+                        .map { BVDocumentRef(it) },
                 status = status,
                 operations = operations,
-                sourceType = getType()
+                sourceType = getType(),
+                sourceName = githubConfig.sourceName
         )
     }
 
@@ -91,7 +92,7 @@ open class GithubTaskService(
             }
 
     private fun mapDocumentUser(user: String?, sourceName: String, userRole: UserRole): BVDocumentUser? =
-            user ?.let { user -> BVDocumentUser(userName = user, sourceName = sourceName, role = userRole) }
+            user ?.let { BVDocumentUser(userName = it, sourceName = sourceName, role = userRole) }
 
     private fun mapStatus(state: String): BVDocumentStatus? = when (state.toLowerCase()) {
         "open" -> BVDocumentStatus.PROGRESS
@@ -107,7 +108,7 @@ open class GithubTaskService(
     private fun toOperation(event: GqlGithubEvent, sourceName: String): BVDocumentOperation? =
             event
                     .takeIf {  it.timestamp!= null && it.user != null }
-                    ?.let { event ->
+                    ?.let {
                         BVDocumentOperation(
                                 description = event.type,
                                 author = event.user!!,

@@ -3,11 +3,10 @@ package org.birdview.source.trello
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentUser
-import org.birdview.model.BVDocumentRelation
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
-import org.birdview.source.BVDocIdTypes.TRELLO_CARD_ID_TYPE
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
@@ -46,7 +45,7 @@ open class TrelloTaskService(
 
             val tasks = cards.map { card ->
                 BVDocument(
-                        ids = extractIds(card, trelloConfig.sourceName),
+                        ids = extractIds(card),
                         title = card.name,
                         key = "#${card.id}",
                         body = card.desc,
@@ -54,10 +53,12 @@ open class TrelloTaskService(
                         created = parseDate(card.dateLastActivity),
                         httpUrl = card.url,
                         users = extractUsers(card, trelloConfig.sourceName),
-                        relations = BVFilters.filterRefsFromText("${card.desc} ${card.name}").map { BVDocumentRelation(it, sourceName = trelloConfig.sourceName) },
+                        refs = BVFilters.filterRefsFromText("${card.desc} ${card.name}")
+                                .map { BVDocumentRef(it) },
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
                         // TODO: load user by id to infer user name!
-                        sourceType = getType()
+                        sourceType = getType(),
+                        sourceName = trelloConfig.sourceName
                 )
             }
 
@@ -84,14 +85,14 @@ open class TrelloTaskService(
     override fun isAuthenticated(sourceName: String): Boolean =
             sourceSecretsStorage.getConfigByName(sourceName, BVTrelloConfig::class.java) != null
 
-    private fun extractIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
+    private fun extractIds(card: TrelloCard): Set<BVDocumentId> =
             setOf(
-                    BVDocumentId( id = card.id, type = TRELLO_CARD_ID_TYPE, sourceName = sourceName),
-                    BVDocumentId( id = card.shortLink, type = TRELLO_CARD_SHORTLINK_TYPE, sourceName = sourceName))
+                    BVDocumentId(id = card.id),
+                    BVDocumentId(id = card.shortLink))
 
-    private fun extractGroupIds(card: TrelloCard, sourceName: String): Set<BVDocumentId> =
-            setOf(BVDocumentId(card.idBoard, TRELLO_BOARD_TYPE, sourceName)) +
-                    card.labels.map { BVDocumentId(it.id, TRELLO_LABEL_TYPE, sourceName) }
+    private fun extractGroupIds(card: TrelloCard): Set<BVDocumentId> =
+            setOf(BVDocumentId(card.idBoard)) +
+                    card.labels.map { BVDocumentId(it.id) }
 
     private fun parseDate(dateString: String) = BVDateTimeUtils.parse(dateString, TRELLO_DATETIME_PATTERN)
 }

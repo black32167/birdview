@@ -13,6 +13,6 @@ class SlackHistoryResponse (
         error: String?,
         val messages: List<SlackMessage>?,
         val hasMore: Boolean?,
-        val pin_count: Integer?,
+        val pin_count: Int?,
         val response_metadata: SlackResponseMetadata?
 ): AbstractSlackResponse(ok, error)

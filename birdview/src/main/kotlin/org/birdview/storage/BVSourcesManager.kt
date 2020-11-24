@@ -11,6 +11,9 @@ class BVSourcesManager (
 ) {
     private val sourceManagersMap = sourceManagers.associateBy { it.getType() }
 
+    fun getSourceType(sourceName: String): SourceType? =
+            getBySourceName(sourceName)?.getType()
+
     fun getBySourceName(sourceName: String): BVTaskSource? =
             sourceSecretsStorage.getConfigByName(sourceName)
                     ?.sourceType

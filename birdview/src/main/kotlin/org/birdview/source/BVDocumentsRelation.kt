@@ -1,6 +1,8 @@
 package org.birdview.source
 
 import org.birdview.analysis.BVDocument
+import org.birdview.model.BVDocumentRef
+import org.birdview.model.RelativeHierarchyPosition
 import java.util.*
 
 class BVDocumentsRelation (
@@ -13,22 +15,23 @@ class BVDocumentsRelation (
             SourceType.SLACK -> 2
             SourceType.GDRIVE, SourceType.CONFLUENCE -> 3
             SourceType.GITHUB -> 4
+            SourceType.UNDEFINED -> 100
         }
 
-        fun from(referncedDoc: BVDocument, doc: BVDocument, refType: BVRefType): BVDocumentsRelation? =
-            when (refType) {
-                BVRefType.UNSPECIFIED -> {
+        fun from(referncedDoc: BVDocument, doc: BVDocument, rel: BVDocumentRef): BVDocumentsRelation? =
+            when (rel.hierarchyPosition) {
+                RelativeHierarchyPosition.UNSPECIFIED -> {
                     val sourceTypePriorityDiff = signInt(getPriority(referncedDoc.sourceType) - getPriority(doc.sourceType))
                     val diff = sourceTypePriorityDiff.takeIf { it != 0 }
                             ?: signLong(millis(referncedDoc.created) - millis(doc.created))
                     when(diff) {
                         -1 -> BVDocumentsRelation(referncedDoc, doc)
                         1 -> BVDocumentsRelation(doc, referncedDoc)
-                        else  -> BVDocumentsRelation(doc, referncedDoc)
+                        else  -> null
                     }
                 }
-                BVRefType.PAREN -> BVDocumentsRelation(referncedDoc, doc)
-                BVRefType.CHILD -> BVDocumentsRelation(doc, referncedDoc)
+                RelativeHierarchyPosition.LINK_TO_PARENT -> BVDocumentsRelation(referncedDoc, doc)
+                RelativeHierarchyPosition.LINK_TO_CHILD -> BVDocumentsRelation(doc, referncedDoc)
             }
 
         private fun signInt(x: Int): Int =
