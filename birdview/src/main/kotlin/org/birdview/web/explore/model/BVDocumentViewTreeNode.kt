@@ -18,9 +18,14 @@ class BVDocumentViewTreeNode (
         node.referencesCount++
     }
 
-    fun addAlternative(child: BVDocumentViewTreeNode) {
+    fun addAlternative(child: BVDocumentViewTreeNode): Boolean {
+        if (child.alternativeNodes.contains(this)) {
+            return false;
+        }
         alternativeNodes += child
+        alternativeNodes.addAll(child.alternativeNodes)
         subNodes.addAll(child.subNodes)
+        return true;
     }
 
     fun isRoot() = referencesCount == 0

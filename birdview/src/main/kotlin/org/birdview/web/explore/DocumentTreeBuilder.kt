@@ -10,48 +10,50 @@ object DocumentTreeBuilder {
         private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
         private val rootNodes = mutableSetOf<BVDocumentViewTreeNode>()
 
-        fun addAndGetDocNode(doc: BVDocument): BVDocumentViewTreeNode =
-            internalId2Node[doc.internalId]
-                    ?: run {
-                        val docNode = BVDocumentViewTreeNode(
-                                doc = BVDocumentViewFactory.create(doc),
-                                lastUpdated = doc.updated,
-                                sourceType = doc.sourceType)
-                        rootNodes.add(docNode)
-                        internalId2Node[doc.internalId] = docNode
+        fun addAndGetDocNode(doc: BVDocument): BVDocumentViewTreeNode {
+            val existingNode = internalId2Node[doc.internalId]
+            if (existingNode != null) {
+                return existingNode;
+            }
 
-                        doc.refs.forEach { ref ->
-                            val referencedDocNode: BVDocumentViewTreeNode? = documentStorage.getDocuments(setOf(ref.docId.id))
-                                    .firstOrNull()
-                                    ?.let { addAndGetDocNode(it) }
+            val docNode = BVDocumentViewTreeNode(
+                    doc = BVDocumentViewFactory.create(doc),
+                    lastUpdated = doc.updated,
+                    sourceType = doc.sourceType)
+            rootNodes.add(docNode)
+            internalId2Node[doc.internalId] = docNode
 
-                            if (referencedDocNode != null) {
-                                val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyPosition)
-                                relation?.apply {
-                                    // Hierarchical relation
-                                    if (!subtreeContains(child, parent)) {
-                                        parent.addSubNode(child)
-                                        val parentNodeLastUpdated = parent.lastUpdated
-                                        if (parentNodeLastUpdated == null ||
-                                                parentNodeLastUpdated.before(child.lastUpdated)) {
-                                            parent.lastUpdated = child.lastUpdated
-                                        }
-                                    } else {
-                                        // Alternatives
-                                        parent.addAlternative(child)
-                                        // TODO: collapse cycle?
-                                    }
-                                    rootNodes.remove(child)
-                                } ?: apply {
-                                    // Alternatives
-                                    docNode.addAlternative(referencedDocNode)
-                                    rootNodes.remove(referencedDocNode)
-                                }
+            doc.refs.forEach { ref ->
+                val referencedDocNode: BVDocumentViewTreeNode? = documentStorage.getDocuments(setOf(ref.docId.id))
+                        .firstOrNull()
+                        ?.let { addAndGetDocNode(it) }
+
+                if (referencedDocNode != null) {
+                    val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyPosition)
+
+                    // Hierarchical relation
+                    if (relation != null && !subtreeContains(relation.child, relation.parent)) {
+                        relation.apply {
+                            parent.addSubNode(child)
+                            val parentNodeLastUpdated = parent.lastUpdated
+                            if (parentNodeLastUpdated == null ||
+                                    parentNodeLastUpdated.before(child.lastUpdated)) {
+                                parent.lastUpdated = child.lastUpdated
                             }
-
+                            rootNodes.remove(child)
                         }
-                        docNode
+                    } else {
+                        // Alternatives
+                        if (docNode.addAlternative(referencedDocNode)) {
+                            rootNodes.remove(referencedDocNode)
+                        }
+                        // TODO: collapse cycle?
                     }
+                }
+            }
+
+            return docNode
+        }
 
         fun getRoots(): List<BVDocumentViewTreeNode> = rootNodes.toList().sortedByDescending { it.lastUpdated }
 
