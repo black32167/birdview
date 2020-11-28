@@ -1,57 +1,83 @@
 package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.BVDocumentRef
 import org.birdview.source.BVDocumentsRelation
+import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
+
 object DocumentTreeBuilder {
-    fun buildTree(_docs: List<BVDocument>): List<BVDocumentViewTreeNode> {
-        // Map all documents
-        val id2Docs =  mutableMapOf<String, BVDocument>()
-        _docs.forEach { doc ->
-           doc.ids.forEach { docId->
-               id2Docs[docId.id] = doc
-           }
-        }
+    class DocumentForest(private val documentStorage: BVDocumentStorage) {
+        private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
+        private val rootNodes = mutableSetOf<BVDocumentViewTreeNode>()
 
-        // Create views
-        val id2Nodes = mutableMapOf<String, BVDocumentViewTreeNode>()
-        val rootNodes = mutableSetOf<BVDocumentViewTreeNode>()
-        _docs.forEach { doc ->
-            val node = BVDocumentViewTreeNode(doc = BVDocumentViewFactory.create(doc), lastUpdated = doc.updated)
-            doc.ids.forEach { docId->
-                id2Nodes[docId.id] = node
-                rootNodes += node
-            }
-        }
+        fun addAndGetDocNode(doc: BVDocument): BVDocumentViewTreeNode =
+            internalId2Node[doc.internalId]
+                    ?: run {
+                        val docNode = BVDocumentViewTreeNode(
+                                doc = BVDocumentViewFactory.create(doc),
+                                lastUpdated = doc.updated,
+                                sourceType = doc.sourceType)
+                        rootNodes.add(docNode)
+                        internalId2Node[doc.internalId] = docNode
 
-        // Link documents
-        _docs.forEach { doc ->
-            val refs:List<BVDocumentRef> = doc.refs// + doc.groupIds.map { it.id }
-            refs.forEach { ref->
-                val referncedDoc = id2Docs[ref.docId.id]
-                if (referncedDoc != null) {
-                    ref.hierarchyPosition
+                        doc.refs.forEach { ref ->
+                            val referencedDocNode: BVDocumentViewTreeNode? = documentStorage.getDocuments(setOf(ref.docId.id))
+                                    .firstOrNull()
+                                    ?.let { addAndGetDocNode(it) }
 
-                    val relation = BVDocumentsRelation.from(referncedDoc, doc, ref)
-                    if (relation != null) {
-                        val parentNode = id2Nodes[relation.parent.ids.first().id]
-                        val childNode = id2Nodes[relation.child.ids.first().id]
+                            if (referencedDocNode != null) {
+                                val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyPosition)
+                                relation?.apply {
+                                    // Hierarchical relation
+                                    if (!subtreeContains(child, parent)) {
+                                        parent.addSubNode(child)
+                                        val parentNodeLastUpdated = parent.lastUpdated
+                                        if (parentNodeLastUpdated == null ||
+                                                parentNodeLastUpdated.before(child.lastUpdated)) {
+                                            parent.lastUpdated = child.lastUpdated
+                                        }
 
-                        if (parentNode != null && childNode != null) {
-                            parentNode.subNodes.add(childNode)
-                            val parentNodeLastUpdated = parentNode.lastUpdated
-                            if (parentNodeLastUpdated == null ||
-                                    parentNodeLastUpdated.before(childNode.lastUpdated)) {
-                                parentNode.lastUpdated = childNode.lastUpdated
+                                        rootNodes.remove(child)
+                                    } else {
+                                        // Alternatives
+                                        parent.alternativeNodes += child
+                                        // TODO: collapse cycle?
+                                    }
+                                } ?: apply {
+                                    // Alternatives
+                                    docNode.alternativeNodes += referencedDocNode
+                                }
                             }
-                            rootNodes.remove(childNode)
+
                         }
+                        docNode
                     }
-                    }
+
+        fun getRoots(): List<BVDocumentViewTreeNode> = rootNodes.toList().sortedByDescending { it.lastUpdated }
+
+        private fun subtreeContains(parentNode: BVDocumentViewTreeNode, targetNode: BVDocumentViewTreeNode): Boolean {
+            if (parentNode == targetNode) {
+                return true
+            }
+            for (children in parentNode.subNodes) {
+                if (subtreeContains(children, targetNode)) {
+                    return true
                 }
             }
-
-        return rootNodes.toList().sortedByDescending { it.lastUpdated }
+            return false
+        }
     }
+
+    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage): List<BVDocumentViewTreeNode> {
+        // Create views
+
+        val tree = DocumentForest(documentStorage)
+
+        _docs.forEach { doc ->
+            tree.addAndGetDocNode(doc)
+        }
+
+        return tree.getRoots()
+    }
+
 }

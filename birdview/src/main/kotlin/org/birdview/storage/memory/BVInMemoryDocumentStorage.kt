@@ -4,11 +4,9 @@ import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentStatus
 import org.birdview.source.BVDocumentsRelation
-import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVSourcesManager
 import org.slf4j.LoggerFactory
-import java.lang.IllegalArgumentException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
@@ -16,50 +14,43 @@ import javax.inject.Named
 
 @Named
 class BVInMemoryDocumentStorage(
-        private val docPredicate: BVDocumentPredicate,
-        private val sourceManager: BVSourcesManager
+        private val docPredicate: BVDocumentPredicate
 ): BVDocumentStorage {
     private val log = LoggerFactory.getLogger(BVInMemoryDocumentStorage::class.java)
 
-    inner class SourcesBundle (
-        private val sourceType: SourceType
-    ) {
-        private val sourceStoragesMap: MutableMap<String, SourceStorage> = ConcurrentHashMap()
-
-        fun findDocument(docId: String): BVDocument? = sourceStoragesMap.values
-                .mapNotNull { storage -> storage.findDocument(docId) }
-                .firstOrNull()
-
-        fun updateDocument(id: String, doc: BVDocument) {
-            sourceStoragesMap.computeIfAbsent(doc.sourceName, ::SourceStorage)
-                    .updateDocument(id, doc)
-        }
-
-        fun findDocuments(filter: BVDocumentFilter): List<BVDocument> =
-            sourceStoragesMap.values
-                    .flatMap { it.findDocuments(filter) }
-    }
-
-    inner class SourceStorage (
+    private class DocHolder (
+            @Volatile
+            var doc: BVDocument
+    )
+    private inner class SourceStorage (
         private val sourceName: String
     ) {
-        val docsMap: MutableMap<String, BVDocument> = ConcurrentHashMap() // id -> doc
-        fun findDocument(docId: String): BVDocument? = docsMap[docId]
+        val externalId2docHolder: MutableMap<String, DocHolder> = ConcurrentHashMap() // id -> doc
+        val internalId2docHolder: MutableMap<String, DocHolder> = ConcurrentHashMap()
+
+        fun findDocument(docId: String): BVDocument? = externalId2docHolder[docId]?.doc
+
         fun updateDocument(id: String, doc: BVDocument) {
-            docsMap[id] = doc
+            val docHolder = internalId2docHolder.computeIfAbsent(doc.internalId) {
+                DocHolder(doc)
+            }
+            docHolder.doc = doc
+            externalId2docHolder[id] = docHolder
         }
 
         fun findDocuments(filter: BVDocumentFilter): List<BVDocument> =
-                docsMap.values
-                        .map { prepareToFilter(it) }
+                externalId2docHolder.values
+                        .map (DocHolder::doc)
+                        .map (::prepareToFilter)
                         .filter { docPredicate.test(it, filter) }
     }
 
     // sourceName -> SourceStorage
-    private val sourceBundlesMap = ConcurrentHashMap<SourceType, SourcesBundle>()
+    private val ids2SourceStorage = ConcurrentHashMap<String, MutableMap<String, SourceStorage>>()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
-        return sourceBundlesMap.values
+        return ids2SourceStorage.values
+                .flatMap { it.values }
                 .flatMap { it.findDocuments(filter) }
                 .toMutableList()
     }
@@ -67,13 +58,17 @@ class BVInMemoryDocumentStorage(
     override fun getDocuments(searchingDocsIds: Set<String>): List<BVDocument> =
         searchingDocsIds.mapNotNull (this::findDocument)
 
-    override fun updateDocument(id: String, doc: BVDocument) {
-        val sourceName = doc.sourceName
-        val sourceType:SourceType = sourceManager.getSourceType(sourceName)
-                ?: throw IllegalArgumentException("Can't find source type by name '${sourceName}', can't update document ${id}")
-
-        val bundle = sourceBundlesMap.computeIfAbsent(sourceType) { SourcesBundle(it) }
-        bundle.updateDocument(id, doc)
+    override fun updateDocument(doc: BVDocument) {
+        doc.ids
+                .map { it.id }
+                .forEach { strId->
+                    ids2SourceStorage
+                            .computeIfAbsent(strId) {
+                                ConcurrentHashMap<String, SourceStorage>()
+                            }
+                            .computeIfAbsent(doc.sourceName, ::SourceStorage)
+                            .updateDocument(strId, doc)
+                }
     }
 
     private fun prepareToFilter(doc: BVDocument): BVDocument =
@@ -83,29 +78,18 @@ class BVInMemoryDocumentStorage(
                 doc
             }
 
-    override fun getDocumentParent(doc: BVDocument): BVDocument? =
-        doc.refs
-                .mapNotNull { ref -> findDocument(ref.docId.id) }
-                .firstOrNull { candidateParent -> isParent(candidateParent, doc) }
-
-    private fun findDocument(docId: String) = sourceBundlesMap.values.asSequence()
-            .mapNotNull { bundle -> bundle.findDocument(docId) }
-            .firstOrNull()
-
-    private fun isParent(candidateParent: BVDocument, doc: BVDocument) =
-            doc.refs
-                    .filter { rel -> candidateParent.ids.any { parentId-> parentId == rel.docId} }
-                    .any { rel->
-                        BVDocumentsRelation.from(candidateParent, doc, rel)?.parent === candidateParent
-                    }
-
+    private fun findDocument(docId: String): BVDocument? =
+            ids2SourceStorage[docId]
+                    ?.values
+                    ?.mapNotNull { storage -> storage.findDocument(docId) }
+                    ?.firstOrNull()
 
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
-        if (doc.status == BVDocumentStatus.INHERITED) {
-            val docParent = getDocumentParent(doc)
-            return docParent?.status
-                    ?: inferDocStatusFromUpdatedTimestamp(doc)
-        }
+//        if (doc.status == BVDocumentStatus.INHERITED) {
+//            val docParent = getDocumentParent(doc)
+//            return docParent?.status
+//                    ?: inferDocStatusFromUpdatedTimestamp(doc)
+//        }
         return doc.status
     }
 

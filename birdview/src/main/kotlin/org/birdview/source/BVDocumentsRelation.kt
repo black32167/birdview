@@ -1,13 +1,13 @@
 package org.birdview.source
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.BVDocumentRef
 import org.birdview.model.RelativeHierarchyPosition
+import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import java.util.*
 
 class BVDocumentsRelation (
-        val parent: BVDocument,
-        val child: BVDocument
+        val parent: BVDocumentViewTreeNode,
+        val child: BVDocumentViewTreeNode
 ) {
     companion object {
         fun getPriority(sourceType: SourceType): Int = when (sourceType) {
@@ -18,20 +18,20 @@ class BVDocumentsRelation (
             SourceType.UNDEFINED -> 100
         }
 
-        fun from(referncedDoc: BVDocument, doc: BVDocument, rel: BVDocumentRef): BVDocumentsRelation? =
-            when (rel.hierarchyPosition) {
+        fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyPosition: RelativeHierarchyPosition): BVDocumentsRelation? =
+            when (hierarchyPosition) {
                 RelativeHierarchyPosition.UNSPECIFIED -> {
-                    val sourceTypePriorityDiff = signInt(getPriority(referncedDoc.sourceType) - getPriority(doc.sourceType))
-                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
-                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
-                    when(diff) {
-                        -1 -> BVDocumentsRelation(referncedDoc, doc)
-                        1 -> BVDocumentsRelation(doc, referncedDoc)
+                    val sourceTypePriorityDiff = signInt(getPriority(referencedNode.sourceType) - getPriority(node.sourceType))
+//                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
+//                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
+                    when(sourceTypePriorityDiff) {
+                        -1 -> BVDocumentsRelation(referencedNode, node)
+                        1 -> BVDocumentsRelation(node, referencedNode)
                         else  -> null
                     }
                 }
-                RelativeHierarchyPosition.LINK_TO_PARENT -> BVDocumentsRelation(referncedDoc, doc)
-                RelativeHierarchyPosition.LINK_TO_CHILD -> BVDocumentsRelation(doc, referncedDoc)
+                RelativeHierarchyPosition.LINK_TO_PARENT -> BVDocumentsRelation(referencedNode, node)
+                RelativeHierarchyPosition.LINK_TO_CHILD -> BVDocumentsRelation(node, referencedNode)
             }
 
         private fun signInt(x: Int): Int =

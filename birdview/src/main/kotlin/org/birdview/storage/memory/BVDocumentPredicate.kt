@@ -12,7 +12,7 @@ import java.util.*
 import javax.inject.Named
 
 @Named
-class BVDocumentPredicate(
+open class BVDocumentPredicate(
         private val userSourceStorage: BVUserSourceStorage
 ) {
     private val log = LoggerFactory.getLogger(BVDocumentFilter::class.java)

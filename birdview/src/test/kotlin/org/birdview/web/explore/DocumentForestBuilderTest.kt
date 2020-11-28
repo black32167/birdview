@@ -6,26 +6,37 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.RelativeHierarchyPosition
 import org.birdview.source.SourceType
+import org.birdview.storage.memory.BVDocumentPredicate
+import org.birdview.storage.memory.BVInMemoryDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.lang.AssertionError
+import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
+import org.mockito.runners.MockitoJUnitRunner
 import java.util.*
+import kotlin.collections.HashMap
 
-class DocumentTreeBuilderTest {
+//@RunWith(MockitoJUnitRunner::class)
+class DocumentForestBuilderTest {
+    private var TIME_INSTANT = System.currentTimeMillis()
+
+    private val documentStorage = BVInMemoryDocumentStorage(mock(BVDocumentPredicate::class.java))
+
+    private val docsMap = HashMap<String, BVDocument>()
+
     @Test
     fun testSimpleTreeBuilt() {
         val PARENT_ID = "parentId"
         val CHILDREN_ID = "childrenId"
         val GRANDCHILDREN_ID = "grandChildrenId"
-        val docs = listOf(
+        val docs = persistDocs(
                 doc(listOf(PARENT_ID), SourceType.JIRA),
-                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID))),
-                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID)))
+                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID, RelativeHierarchyPosition.LINK_TO_PARENT))),
+                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID, RelativeHierarchyPosition.LINK_TO_PARENT)))
         )
-        val views = DocumentTreeBuilder.buildTree(docs)
+        val views = DocumentTreeBuilder.buildTree(docs, documentStorage)
         Assert.assertEquals(1, views.size)
         Assert.assertEquals(1, views.first().subNodes.size)
         Assert.assertEquals(1, views.first().subNodes[0].subNodes.size)
@@ -34,12 +45,12 @@ class DocumentTreeBuilderTest {
 
     @Test
     fun testCyclicDependenciesDoNotCreateCycleInTree() {
-        val docs = listOf(
+        val docs = persistDocs(
                 doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt")))
         )
-        val tree = DocumentTreeBuilder.buildTree(docs)
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
@@ -47,34 +58,34 @@ class DocumentTreeBuilderTest {
 
     @Test
     fun testDirectedCyclicDependenciesDoNotCreateCycleInTree() {
-        val docs = listOf(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
-                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
+        val docs = persistDocs(
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD))),
+                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3", RelativeHierarchyPosition.LINK_TO_CHILD))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
         )
-        val tree = DocumentTreeBuilder.buildTree(docs)
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
-        assertTrue(tree.isEmpty())
+       // assertTrue(tree.isEmpty())
+        tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }
 
     @Test
     fun testDirectedBackwardDependency() {
-        val docs = listOf(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
+        val docs = persistDocs(
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD))),
                 doc(listOf("id2"), SourceType.JIRA, listOf()),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
         )
-        val tree = DocumentTreeBuilder.buildTree(docs)
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }
 
-
     @Test
     fun testTreeBuilderMultipleIds() {
-        val docs = listOf(doc(listOf("parentId", "alternativeParentId"), SourceType.JIRA))
-        val views = DocumentTreeBuilder.buildTree(docs)
+        val docs = persistDocs(doc(listOf("parentId", "alternativeParentId"), SourceType.JIRA))
+        val views = DocumentTreeBuilder.buildTree(docs, documentStorage)
         Assert.assertEquals(1, views.size)
     }
 
@@ -86,14 +97,14 @@ class DocumentTreeBuilderTest {
         val docs = listOf(
                 doc(listOf(DOC1_ID), SourceType.JIRA, updated = Date(now)),
                         doc(listOf(DOC2_ID), SourceType.JIRA, updated = Date(now-10000)))
-        val views1 = DocumentTreeBuilder.buildTree(docs)
+        val views1 = DocumentTreeBuilder.buildTree(docs, documentStorage)
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
 
-        val views2 = DocumentTreeBuilder.buildTree(docs.reversed())
+        val views2 = DocumentTreeBuilder.buildTree(docs.reversed(), documentStorage)
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
     }
 
-    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:Date = Date()): BVDocument =
+    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:Date = dateSeq()): BVDocument =
             BVDocument(
                     ids = ids.map { BVDocumentId(it) }.toSet(),
                     title = ids.first(),
@@ -108,6 +119,10 @@ class DocumentTreeBuilderTest {
                     sourceType = sourceType,
                     sourceName = "sourceName")
 
+    private fun dateSeq():Date {
+        TIME_INSTANT += 10
+        return Date(TIME_INSTANT);
+    }
     private fun docRef(ref: String, type: RelativeHierarchyPosition = RelativeHierarchyPosition.UNSPECIFIED) =
             BVDocumentRef(BVDocumentId(ref), type)
 
@@ -120,5 +135,12 @@ class DocumentTreeBuilderTest {
             assertNoCycles(it, visited);
         }
         visited.remove(node)
+    }
+
+    fun persistDocs(vararg docs:BVDocument): List<BVDocument> {
+        docs.forEach { doc->
+            documentStorage.updateDocument(doc)
+        }
+        return docs.toList()
     }
 }

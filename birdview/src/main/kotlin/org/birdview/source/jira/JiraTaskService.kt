@@ -59,7 +59,7 @@ open class JiraTaskService(
 
         try {
             return BVDocument(
-                    ids = setOf(BVDocumentId(id = issue.key)),
+                    ids = docId(issue.key, issue.self),
                     title = issue.fields.summary,
                     key = issue.key,
                     body = description,
@@ -78,6 +78,8 @@ open class JiraTaskService(
             throw RuntimeException("Could not parse issue $issue", e)
         }
     }
+
+    private fun docId(vararg ids:String) = ids.map { BVDocumentId(it, sourceType = SourceType.JIRA) }.toSet()
 
     private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>): List<BVDocumentRef> {
         val textIds = BVFilters.filterRefsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}")
@@ -142,7 +144,7 @@ open class JiraTaskService(
         issue.changelog
                 ?.histories
                 ?.flatMap { toOperation(it, config.sourceName) }
-                ?.filter { it.author.equals(config.user) }
+                ?.filter { it.author == config.user }
                 ?: emptyList()
 
     private fun toOperation(changelogItem: JiraChangelogItem, sourceName: String): List<BVDocumentOperation> =

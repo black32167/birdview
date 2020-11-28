@@ -3,6 +3,8 @@ package org.birdview.web.explore
 import org.birdview.BVTaskService
 import org.birdview.model.*
 import org.birdview.security.UserContext
+import org.birdview.storage.BVDocumentStorage
+import org.birdview.storage.memory.BVInMemoryDocumentStorage
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.springframework.web.bind.annotation.GetMapping
@@ -15,7 +17,8 @@ import java.time.temporal.ChronoUnit
 @RequestMapping("/rest")
 class BVRestController(
         private val taskService: BVTaskService,
-        private val userUpdater: BVUserDataUpdater
+        private val userUpdater: BVUserDataUpdater,
+        private val documentStorage: BVDocumentStorage
 ) {
     class DocumentRequest(
             val user: String?,
@@ -41,7 +44,7 @@ class BVRestController(
                 representationType = documentRequest.representationType)
   //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
         val docs = taskService.getDocuments(tsRequest)
-        val docViews = DocumentTreeBuilder.buildTree(docs).toMutableList()
+        val docViews = DocumentTreeBuilder.buildTree(docs, documentStorage ).toMutableList()
         HierarchySorter.sortHierarchy(docViews, documentRequest.reportType)
 
         if (documentRequest.representationType == RepresentationType.LIST) {

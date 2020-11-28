@@ -11,8 +11,7 @@ class BVFiltersTest {
     fun shouldExtractSimpleLink() {
         val text = "  $ref"
         val ids = BVFilters.filterRefsFromText(text)
-        assertFalse(ids.isEmpty())
-        assertEquals(ids.first(), ref)
+        assertEquals(ids.first().id, ref)
     }
 
     @Test
@@ -21,6 +20,6 @@ class BVFiltersTest {
                 " with smartlink"
         val ids = BVFilters.filterRefsFromText(text)
         assertFalse(ids.isEmpty())
-        assertEquals(ref, ids.first())
+        assertEquals(ref, ids.first().id)
     }
 }
