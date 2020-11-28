@@ -36,16 +36,16 @@ object DocumentTreeBuilder {
                                                 parentNodeLastUpdated.before(child.lastUpdated)) {
                                             parent.lastUpdated = child.lastUpdated
                                         }
-
-                                        rootNodes.remove(child)
                                     } else {
                                         // Alternatives
-                                        parent.alternativeNodes += child
+                                        parent.addAlternative(child)
                                         // TODO: collapse cycle?
                                     }
+                                    rootNodes.remove(child)
                                 } ?: apply {
                                     // Alternatives
-                                    docNode.alternativeNodes += referencedDocNode
+                                    docNode.addAlternative(referencedDocNode)
+                                    rootNodes.remove(referencedDocNode)
                                 }
                             }
 
