@@ -3,7 +3,7 @@ package org.birdview.web.explore.model
 import org.birdview.analysis.Priority
 
 data class BVDocumentView (
-        val id: String,
+        val internalId: String,
         val ids: List<String>,
         val title: String,
         val updated: String?,

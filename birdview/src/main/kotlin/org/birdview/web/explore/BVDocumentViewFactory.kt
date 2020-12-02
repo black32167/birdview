@@ -3,12 +3,11 @@ package org.birdview.web.explore
 import org.birdview.analysis.BVDocument
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.web.explore.model.BVDocumentView
-import java.util.*
 
 object BVDocumentViewFactory {
     fun create(doc: BVDocument) : BVDocumentView =
             BVDocumentView(
-                    id = UUID.randomUUID().toString(),
+                    internalId = doc.internalId,
                     ids = doc.ids.map { it.id },
                     httpUrl = doc.httpUrl,
                     sourceName = doc.sourceName,

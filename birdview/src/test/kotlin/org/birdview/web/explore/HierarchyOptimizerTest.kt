@@ -18,7 +18,7 @@ class HierarchyOptimizerTest {
         HierarchyOptimizer.optimizeHierarchy(root)
 
         Assert.assertEquals(1, root.subNodes.size)
-        Assert.assertEquals(0, root.subNodes[0].subNodes.size)
+        Assert.assertEquals(0, root.subNodes.first().subNodes.size)
      }
 
     @Test
@@ -53,14 +53,15 @@ class HierarchyOptimizerTest {
                         updated = "2020-12-15",
                         httpUrl = "httpUrl",
                         status = "BACKLOG",
-                        id = id,
+                        internalId = id,
                         lastUpdater = "lastUpdater",
                         sourceName = "sourceName",
                         priority = Priority.NORMAL
                     ),
                     lastUpdated = Date(),
-                    sourceType = SourceType.JIRA
+                    sourceType = SourceType.JIRA,
+                    subNodesComparator = Comparator.comparing { it.lastUpdated }
             ).also {
-                it.subNodes = subNodes.toMutableList()
+                it.subNodes = subNodes.toMutableSet()
             }
 }

@@ -7,26 +7,37 @@ import java.util.*
 class BVDocumentViewTreeNode (
         val doc: BVDocumentView,
         val sourceType: SourceType,
-        var lastUpdated: Date?
+        var lastUpdated: Date?,
+        val subNodesComparator: Comparator<BVDocumentViewTreeNode>
 ) {
-    var subNodes: MutableList<BVDocumentViewTreeNode> = mutableListOf()
-    val alternativeNodes: MutableList<BVDocumentViewTreeNode> = mutableListOf()
-    private var referencesCount = 0
+    var subNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()
+    var referringNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()
+    val alternativeDocs: MutableSet<BVDocumentView> = mutableSetOf()
+    val internalId: String
+        get() = doc.internalId
 
     fun addSubNode(node: BVDocumentViewTreeNode) {
         subNodes.add(node)
-        node.referencesCount++
+        node.referringNodes.add(this)
     }
 
-    fun addAlternative(child: BVDocumentViewTreeNode): Boolean {
-        if (child.alternativeNodes.contains(this)) {
-            return false;
+    fun addAlternative(otherNode: BVDocumentViewTreeNode) {
+        alternativeDocs += otherNode.doc
+        alternativeDocs.addAll(otherNode.alternativeDocs.filter { it.internalId != this.doc.internalId })
+
+        subNodes.remove(otherNode)
+        referringNodes.remove(otherNode)
+
+        otherNode.referringNodes.forEach { referringNode->
+            referringNode.subNodes.remove(otherNode)
         }
-        alternativeNodes += child
-        alternativeNodes.addAll(child.alternativeNodes)
-        subNodes.addAll(child.subNodes)
-        return true;
+        otherNode.subNodes.forEach { subNode->
+            subNode.referringNodes.remove(otherNode)
+        }
+
+        subNodes.addAll(otherNode.subNodes.filter { it != this })
+        referringNodes.addAll(otherNode.referringNodes.filter { it != this })
     }
 
-    fun isRoot() = referencesCount == 0
+    fun isRoot() = referringNodes.isEmpty()
 }

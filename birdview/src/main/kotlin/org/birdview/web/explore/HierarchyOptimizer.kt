@@ -10,12 +10,12 @@ object HierarchyOptimizer {
         }
     }
 
-    private fun optimizeChildren(nodes: List<BVDocumentViewTreeNode>): MutableList<BVDocumentViewTreeNode> =
+    private fun optimizeChildren(nodes: Set<BVDocumentViewTreeNode>): MutableSet<BVDocumentViewTreeNode> =
             nodes.flatMap { node ->
                 if (node.subNodes.size in 1..2) {
                     node.subNodes
                 } else {
                     listOf(node)
                 }
-            }.toMutableList()
+            }.toMutableSet()
 }

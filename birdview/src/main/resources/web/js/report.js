@@ -11,8 +11,11 @@ function renderTable(rootElement, nodes, parentId, level) {
         }
 
         // Title
+        var alternativeLinks = [doc].concat(node.alternativeDocs)
+            .map(d=>`<a href="${d.httpUrl}">${d.key}</a>`)
+        var title = `${doc.title} (${alternativeLinks.join(",")})`
         var titleCol = $('<td>')
-            .html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
+            .html(title)
             .addClass(node.subNodes.length == 0 ? 'title_leaf' : 'title')
         row.append(titleCol)
 

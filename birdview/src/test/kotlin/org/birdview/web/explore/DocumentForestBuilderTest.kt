@@ -5,6 +5,7 @@ import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.RelativeHierarchyPosition
+import org.birdview.model.ReportType
 import org.birdview.source.SourceType
 import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.storage.memory.BVInMemoryDocumentStorage
@@ -12,19 +13,14 @@ import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
-import org.mockito.runners.MockitoJUnitRunner
 import java.util.*
-import kotlin.collections.HashMap
 
 //@RunWith(MockitoJUnitRunner::class)
 class DocumentForestBuilderTest {
     private var TIME_INSTANT = System.currentTimeMillis()
 
     private val documentStorage = BVInMemoryDocumentStorage(mock(BVDocumentPredicate::class.java))
-
-    private val docsMap = HashMap<String, BVDocument>()
 
     @Test
     fun testSimpleTreeBuilt() {
@@ -36,11 +32,11 @@ class DocumentForestBuilderTest {
                 doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID, RelativeHierarchyPosition.LINK_TO_PARENT))),
                 doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID, RelativeHierarchyPosition.LINK_TO_PARENT)))
         )
-        val views = DocumentTreeBuilder.buildTree(docs, documentStorage)
+        val views = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
         Assert.assertEquals(1, views.size)
         Assert.assertEquals(1, views.first().subNodes.size)
-        Assert.assertEquals(1, views.first().subNodes[0].subNodes.size)
-        Assert.assertEquals(0, views.first().subNodes[0].subNodes[0].subNodes.size)
+        Assert.assertEquals(1, views.first().subNodes.first().subNodes.size)
+        Assert.assertEquals(0, views.first().subNodes.first().subNodes.first().subNodes.size)
     }
 
     @Test
@@ -50,9 +46,10 @@ class DocumentForestBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt")))
         )
-        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
 
         assertFalse(tree.isEmpty())
+        assertFalse(tree.first().alternativeDocs.any() { it.ids.contains("id3") })
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }
 
@@ -63,9 +60,9 @@ class DocumentForestBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3", RelativeHierarchyPosition.LINK_TO_CHILD))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
         )
-        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
 
-       // assertTrue(tree.isEmpty())
+        assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }
 
@@ -76,7 +73,7 @@ class DocumentForestBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf()),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
         )
-        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
@@ -85,7 +82,7 @@ class DocumentForestBuilderTest {
     @Test
     fun testTreeBuilderMultipleIds() {
         val docs = persistDocs(doc(listOf("parentId", "alternativeParentId"), SourceType.JIRA))
-        val views = DocumentTreeBuilder.buildTree(docs, documentStorage)
+        val views = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
         Assert.assertEquals(1, views.size)
     }
 
@@ -97,10 +94,10 @@ class DocumentForestBuilderTest {
         val docs = listOf(
                 doc(listOf(DOC1_ID), SourceType.JIRA, updated = Date(now)),
                         doc(listOf(DOC2_ID), SourceType.JIRA, updated = Date(now-10000)))
-        val views1 = DocumentTreeBuilder.buildTree(docs, documentStorage)
+        val views1 = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
 
-        val views2 = DocumentTreeBuilder.buildTree(docs.reversed(), documentStorage)
+        val views2 = DocumentTreeBuilder.buildTree(docs.reversed(), documentStorage, ReportType.WORKED)
         Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
     }
 
