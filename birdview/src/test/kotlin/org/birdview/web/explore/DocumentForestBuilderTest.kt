@@ -12,6 +12,7 @@ import org.birdview.storage.memory.BVInMemoryDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.mock
 import java.util.*
@@ -49,6 +50,22 @@ class DocumentForestBuilderTest {
         val tree = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
 
         assertFalse(tree.isEmpty())
+        assertFalse(tree.first().alternativeDocs.any() { it.ids.contains("id3") })
+        tree.forEach { assertNoCycles(it, mutableSetOf()) }
+    }
+
+    @Test
+    fun testCyclicDependencie2DoNotCreateCycleInTree() {
+        val docs = persistDocs(
+                doc(listOf("id0"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyPosition.LINK_TO_CHILD))),
+                doc(listOf("id1"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD), docRef("id3", RelativeHierarchyPosition.LINK_TO_CHILD))),
+                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyPosition.LINK_TO_CHILD))),
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyPosition.LINK_TO_CHILD), docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD)))
+        )
+        val tree = DocumentTreeBuilder.buildTree(docs, documentStorage, ReportType.WORKED)
+
+        assertFalse(tree.isEmpty())
+        assertTrue(tree.first().doc.ids.contains("id0"))
         assertFalse(tree.first().alternativeDocs.any() { it.ids.contains("id3") })
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }

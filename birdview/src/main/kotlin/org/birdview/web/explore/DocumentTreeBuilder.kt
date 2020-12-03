@@ -1,11 +1,11 @@
 package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.RelativeHierarchyPosition
 import org.birdview.model.ReportType
 import org.birdview.source.BVDocumentsRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
+import java.lang.RuntimeException
 import java.util.Comparator
 
 object DocumentTreeBuilder {
@@ -60,20 +60,25 @@ object DocumentTreeBuilder {
         }
 
         fun collapseCycles() {
-            while (!internalId2Node.isEmpty() &&
-                    collapseCycles(
-                            internalId2Node.values.first(), mutableSetOf(), mutableSetOf())) {
+            internalId2Node.values.toList().forEach { node->
+                if (internalId2Node.containsKey(node.internalId)) {
+                    while (collapseCycles(
+                                    node, mutableListOf(), mutableSetOf())) {
+                    }
+                }
             }
         }
 
-        private fun collapseCycles(node: BVDocumentViewTreeNode, visiting: MutableSet<BVDocumentViewTreeNode>, visitedIds: MutableSet<String>):Boolean {
+        private fun collapseCycles(node: BVDocumentViewTreeNode, visiting: MutableList<BVDocumentViewTreeNode>, visitedIds: MutableSet<String>):Boolean {
             if (visitedIds.contains(node.internalId)) {
                 return false
             }
-            if (visiting.contains(node)) {
+            val cycleIdx = visiting.indexOf(node)
+            if (cycleIdx != -1) {
+                val cycle = visiting.subList(cycleIdx+1, visiting.size)
                 // cycle
-                visiting.filter { it != node }.forEach { cycleNode->
-                    if (internalId2Node.containsKey(cycleNode.internalId)) {
+                cycle.forEach { cycleNode->
+                    if (internalId2Node.containsKey(node.internalId)) {
                         node.addAlternative(cycleNode)
                         internalId2Node.remove(cycleNode.internalId)
                     }
@@ -96,7 +101,6 @@ object DocumentTreeBuilder {
                 .filter (BVDocumentViewTreeNode::isRoot)
                 .toList()
                 .sortedByDescending { it.lastUpdated }
-
     }
 
     fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage, reportType: ReportType): List<BVDocumentViewTreeNode> {
@@ -113,9 +117,15 @@ object DocumentTreeBuilder {
             tree.addAndGetDocNode(doc)
         }
 
-        tree.collapseCycles()
+        try {
+            tree.collapseCycles()
 
-        return tree.getRoots()
+            val roots = tree.getRoots()
+
+            return roots
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
     }
 
 }

@@ -21,6 +21,7 @@ open class JiraTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
+    private val JIRA_REST_URL_REGEX = "https?://.*/rest/api/2/issue/.*".toRegex()
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("JiraTaskService"))
 
@@ -41,15 +42,23 @@ open class JiraTaskService(
                 }
     }
 
-    override fun canHandleId(id: String): Boolean = BVFilters.JIRA_KEY_REGEX.matches(id)
+    override fun canHandleId(id: String): Boolean =
+            BVFilters.JIRA_KEY_REGEX.matches(id) || JIRA_REST_URL_REGEX.matches(id)
 
-    override fun loadByIds(sourceName: String, keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit): Unit {
+    override fun loadByIds(sourceName: String, idList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
+        val issueKeys = idList.filter { BVFilters.JIRA_KEY_REGEX.matches(it) }
+        val issueUrls = idList.filter { JIRA_REST_URL_REGEX.matches(it) }
         sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java)?.also { config ->
             val client = jiraClientProvider.getJiraClient(config)
-            client.loadByKeys(keyList.distinct()) {
-                issues ->
+            client.loadByKeys(issueKeys.distinct()) { issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })
             }
+            val docsByUrls = issueUrls.distinct()
+                    .map { url->executor.submit(Callable { client.loadByUrl(url) }) }
+                    .map {
+                        mapDocument(it.get(), config)
+                    }
+            chunkConsumer.invoke(docsByUrls)
         }
     }
 

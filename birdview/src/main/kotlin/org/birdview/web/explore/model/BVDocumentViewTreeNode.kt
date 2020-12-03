@@ -1,5 +1,6 @@
 package org.birdview.web.explore.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.birdview.source.SourceType
 import java.util.*
 
@@ -11,6 +12,8 @@ class BVDocumentViewTreeNode (
         val subNodesComparator: Comparator<BVDocumentViewTreeNode>
 ) {
     var subNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()
+
+    @JsonIgnore
     var referringNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()
     val alternativeDocs: MutableSet<BVDocumentView> = mutableSetOf()
     val internalId: String
@@ -28,11 +31,13 @@ class BVDocumentViewTreeNode (
         subNodes.remove(otherNode)
         referringNodes.remove(otherNode)
 
-        otherNode.referringNodes.forEach { referringNode->
+        otherNode.referringNodes.filter { it != this }.forEach { referringNode->
             referringNode.subNodes.remove(otherNode)
+            referringNode.subNodes.add(this)
         }
-        otherNode.subNodes.forEach { subNode->
+        otherNode.subNodes.filter { it != this }.forEach { subNode->
             subNode.referringNodes.remove(otherNode)
+            subNode.referringNodes.add(this)
         }
 
         subNodes.addAll(otherNode.subNodes.filter { it != this })

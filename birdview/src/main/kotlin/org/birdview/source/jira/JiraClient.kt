@@ -53,7 +53,7 @@ class JiraClient(
     fun loadByKeys(issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
         val issues = issueKeys
                 .map { "${getApiRootUrl()}/issue/${it}" }
-                .map { executor.submit(Callable { loadIssue(it) }) }
+                .map { executor.submit(Callable { loadByUrl(it) }) }
                 .mapNotNull { future ->
                     try {
                         future.get()
@@ -77,7 +77,7 @@ class JiraClient(
                     .let { resp ->
                         val issuesResponse = resp.readEntity(JiraIssuesFilterResponse::class.java)
                         val issues = issuesResponse.issues
-                                .map { executor.submit(Callable { loadIssue(it.self) }) }
+                                .map { executor.submit(Callable { loadByUrl(it.self) }) }
                                 .mapNotNull { future ->
                                     try {
                                         future.get()
@@ -93,7 +93,7 @@ class JiraClient(
                                         ?.run { startAt + maxResults })
                     }
 
-    private fun loadIssue(url:String): JiraIssue =
+    fun loadByUrl(url:String): JiraIssue =
             getTargetFactory(url).getTarget("")
                 .queryParam("expand", "changelog")
                 .request()
