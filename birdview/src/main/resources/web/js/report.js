@@ -100,14 +100,24 @@ function authenticate(url) {
 function reindex() {
     showOverlay(true)
     $.ajax(`${baseURL}/rest/documents/reindex`)
-    .always(function(){
-        showOverlay(false)
-        refresh()
-    })
+        .always(function(){
+            showOverlay(false)
+            refresh()
+        })
 
     //window.location.replace(window.location.pathname + "?refresh")
     return false
 }
+function updateStatus() {
+    $.ajax({
+        url:`${baseURL}/rest/documents/status`,
+        success: function( data ) {
+            var msg = data.updating ? "Updating..." : ""
+            $("#status").text(msg)
+        }
+    })
+}
+
 function refresh() {
     var reportType = $('#reportType').val()
     var daysBack = $('#daysBack').val()

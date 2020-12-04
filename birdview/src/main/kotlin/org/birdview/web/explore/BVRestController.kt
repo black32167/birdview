@@ -5,6 +5,7 @@ import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.user.BVUserDataUpdater
+import org.birdview.web.explore.model.BVUserDocumentCorpusStatus
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -27,6 +28,7 @@ class BVRestController(
             val userRole: UserRole?,
             var representationType: RepresentationType
     )
+
     @GetMapping("documents")
     fun documents(
             documentRequest: DocumentRequest
@@ -51,13 +53,17 @@ class BVRestController(
         return docViews
     }
 
-    private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
-        ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR, UserRole.CREATOR)
-        ReportType.WORKED -> listOf(UserRole.IMPLEMENTOR)
-    }
-
     @GetMapping("documents/reindex")
     fun reindexDocuments() {
         userUpdater.refreshUser(UserContext.getUserName())
+    }
+
+    @GetMapping("documents/status")
+    fun getDocumentUpdateStatus(): BVUserDocumentCorpusStatus? =
+        userUpdater.getStatusForUser(UserContext.getUserName())
+
+    private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
+        ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR, UserRole.CREATOR)
+        ReportType.WORKED -> listOf(UserRole.IMPLEMENTOR)
     }
 }

@@ -13,6 +13,7 @@
     baseURL = "${baseURL}"
     $(function() {
         console.log( "document loaded!" )
+        setInterval(updateStatus, 1000)
         refresh()
     })
 </script>
@@ -82,6 +83,10 @@
         <a href="#" onclick="reindex()" class="refresh">Update</a>
         |
         <@logout_link />
+    </div>
+
+    <div class="center">
+       <span id="status"></span>
     </div>
     </span>
 </td>

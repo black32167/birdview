@@ -3,7 +3,10 @@ package org.birdview.user.document
 import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.SourceType
-import org.birdview.storage.*
+import org.birdview.storage.BVAbstractSourceConfig
+import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVSourcesManager
+import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDocumentUtils.getReferencedDocIds
 import org.birdview.utils.BVTimeUtil
@@ -12,11 +15,11 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.function.Consumer
 import javax.inject.Named
 
 @Named
 class BVDocumentsLoader (
-        private val documentStorage: BVDocumentStorage,
         private val userSourceStorage: BVUserSourceStorage,
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val sourcesManager: BVSourcesManager
@@ -24,7 +27,7 @@ class BVDocumentsLoader (
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
 
-    fun loadDocuments(bvUser: String):List<Future<*>> =
+    fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: Consumer<BVDocument>):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)
                     .map { sourceConfig ->
                         val subtaskFutures = mutableListOf<Future<*>>()
@@ -32,12 +35,12 @@ class BVDocumentsLoader (
                             BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType}") {
                                 val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
                                 try {
-                                    sourceManager.getTasks(bvUser, TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1)), sourceConfig) { docChunk ->
-                                        docChunk.forEach { doc -> documentStorage.updateDocument(doc) }
+                                    sourceManager.getTasks(bvUser, timeIntervalFilter, sourceConfig) { docChunk ->
+                                        docChunk.forEach (documentConsumer)
 
                                         subtaskFutures.add(executor.submit {
                                             loadReferredDocs(bvUser, docChunk) { docChunk ->
-                                                docChunk.forEach { doc -> documentStorage.updateDocument(doc) }
+                                                docChunk.forEach (documentConsumer)
                                             }
                                         })
                                     }
