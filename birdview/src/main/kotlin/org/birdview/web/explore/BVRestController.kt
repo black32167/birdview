@@ -57,7 +57,7 @@ class BVRestController(
 
     @GetMapping("documents/reindex")
     fun reindexDocuments() {
-        userUpdater.refreshUser(UserContext.getUserName())
+        userUpdater.requestUserRefresh(UserContext.getUserName())
     }
 
     @GetMapping("documents/status")

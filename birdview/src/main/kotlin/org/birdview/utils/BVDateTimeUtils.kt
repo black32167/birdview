@@ -13,7 +13,7 @@ object BVDateTimeUtils {
     private val formatterDateTime = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")
 
     fun format(interval: TimeIntervalFilter) =
-            "[${dateTimeFormat(interval.after)} to ${timeFormat(interval.before)}]"
+            "[${dateTimeFormat(interval.after)} to ${dateTimeFormat(interval.before)}]"
 
     fun dateTimeFormat(instant: TemporalAccessor?): String =
             instant?.let(formatterDateTime::format) ?: "Now"
