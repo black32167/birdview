@@ -4,7 +4,7 @@ import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.user.document.BVDocumentsLoader
-import org.birdview.web.explore.model.BVUserDocumentCorpusStatus
+import org.birdview.utils.BVDateTimeUtils
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.util.*
@@ -19,7 +19,8 @@ import javax.inject.Named
 class BVInMemoryUserDataUpdater (
         private val userStorage: BVUserStorage,
         private val documentsLoader: BVDocumentsLoader,
-        private val documentStorage: BVDocumentStorage
+        private val documentStorage: BVDocumentStorage,
+        private val userLog: BVUserLog
 ): BVUserDataUpdater, BVUserStorage.UserChangedListener {
     companion object {
         private const val DELAY_BETWEEN_UPDATES_MINUTES: Long = 30
@@ -32,10 +33,7 @@ class BVInMemoryUserDataUpdater (
         (userInfo1.timestamp-userInfo2.timestamp).toInt()
     }
 
-    @Deprecated("in favor of userUpdateStatus")
     private val userFutures = ConcurrentHashMap<String, CompletableFuture<*>>()
-
-    private val userUpdateStatus = ConcurrentHashMap<String, BVUserDocumentCorpusStatus>()
 
     override fun onUserDeleted(bvUser: String) {
         userUpdateTimestampInfoHeap
@@ -71,43 +69,37 @@ class BVInMemoryUserDataUpdater (
 
     override fun refreshUser(bvUser: String) {
         log.info(">>>>>>>>> Refreshing user ${bvUser}")
+
         executor.submit {
             val userFuture = CompletableFuture<Void>()
-            userFutures[bvUser] = userFuture
-            userUpdateTimestampInfoHeap.offer(UserUpdateInfo(bvUser = bvUser, timestamp = System.currentTimeMillis()))
-
-
             val interval = TimeIntervalFilter(after = ZonedDateTime.now().minusMonths(1))
-
-            val futures = documentsLoader.loadDocuments(bvUser, interval) { doc ->
-                documentStorage.updateDocument(doc)
-                userUpdateStatus[bvUser]
-            }
-
-            documentCorpusStatus(bvUser).startUpdating()
             try {
+                userFutures[bvUser] = userFuture
+                userUpdateTimestampInfoHeap.offer(UserUpdateInfo(bvUser = bvUser, timestamp = System.currentTimeMillis()))
+
+                userLog.logMessage(bvUser, "Start updating interval ${BVDateTimeUtils.format(interval)}")
+
+                val futures = documentsLoader.loadDocuments(bvUser, interval) { doc ->
+                    documentStorage.updateDocument(doc)
+                }
+
                 for (future in futures) {
                     try {
                         future.get()
                     } catch (e: Exception) {
                     }
                 }
+            } catch (e: Exception) {
+                log.error("", e)
             } finally {
-                documentCorpusStatus(bvUser).finishUpdating()
+                userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}")
                 userFuture.complete(null)
                 log.info(">>>>>>>>> Finished refreshing user ${bvUser}")
             }
         }
     }
 
-    private fun documentCorpusStatus(bvUser: String) =
-            userUpdateStatus
-                .computeIfAbsent(bvUser) { BVUserDocumentCorpusStatus() }
-
     override fun waitForUserUpdated(userAlias: String) {
         userFutures[userAlias]?.get()
     }
-
-    override fun getStatusForUser(bvUser: String): BVUserDocumentCorpusStatus? =
-            userUpdateStatus[bvUser]
 }

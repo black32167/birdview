@@ -85,8 +85,8 @@
         <@logout_link />
     </div>
 
-    <div class="center">
-       <span id="status"></span>
+    <div class="log">
+
     </div>
     </span>
 </td>

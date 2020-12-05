@@ -92,11 +92,13 @@ function showOverlay(show) {
     $("#overlay").hide()
   }
 }
+
 function authenticate(url) {
   if(url != "") {
     window.location.replace(url)
   }
 }
+
 function reindex() {
     showOverlay(true)
     $.ajax(`${baseURL}/rest/documents/reindex`)
@@ -108,14 +110,31 @@ function reindex() {
     //window.location.replace(window.location.pathname + "?refresh")
     return false
 }
+
 function updateStatus() {
     $.ajax({
         url:`${baseURL}/rest/documents/status`,
-        success: function( data ) {
-            var msg = data.updating ? "Updating..." : ""
-            $("#status").text(msg)
+        success: function( userLog ) {
+            if (userLog.length > 0) {
+                $(".log").show()
+
+                var logHtml = userLog
+                    .map(e=>formatLogEntry(e))
+                    .join("")
+
+                $(".log").html(logHtml)
+            } else {
+                $(".log").hide()
+            }
         }
     })
+}
+
+function formatLogEntry(entry) {
+  return `<div class="log-entry">
+           <div class='log-time'>${entry.timestamp}</div>
+           <div class='log-message'>${entry.message}</div>
+        </div>`
 }
 
 function refresh() {

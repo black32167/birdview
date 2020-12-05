@@ -5,7 +5,8 @@ import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.user.BVUserDataUpdater
-import org.birdview.web.explore.model.BVUserDocumentCorpusStatus
+import org.birdview.user.BVUserLog
+import org.birdview.web.explore.model.BVUserLogEntry
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -18,7 +19,8 @@ import java.time.temporal.ChronoUnit
 class BVRestController(
         private val taskService: BVTaskService,
         private val userUpdater: BVUserDataUpdater,
-        private val documentStorage: BVDocumentStorage
+        private val documentStorage: BVDocumentStorage,
+        private val userLog: BVUserLog
 ) {
     class DocumentRequest(
             val user: String?,
@@ -59,8 +61,8 @@ class BVRestController(
     }
 
     @GetMapping("documents/status")
-    fun getDocumentUpdateStatus(): BVUserDocumentCorpusStatus? =
-        userUpdater.getStatusForUser(UserContext.getUserName())
+    fun getDocumentUpdateStatus(): List<BVUserLogEntry> =
+        userLog.getUserLog(UserContext.getUserName())
 
     private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
         ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR, UserRole.CREATOR)

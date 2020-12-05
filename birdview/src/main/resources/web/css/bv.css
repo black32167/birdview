@@ -73,6 +73,23 @@ html, body {
     height: 100%;
     font-weight: bold;
 }
+.log {
+    margin: 10px 10px auto 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid black;
+    display: none;
+}
+.log-entry {
+    font-size: 0.6em;
+}
+.log-time {
+    margin-left: 0px;
+    font-weight: bold;
+}
+.log-message {
+    margin-left: 10px;
+}
 .center {
     margin:auto;
     display: table;
