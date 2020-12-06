@@ -45,12 +45,12 @@ class GqlGithubIssueComment(
 }
 
 class PullRequestReview(
-        val author: GqlGithubUserActor,
+        val author: GqlGithubActor,
         val createdAt: String
 ) : GqlGithubEvent("PullRequestReview") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.COMMENT
     override val timestamp = createdAt
-    override val user = author.login
+    override val user = (author as? GqlGithubUserActor)?.login
 }
 
 class MergedEvent(

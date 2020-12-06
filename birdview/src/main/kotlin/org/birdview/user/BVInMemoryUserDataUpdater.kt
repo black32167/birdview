@@ -70,16 +70,27 @@ class BVInMemoryUserDataUpdater (
 
     override fun requestUserRefresh(bvUser: String) {
         log.info(">>>>>>>>> Refreshing user ${bvUser}")
+        userUpdateTimestampInfoHeap.offer(UserUpdateInfo(bvUser = bvUser, timestamp = System.currentTimeMillis()))
+        val userFuture = CompletableFuture<Void>()
+        userFutures[bvUser] = userFuture
 
         executor.submit {
             var endTime = ZonedDateTime.now()
-            var startTime = endTime.minusDays(10)
+            var startTime = endTime.minusDays(10).withHour(0).withMinute(0).withSecond(0).withNano(0)
             val minStartTime = ZonedDateTime.now().minusDays(MAX_DAYS_BACK)
 
-            while (startTime > minStartTime) {
-                loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
-                endTime = startTime
-                startTime = endTime.minusDays(14)
+
+            try {
+                while (startTime > minStartTime) {
+                    loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
+                    endTime = startTime
+                    startTime = endTime.minusDays(14)
+                }
+            } catch (e: Error) {
+                log.error("", e)
+            } finally {
+                userFuture.complete(null)
+                log.info(">>>>>>>>> Finished refreshing user ${bvUser}. Overall ${documentStorage.count()} documents loaded.")
             }
         }
     }
@@ -89,12 +100,10 @@ class BVInMemoryUserDataUpdater (
     }
 
     private fun loadUserData(bvUser: String, interval: TimeIntervalFilter) {
-        val userFuture = CompletableFuture<Void>()
-        try {
-            userFutures[bvUser] = userFuture
-            userUpdateTimestampInfoHeap.offer(UserUpdateInfo(bvUser = bvUser, timestamp = System.currentTimeMillis()))
+        log.info(">>>>>>>>> Loading data for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
 
-            userLog.logMessage(bvUser, "Start updating interval ${BVDateTimeUtils.format(interval)}")
+        try {
+            userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
 
             val futures = documentsLoader.loadDocuments(bvUser, interval) { doc ->
                 documentStorage.updateDocument(doc)
@@ -109,9 +118,8 @@ class BVInMemoryUserDataUpdater (
         } catch (e: Exception) {
             log.error("", e)
         } finally {
+            log.info(">>>>>>>>> Loaded data for user ${bvUser} ${BVDateTimeUtils.format(interval)},${documentStorage.count()} documents.")
             userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}")
-            userFuture.complete(null)
-            log.info(">>>>>>>>> Finished refreshing user ${bvUser}")
         }
     }
 }

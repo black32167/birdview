@@ -24,9 +24,19 @@
 <table class="layout" width="100%" height="100%">
 <tr>
 <td class="menu-left">
+
     <div class="menu-item">
         ${.now?date}
     </div>
+
+    <div class="menu-item">
+        <a href="/user/sources">Sources...</a>
+        |
+        <a href="#" onclick="reindex()" class="refresh">Update</a>
+        |
+        <@logout_link />
+    </div>
+
     <table class="settings">
         <tr><td class="sign">Report:</td>
         <td>
@@ -77,18 +87,7 @@
         </td></tr>
     </table>
 
-    <div class="menu-item">
-        <a href="/user/sources">Sources...</a>
-        |
-        <a href="#" onclick="reindex()" class="refresh">Update</a>
-        |
-        <@logout_link />
-    </div>
-
-    <div class="log">
-
-    </div>
-    </span>
+    <div class="log"></div>
 </td>
 <td width="100%">
     <div id="reportContainer">

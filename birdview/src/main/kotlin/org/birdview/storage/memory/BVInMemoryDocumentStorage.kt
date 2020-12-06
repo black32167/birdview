@@ -3,9 +3,7 @@ package org.birdview.storage.memory
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentStatus
-import org.birdview.source.BVDocumentsRelation
 import org.birdview.storage.BVDocumentStorage
-import org.birdview.storage.BVSourcesManager
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -43,13 +41,15 @@ class BVInMemoryDocumentStorage(
                         .map (DocHolder::doc)
                         .map (::prepareToFilter)
                         .filter { docPredicate.test(it, filter) }
+
+        fun count() = internalId2docHolder.size
     }
 
     // sourceName -> SourceStorage
-    private val ids2SourceStorage = ConcurrentHashMap<String, MutableMap<String, SourceStorage>>()
+    private val name2SourceStorage = ConcurrentHashMap<String, MutableMap<String, SourceStorage>>()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
-        return ids2SourceStorage.values
+        return name2SourceStorage.values
                 .flatMap { it.values }
                 .flatMap { it.findDocuments(filter) }
                 .toMutableList()
@@ -62,7 +62,7 @@ class BVInMemoryDocumentStorage(
         doc.ids
                 .map { it.id }
                 .forEach { strId->
-                    ids2SourceStorage
+                    name2SourceStorage
                             .computeIfAbsent(strId) {
                                 ConcurrentHashMap<String, SourceStorage>()
                             }
@@ -70,6 +70,13 @@ class BVInMemoryDocumentStorage(
                             .updateDocument(strId, doc)
                 }
     }
+
+    override fun count(): Int =
+            name2SourceStorage.values
+                    .flatMap { it.values }
+                    .map { it.count() }
+                    .sum()
+
 
     private fun prepareToFilter(doc: BVDocument): BVDocument =
             if (doc.status == BVDocumentStatus.INHERITED) {
@@ -79,7 +86,7 @@ class BVInMemoryDocumentStorage(
             }
 
     private fun findDocument(docId: String): BVDocument? =
-            ids2SourceStorage[docId]
+            name2SourceStorage[docId]
                     ?.values
                     ?.mapNotNull { storage -> storage.findDocument(docId) }
                     ?.firstOrNull()

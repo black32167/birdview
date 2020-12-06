@@ -8,4 +8,5 @@ interface BVDocumentStorage {
     fun findDocuments(filter: BVDocumentFilter): List<BVDocument>
     fun getDocuments(searchingDocsIds: Set<String>): List<BVDocument>
     fun updateDocument(doc: BVDocument)
+    fun count(): Int
 }

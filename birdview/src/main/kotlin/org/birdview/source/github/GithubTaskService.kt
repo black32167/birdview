@@ -8,9 +8,7 @@ import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
-import org.birdview.source.github.gql.model.GqlGithubEvent
-import org.birdview.source.github.gql.model.GqlGithubPullRequest
-import org.birdview.source.github.gql.model.GqlGithubReviewUser
+import org.birdview.source.github.gql.model.*
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -79,7 +77,7 @@ open class GithubTaskService(
             }
 
     private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
-            (pr.author?.login ?.let { listOfNotNull(
+            ((pr.author as? GqlGithubUserActor)?.login ?.let { listOfNotNull(
                 mapDocumentUser(it, config.sourceName, UserRole.CREATOR),
                 mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR)) } ?: emptyList()) +
             pr.assignees.nodes.mapNotNull { mapDocumentUser(it.login, config.sourceName, UserRole.WATCHER) } +
