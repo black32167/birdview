@@ -101,10 +101,8 @@ class BVInMemoryUserDataUpdater (
 
     private fun loadUserData(bvUser: String, interval: TimeIntervalFilter) {
         log.info(">>>>>>>>> Loading data for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
-
+        val logId = userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
         try {
-            userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
-
             val futures = documentsLoader.loadDocuments(bvUser, interval) { doc ->
                 documentStorage.updateDocument(doc)
             }
@@ -119,7 +117,7 @@ class BVInMemoryUserDataUpdater (
             log.error("", e)
         } finally {
             log.info(">>>>>>>>> Loaded data for user ${bvUser} ${BVDateTimeUtils.format(interval)},${documentStorage.count()} documents.")
-            userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}")
+            userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}", logId)
         }
     }
 }
