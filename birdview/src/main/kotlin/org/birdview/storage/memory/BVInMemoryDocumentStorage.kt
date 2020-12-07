@@ -42,10 +42,13 @@ class BVInMemoryDocumentStorage(
                         .map (::prepareToFilter)
                         .filter { docPredicate.test(it, filter) }
 
+        fun findDocumentByExternalId(id: String): BVDocument? =
+                externalId2docHolder[id]?.doc
+
         fun count() = internalId2docHolder.size
     }
 
-    // sourceName -> SourceStorage
+    // docId -> sourceName -> SourceStorage
     private val name2SourceStorage = ConcurrentHashMap<String, MutableMap<String, SourceStorage>>()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
@@ -76,6 +79,10 @@ class BVInMemoryDocumentStorage(
                     .flatMap { it.values }
                     .map { it.count() }
                     .sum()
+
+    override fun containsDocWithExternalId(externalId: String): Boolean =
+        name2SourceStorage.values.flatMap { it.values }
+                .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
 
 
     private fun prepareToFilter(doc: BVDocument): BVDocument =

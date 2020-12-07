@@ -8,10 +8,8 @@ import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVSourcesManager
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVConcurrentUtils
-import org.birdview.utils.BVDocumentUtils.getReferencedDocIds
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
-import java.time.ZonedDateTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -30,7 +28,7 @@ class BVDocumentsLoader (
     fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: Consumer<BVDocument>):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)
                     .map { sourceConfig ->
-                        val subtaskFutures = mutableListOf<Future<*>>()
+
                         CompletableFuture.runAsync(Runnable {
                             BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType}") {
                                 val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
@@ -38,13 +36,7 @@ class BVDocumentsLoader (
                                     sourceManager.getTasks(bvUser, timeIntervalFilter, sourceConfig) { docChunk ->
                                         docChunk.forEach (documentConsumer)
 
-                                        subtaskFutures.add(executor.submit {
-                                            loadReferredDocs(bvUser, docChunk) { docChunk ->
-                                                docChunk.forEach (documentConsumer)
-                                            }
-                                        })
                                     }
-                                    subtaskFutures.forEach { it.get() }
                                 } catch (e: Exception) {
                                     log.error("Error loading documents for ${sourceConfig.sourceType}", e)
                                 }
@@ -52,31 +44,30 @@ class BVDocumentsLoader (
                         }, executor)
                     }
 
-    private fun loadReferredDocs(bvUser: String, filteredDocs: List<BVDocument>, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val missedDocsIds = getReferencedDocIds(filteredDocs)
-        loadDocsByIds(bvUser, missedDocsIds, chunkConsumer)
-    }
-
-    private fun loadDocsByIds(bvUser: String, missedDocsIds: Set<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
+    fun loadDocsByIds(bvUser: String, missedDocsIds: Collection<String>, chunkConsumer: (List<BVDocument>) -> Unit):List<Future<*>> {
+        val subtaskFutures = mutableListOf<Future<*>>()
         val sourceType2SourceNames: Map<SourceType, List<String>> =
-                listEnabledSourceConfigs(bvUser).groupBy ({ it.sourceType}, {it.sourceName})
+                listEnabledSourceConfigs(bvUser).groupBy({ it.sourceType }, { it.sourceName })
         val type2Ids: Map<SourceType, List<String>> = missedDocsIds
                 .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
                     sourcesManager.guessSourceTypesByDocumentId(id)?.let { type -> acc.computeIfAbsent(type) { mutableListOf() }.add(id) }
                     acc
                 }
 
-        return type2Ids.entries.forEach { (sourceType, sourceIds) ->
+        type2Ids.entries.forEach { (sourceType, sourceIds) ->
             val sourceNames = sourceType2SourceNames[sourceType]
             val sourceManager = sourcesManager.getBySourceType(sourceType)
             sourceNames?.forEach { sourceName ->
-                try {
-                    sourceManager.loadByIds(sourceName, sourceIds, chunkConsumer)
-                } catch (e: Exception) {
-                    log.error("", e)
-                }
+                subtaskFutures.add(executor.submit {
+                    try {
+                        sourceManager.loadByIds(sourceName, sourceIds, chunkConsumer)
+                    } catch (e: Exception) {
+                        log.error("", e)
+                    }
+                })
             }
         }
+        return subtaskFutures
     }
 
     private fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceConfig> =

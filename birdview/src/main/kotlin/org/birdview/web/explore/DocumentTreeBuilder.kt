@@ -104,13 +104,7 @@ object DocumentTreeBuilder {
     }
 
     fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage, reportType: ReportType): List<BVDocumentViewTreeNode> {
-        val comparator: Comparator<BVDocumentViewTreeNode> = if (reportType == ReportType.WORKED) {
-            compareByDescending<BVDocumentViewTreeNode> { it.lastUpdated }
-                    .thenByDescending { it.doc.priority.ordinal }
-        } else {
-            compareByDescending<BVDocumentViewTreeNode>{ it.doc.priority.ordinal }
-                    .thenByDescending { it.lastUpdated }
-        }
+        val comparator = documentsComparator(reportType)
         val tree = DocumentForest(documentStorage, comparator)
 
         _docs.forEach { doc ->
@@ -128,4 +122,12 @@ object DocumentTreeBuilder {
         }
     }
 
+    private fun documentsComparator(reportType: ReportType): Comparator<BVDocumentViewTreeNode> =
+            if (reportType == ReportType.WORKED) {
+                compareByDescending<BVDocumentViewTreeNode> { it.lastUpdated }
+                        .thenByDescending { it.doc.priority.ordinal }
+            } else {
+                compareByDescending<BVDocumentViewTreeNode>{ it.doc.priority.ordinal }
+                        .thenByDescending { it.lastUpdated }
+            }
 }

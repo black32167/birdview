@@ -9,4 +9,5 @@ interface BVDocumentStorage {
     fun getDocuments(searchingDocsIds: Set<String>): List<BVDocument>
     fun updateDocument(doc: BVDocument)
     fun count(): Int
+    fun containsDocWithExternalId(externalId: String): Boolean
 }

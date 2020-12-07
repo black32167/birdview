@@ -1,17 +1,16 @@
 package org.birdview.user
 
+import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.user.document.BVDocumentsLoader
 import org.birdview.utils.BVDateTimeUtils
+import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import javax.annotation.PostConstruct
 import javax.inject.Named
 
@@ -103,21 +102,33 @@ class BVInMemoryUserDataUpdater (
         log.info(">>>>>>>>> Loading data for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
         val logId = userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
         try {
-            val futures = documentsLoader.loadDocuments(bvUser, interval) { doc ->
-                documentStorage.updateDocument(doc)
-            }
 
-            for (future in futures) {
-                try {
-                    future.get()
-                } catch (e: Exception) {
-                }
-            }
+            val loadedDocs = ConcurrentHashMap<String, BVDocument>()
+            documentsLoader.loadDocuments(bvUser, interval) { doc ->
+                documentStorage.updateDocument(doc)
+                loadedDocs[doc.internalId] = doc
+            }.forEach(this::waitForCompletion)
+
+            log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
+            val referredDocsIds = BVDocumentUtils.getReferencedDocIds(loadedDocs.values)
+            val missedDocsIds = referredDocsIds.filter { !documentStorage.containsDocWithExternalId(it) }
+            documentsLoader.loadDocsByIds(bvUser, missedDocsIds)  { docChunk ->
+                docChunk.forEach (documentStorage::updateDocument)
+            }.forEach(this::waitForCompletion)
+
         } catch (e: Exception) {
             log.error("", e)
         } finally {
             log.info(">>>>>>>>> Loaded data for user ${bvUser} ${BVDateTimeUtils.format(interval)},${documentStorage.count()} documents.")
             userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}", logId)
+        }
+    }
+
+    private fun waitForCompletion(future: Future<*>) {
+        try {
+            future.get()
+        } catch (e: Exception) {
+            log.error(e.message)
         }
     }
 }
