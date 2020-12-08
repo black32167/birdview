@@ -79,7 +79,7 @@ open class GDriveTaskService(
                     authorDisplayName = user.displayName,
                     created = parseDate(file.modifiedTime),
                     sourceName = sourceName,
-                    type = BVDocumentOperationType.COLLABORATE
+                    type = BVDocumentOperationType.UPDATE
             )
         }
         return listOfNotNull(lastModification)

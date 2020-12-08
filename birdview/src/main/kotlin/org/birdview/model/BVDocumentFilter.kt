@@ -3,7 +3,7 @@ package org.birdview.model
 import java.time.ZonedDateTime
 
 data class BVDocumentFilter(
-        val reportType: ReportType,
+        val docStatuses: List<BVDocumentStatus>,
         val grouping: Boolean,
         val updatedPeriod: TimeIntervalFilter,
         val userFilter: UserFilter,
@@ -19,7 +19,7 @@ enum class UserRole {
 
 data class UserFilter(
         val userAlias: String,
-        val roles: List<UserRole>
+        val role: UserRole
 )
 
 data class TimeIntervalFilter(

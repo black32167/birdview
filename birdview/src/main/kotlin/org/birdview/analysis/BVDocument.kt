@@ -56,7 +56,7 @@ data class BVDocumentUser (
 )
 
 enum class BVDocumentOperationType {
-    COMMENT, COLLABORATE, NONE
+    COMMENT, UPDATE, NONE
 }
 
 class BVDocumentOperation (

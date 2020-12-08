@@ -74,7 +74,7 @@ class BVConfluenceDocumentService (
                 authorDisplayName = history.createdBy.run { email?:displayName },
                 created = parseDate(history.createdDate),
                 sourceName = sourceName,
-                type = BVDocumentOperationType.COLLABORATE
+                type = BVDocumentOperationType.UPDATE
         )
         val modificationOperations = history.contributors.publishers.users.map { user ->
             val contributorAccountId = user.accountId
@@ -84,7 +84,7 @@ class BVConfluenceDocumentService (
                     authorDisplayName = user.run { email?:displayName },
                     created = parseDate(confluenceDocument.lastModified),
                     sourceName = sourceName,
-                    type = BVDocumentOperationType.COLLABORATE
+                    type = BVDocumentOperationType.UPDATE
             )
         }
         return modificationOperations + creationOperation

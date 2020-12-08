@@ -8,10 +8,14 @@ import java.util.*
 class BVDocumentViewTreeNode (
         val doc: BVDocumentView,
         val sourceType: SourceType,
-        var lastUpdated: Date?,
-        val subNodesComparator: Comparator<BVDocumentViewTreeNode>
+        var lastUpdated: Date? = null,
+        val subNodesComparator: Comparator<BVDocumentViewTreeNode>? = null
 ) {
-    var subNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()
+    var subNodes: MutableSet<BVDocumentViewTreeNode> = if (subNodesComparator != null) {
+        TreeSet(subNodesComparator)
+    } else {
+        mutableSetOf()
+    }
 
     @JsonIgnore
     var referringNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()

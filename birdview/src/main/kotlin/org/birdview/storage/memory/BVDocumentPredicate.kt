@@ -22,12 +22,12 @@ open class BVDocumentPredicate(
             return false
         }
 
-        val docUpdated = if (filter.reportType == ReportType.WORKED)
-            getLastUserUpdateDate(doc, filter.userFilter)
-        else {
-            if (isDocEverModifiedByUser(doc, filter.userFilter.userAlias))
-                toInstant(doc.updated)
-            else null
+        val docUpdated = when (filter.userFilter.role) {
+            UserRole.IMPLEMENTOR ->
+                getLastUserUpdateDate(doc, filter.userFilter)
+            UserRole.WATCHER ->
+                toInstant(doc.updated).takeIf { isDocEverModifiedByUser(doc, filter.userFilter.userAlias) }
+            else -> null
         }
 
         if (filter.updatedPeriod.after != null) {
@@ -45,7 +45,7 @@ open class BVDocumentPredicate(
         }
 
         val inferredDocStatus = doc.status
-        val targetDocumentStatuses = getTargetDocStatuses(filter.reportType)
+        val targetDocumentStatuses = filter.docStatuses
         if (!targetDocumentStatuses.contains(inferredDocStatus)) {
             log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
             return false
@@ -114,7 +114,7 @@ open class BVDocumentPredicate(
 
     private fun mapOperationTypeToRole(type: BVDocumentOperationType): Set<UserRole> =
             when (type) {
-                BVDocumentOperationType.COLLABORATE -> setOf(UserRole.IMPLEMENTOR)
+                BVDocumentOperationType.UPDATE -> setOf(UserRole.IMPLEMENTOR)
                 else -> setOf(UserRole.WATCHER)
             }
 
@@ -125,9 +125,6 @@ open class BVDocumentPredicate(
                 doc.updated
             }
 
-    private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {
-        ReportType.WORKED -> listOf(BVDocumentStatus.DONE, BVDocumentStatus.PROGRESS)
-        ReportType.PLANNED -> listOf(BVDocumentStatus.PROGRESS, BVDocumentStatus.PLANNED, BVDocumentStatus.BACKLOG)
-    }
+
 
 }

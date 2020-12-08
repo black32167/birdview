@@ -84,7 +84,7 @@ open class GithubTaskService(
             pr.reviewRequests.nodes.mapNotNull { mapDocumentUser((it.requestedReviewer as? GqlGithubReviewUser) ?.login, config.sourceName, UserRole.WATCHER) } +
             operations.mapNotNull {
                 when(it.type) {
-                    BVDocumentOperationType.COLLABORATE -> mapDocumentUser(it.author, config.sourceName, UserRole.IMPLEMENTOR)
+                    BVDocumentOperationType.UPDATE -> mapDocumentUser(it.author, config.sourceName, UserRole.IMPLEMENTOR)
                     BVDocumentOperationType.COMMENT,BVDocumentOperationType.NONE -> mapDocumentUser(it.author, config.sourceName, UserRole.WATCHER)
                 }
             }

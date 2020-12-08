@@ -16,6 +16,7 @@ class BVDocumentsRelation (
             SourceType.GDRIVE, SourceType.CONFLUENCE -> 3
             SourceType.GITHUB -> 4
             SourceType.UNDEFINED -> 100
+            SourceType.NONE -> 1000
         }
 
         fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyPosition: RelativeHierarchyPosition): BVDocumentsRelation? =
