@@ -57,7 +57,7 @@ class MergedEvent(
         val actor: GqlGithubUserActor,
         val createdAt: String
 ) : GqlGithubEvent("MergedEvent") {
-    override val contributionType: BVDocumentOperationType = BVDocumentOperationType.COMMENT
+    override val contributionType: BVDocumentOperationType = BVDocumentOperationType.UPDATE
     override val timestamp = createdAt
     override val user = actor.login
 }
