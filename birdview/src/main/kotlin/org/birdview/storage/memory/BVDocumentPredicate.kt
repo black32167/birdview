@@ -24,7 +24,9 @@ open class BVDocumentPredicate(
 
         val docUpdated = when (filter.userFilter.role) {
             UserRole.IMPLEMENTOR ->
-                getLastUserUpdateDate(doc, filter.userFilter)
+                getLastUserUpdateDate(doc, filter.userFilter, BVDocumentOperationType.UPDATE)
+            UserRole.COMMENTER ->
+                getLastUserUpdateDate(doc, filter.userFilter, BVDocumentOperationType.COMMENT)
             UserRole.WATCHER ->
                 toInstant(doc.updated).takeIf { isDocEverModifiedByUser(doc, filter.userFilter.userAlias) }
             else -> null
@@ -64,10 +66,8 @@ open class BVDocumentPredicate(
     private fun resolveUserName(bvUser:String, sourceName: String) =
             userSourceStorage.getSourceProfile(bvUser, sourceName).sourceUserName
 
-    private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter): ChronoZonedDateTime<*>? {
-        val date = getLastUserOperation(doc, userFilter.userAlias) ?.created
-               // ?: getDocDate(doc)
-
+    private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter, operationType: BVDocumentOperationType): ChronoZonedDateTime<*>? {
+        val date = getLastUserOperation(doc, userFilter.userAlias, operationType) ?.created
         return toInstant(date)
     }
 
@@ -100,15 +100,12 @@ open class BVDocumentPredicate(
             getLastUserOperation(doc, bvUser) != null
     }
 
-    private fun getLastUserOperation(doc: BVDocument, bvUser:String): BVDocumentOperation? {
-//        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
-//            return null
-//        }
-        return doc.lastOperations.firstOrNull { operation ->
+    private fun getLastUserOperation(doc: BVDocument, bvUser:String, operationType: BVDocumentOperationType? = null): BVDocumentOperation? {
+        return doc.operations.firstOrNull { operation ->
             resolveUserName(bvUser, operation.sourceName)
-                    ?.let { sourceFilteringUserName->
-                        sourceFilteringUserName == operation.author
-                    } ?: false
+                    .let { sourceFilteringUserName->
+                        sourceFilteringUserName == operation.author && operationType == operation.type
+                    }
         }
     }
 

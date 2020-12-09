@@ -68,7 +68,6 @@ open class GithubTaskService(
         )
     }
 
-
     private fun extractClosed(operations: List<BVDocumentOperation>, status: BVDocumentStatus?): Date? =
             if (status == BVDocumentStatus.DONE) {
                 operations.find { operation -> operation.description == "merged" } ?.created
