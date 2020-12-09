@@ -141,8 +141,7 @@ open class JiraTaskService(
 
     private fun extractUsers(issue: JiraIssue, config: BVJiraConfig): List<BVDocumentUser> =
         listOfNotNull(
-                mapDocumentUser(issue.fields.assignee, config.sourceName, UserRole.IMPLEMENTOR),
-                mapDocumentUser(issue.fields.creator, config.sourceName, UserRole.CREATOR)
+                mapDocumentUser(issue.fields.assignee, config.sourceName, UserRole.IMPLEMENTOR)
         )
 
     private fun mapDocumentUser(jiraUser: JiraUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =

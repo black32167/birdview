@@ -77,9 +77,8 @@ open class GithubTaskService(
             }
 
     private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
-            ((pr.author as? GqlGithubUserActor)?.login ?.let { listOfNotNull(
-                mapDocumentUser(it, config.sourceName, UserRole.CREATOR),
-                mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR)) } ?: emptyList()) +
+            ((pr.author as? GqlGithubUserActor)?.login ?.let {
+                listOfNotNull(mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR)) } ?: emptyList()) +
             pr.assignees.nodes.mapNotNull { mapDocumentUser(it.login, config.sourceName, UserRole.WATCHER) } +
             pr.reviewRequests.nodes.mapNotNull { mapDocumentUser((it.requestedReviewer as? GqlGithubReviewUser) ?.login, config.sourceName, UserRole.WATCHER) } +
             operations.mapNotNull {

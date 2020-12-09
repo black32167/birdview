@@ -79,8 +79,8 @@ class BVRestController(
         userLog.getUserLog(UserContext.getUserName())
 
     private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
-        ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR, UserRole.CREATOR)
-        ReportType.WORKED -> listOf(UserRole.IMPLEMENTOR)
+        ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR)
+        ReportType.WORKED -> listOf(UserRole.COMMENTER, UserRole.IMPLEMENTOR)
     }
 
     private fun getTargetDocStatuses(reportType: ReportType) = when (reportType) {

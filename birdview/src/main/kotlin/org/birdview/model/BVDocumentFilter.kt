@@ -12,7 +12,7 @@ data class BVDocumentFilter(
 )
 
 enum class UserRole {
-    CREATOR,
+    COMMENTER,
     IMPLEMENTOR,
     WATCHER
 }

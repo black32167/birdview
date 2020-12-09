@@ -88,7 +88,7 @@ open class GDriveTaskService(
     private fun extractUsers(file: GDriveFile, config: BVGDriveConfig): List<BVDocumentUser> {
         val users = mutableListOf<BVDocumentUser>()
         users += file.owners
-                .mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.CREATOR) }.toMutableList()
+                .mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.IMPLEMENTOR) }.toMutableList()
         users += file.owners.mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.IMPLEMENTOR) }.toMutableList()
         mapDocumentUser(file.sharingUser, config.sourceName, UserRole.IMPLEMENTOR) ?.also { users.add(it) }
         if(file.modifiedByMe) {
