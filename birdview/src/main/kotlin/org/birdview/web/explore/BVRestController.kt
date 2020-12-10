@@ -54,7 +54,7 @@ class BVRestController(
             //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
             val docs = taskService.getDocuments(docFilter)
             val docViews = DocumentTreeBuilder
-                    .buildTree(docs, documentStorage, documentsComparator(documentRequest.reportType))
+                    .buildTree(docs, documentStorage, role, documentsComparator(documentRequest.reportType))
                     .toMutableList()
 
             if (documentRequest.representationType == RepresentationType.LIST) {

@@ -1,6 +1,7 @@
 package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
+import org.birdview.model.UserRole
 import org.birdview.source.BVDocumentsRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
@@ -101,7 +102,11 @@ object DocumentTreeBuilder {
                 .sortedByDescending { it.lastUpdated }
     }
 
-    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage, nodesComparator: Comparator<BVDocumentViewTreeNode>? = null): List<BVDocumentViewTreeNode> {
+    fun buildTree(
+            _docs: List<BVDocument>,
+            documentStorage: BVDocumentStorage,
+            userRole: UserRole,
+            nodesComparator: Comparator<BVDocumentViewTreeNode>? = null): List<BVDocumentViewTreeNode> {
         val tree = DocumentForest(documentStorage, nodesComparator)
 
         _docs.forEach { doc ->
