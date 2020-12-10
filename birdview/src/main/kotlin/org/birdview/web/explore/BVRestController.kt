@@ -53,19 +53,20 @@ class BVRestController(
                     representationType = documentRequest.representationType)
             //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
             val docs = taskService.getDocuments(docFilter)
-            val docViews = DocumentTreeBuilder
+
+            val docViewsRoots = DocumentTreeBuilder
                     .buildTree(docs, documentStorage, documentsComparator(documentRequest.reportType))
                     .toMutableList()
 
             if (documentRequest.representationType == RepresentationType.LIST) {
-                docViews.forEach(HierarchyOptimizer::optimizeHierarchy)
+                docViewsRoots.forEach(HierarchyOptimizer::optimizeHierarchy)
             }
 
-            if (docViews.isNotEmpty()) {
+            if (docViewsRoots.isNotEmpty()) {
                 val roleNode = BVDocumentViewTreeNode(
                         doc = BVDocumentView(role.name, listOf(), role.name, null, "", "", "", "", null, Priority.NORMAL),
                         sourceType = SourceType.NONE)
-                roleNode.subNodes.addAll(docViews)
+                roleNode.subNodes.addAll(docViewsRoots)
                 topNodes += roleNode
             }
         }
