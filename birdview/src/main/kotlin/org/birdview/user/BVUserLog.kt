@@ -22,7 +22,7 @@ class BVUserLog {
 
             if (existingEntry == null) {
                 if (userLog.size > maxUserLogSize) {
-                    userLog.removeLast()
+                    userLog.removeFirst()
                 }
                 val newEntry = BVUserLogEntry(
                         timestamp = BVDateTimeUtils.timeFormat(ZonedDateTime.now()),
