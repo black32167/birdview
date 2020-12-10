@@ -1,17 +1,15 @@
 package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.ReportType
 import org.birdview.source.BVDocumentsRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
-import java.lang.RuntimeException
-import java.util.Comparator
+import java.util.*
 
 object DocumentTreeBuilder {
     class DocumentForest (
             private val documentStorage: BVDocumentStorage,
-            private val subNodesComparator: Comparator<BVDocumentViewTreeNode>
+            private val subNodesComparator: Comparator<BVDocumentViewTreeNode>?
     ) {
         private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
 
@@ -103,9 +101,8 @@ object DocumentTreeBuilder {
                 .sortedByDescending { it.lastUpdated }
     }
 
-    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage, reportType: ReportType): List<BVDocumentViewTreeNode> {
-        val comparator = documentsComparator(reportType)
-        val tree = DocumentForest(documentStorage, comparator)
+    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage, nodesComparator: Comparator<BVDocumentViewTreeNode>? = null): List<BVDocumentViewTreeNode> {
+        val tree = DocumentForest(documentStorage, nodesComparator)
 
         _docs.forEach { doc ->
             tree.addAndGetDocNode(doc)
@@ -121,13 +118,4 @@ object DocumentTreeBuilder {
             throw RuntimeException(e)
         }
     }
-
-    private fun documentsComparator(reportType: ReportType): Comparator<BVDocumentViewTreeNode> =
-            if (reportType == ReportType.WORKED) {
-                compareByDescending<BVDocumentViewTreeNode> { it.lastUpdated }
-                        .thenByDescending { it.doc.priority.ordinal }
-            } else {
-                compareByDescending<BVDocumentViewTreeNode>{ it.doc.priority.ordinal }
-                        .thenByDescending { it.lastUpdated }
-            }
 }

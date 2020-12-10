@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import java.util.Comparator
 
 @RestController()
 @RequestMapping("/rest")
@@ -52,7 +53,9 @@ class BVRestController(
                     representationType = documentRequest.representationType)
             //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
             val docs = taskService.getDocuments(docFilter)
-            val docViews = DocumentTreeBuilder.buildTree(docs, documentStorage, documentRequest.reportType).toMutableList()
+            val docViews = DocumentTreeBuilder
+                    .buildTree(docs, documentStorage, documentsComparator(documentRequest.reportType))
+                    .toMutableList()
 
             if (documentRequest.representationType == RepresentationType.LIST) {
                 docViews.forEach(HierarchyOptimizer::optimizeHierarchy)
@@ -77,6 +80,15 @@ class BVRestController(
     @GetMapping("documents/status")
     fun getDocumentUpdateStatus(): List<BVUserLogEntry> =
         userLog.getUserLog(UserContext.getUserName())
+
+    private fun documentsComparator(reportType: ReportType): Comparator<BVDocumentViewTreeNode> =
+            if (reportType == ReportType.WORKED) {
+                compareByDescending<BVDocumentViewTreeNode> { it.lastUpdated }
+                        .thenByDescending { it.doc.priority.ordinal }
+            } else {
+                compareByDescending<BVDocumentViewTreeNode>{ it.doc.priority.ordinal }
+                        .thenByDescending { it.lastUpdated }
+            }
 
     private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
         ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR)
