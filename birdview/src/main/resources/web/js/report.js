@@ -5,7 +5,11 @@ function applyTree(treeElement) {
 function renderTable(rootElement, nodes, parentId, level) {
     nodes.forEach( node => {
         var doc = node.doc
-        var row = $('<tr>').attr('data-tt-id', doc.internalId)
+        var nodeId = doc.internalId
+        if (parentId !== null) {
+            nodeId = parentId+"/"+nodeId
+        }
+        var row = $('<tr>').attr('data-tt-id', nodeId)
         if(parentId) {
             row.attr('data-tt-parent-id', parentId)
         }
@@ -41,7 +45,7 @@ function renderTable(rootElement, nodes, parentId, level) {
         rootElement.append(row)
 
         // Rendering subdocuments:
-        renderTable(rootElement, node.subNodes, doc.internalId, level+1)
+        renderTable(rootElement, node.subNodes, nodeId, level+1)
     })
 }
 function renderList(rootElement, nodes) {
