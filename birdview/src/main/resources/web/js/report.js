@@ -1,6 +1,6 @@
 
 function applyTree(treeElement) {
-    $(treeElement).treetable({ expandable: true })
+    $(treeElement).treetable({ expandable: true, initialState: "expanded" })
 }
 function renderTable(rootElement, nodes, parentId, level) {
     nodes.forEach( node => {
