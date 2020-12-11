@@ -75,15 +75,14 @@ class BVInMemoryUserDataUpdater (
 
         executor.submit {
             var endTime = ZonedDateTime.now()
-            var startTime = endTime.minusDays(10).withHour(0).withMinute(0).withSecond(0).withNano(0)
+            var startTime = endTime.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
             val minStartTime = ZonedDateTime.now().minusDays(MAX_DAYS_BACK)
-
 
             try {
                 while (startTime > minStartTime) {
                     loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
                     endTime = startTime
-                    startTime = endTime.minusDays(14)
+                    startTime = endTime.minusDays(10)
                 }
             } catch (e: Error) {
                 log.error("", e)

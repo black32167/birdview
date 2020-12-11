@@ -22,7 +22,7 @@ class GithubGqlClient (
             val query: String
     )
     fun getPullRequests(githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
-        log.info("Running Github query:", githubQuery)
+        log.info("Running Github query:{}", githubQuery)
         return BVTimeUtil.logTime("getPullRequests-GQL") {
 
             val queryTemplate = javaClass
