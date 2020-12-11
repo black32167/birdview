@@ -112,6 +112,7 @@ class BVInMemoryUserDataUpdater (
             log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
             val referredDocsIds = BVDocumentUtils.getReferencedDocIds(loadedDocs.values)
             val missedDocsIds = referredDocsIds.filter { !documentStorage.containsDocWithExternalId(it) }
+            log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)
             documentsLoader.loadDocsByIds(bvUser, missedDocsIds)  { docChunk ->
                 docChunk.forEach (documentStorage::updateDocument)
             }.forEach(this::waitForCompletion)

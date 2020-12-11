@@ -8,7 +8,10 @@ import org.birdview.model.UserRole
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
-import org.birdview.source.github.gql.model.*
+import org.birdview.source.github.gql.model.GqlGithubEvent
+import org.birdview.source.github.gql.model.GqlGithubPullRequest
+import org.birdview.source.github.gql.model.GqlGithubReviewUser
+import org.birdview.source.github.gql.model.GqlGithubUserActor
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage

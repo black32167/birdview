@@ -10,16 +10,19 @@ import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
+import org.slf4j.LoggerFactory
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.GenericType
 
 class GithubGqlClient (
         private val githubConfig: BVGithubConfig
 ) {
+    private val log = LoggerFactory.getLogger(GithubGqlClient::class.java)
     private class GQL(
             val query: String
     )
     fun getPullRequests(githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
+        log.info("Running Github query:", githubQuery)
         return BVTimeUtil.logTime("getPullRequests-GQL") {
 
             val queryTemplate = javaClass
@@ -51,6 +54,7 @@ class GithubGqlClient (
                 val edges = data.search.edges //?.sortedBy { it.node.updatedAt }
                 val pageInfo = data.search.pageInfo
                 val prs = edges.map { it.node }
+                log.info("Loaded {} pull requests", prs.size)
                 if (prs.isNotEmpty()) {
                     chunkConsumer.invoke(prs)
                 }

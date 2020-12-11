@@ -1,5 +1,5 @@
 {
-    search(query: "$query", type:ISSUE, first: 80, after: $cursor) {
+    search(query: "$query", type:ISSUE, first: 50, after: $cursor) {
       pageInfo {
           endCursor
           hasNextPage
@@ -50,7 +50,7 @@
                 title
                 updatedAt
                 url
-                timelineItems (last:5) {
+                timelineItems (last:15) {
                     nodes {
                         __typename
                         ... on PullRequestCommit {
@@ -73,8 +73,8 @@
                         }
                         ... on IssueComment {
                             author {
+                                __typename
                                 ... on User {
-                                    __typename
                                     login
                                 }
                             }
@@ -82,17 +82,17 @@
                         }
                         ... on PullRequestReview {
                             author {
+                                __typename
                                 ... on User {
-                                  __typename
-                                  login
+                                    login
                                 }
                             }
                             createdAt
                         }
                         ... on MergedEvent {
                             actor {
+                                __typename
                                 ... on User {
-                                  __typename
                                   login
                                 }
                             }
