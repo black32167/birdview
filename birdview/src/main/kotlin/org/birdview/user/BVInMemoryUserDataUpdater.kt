@@ -105,6 +105,9 @@ class BVInMemoryUserDataUpdater (
             val loadedDocs = ConcurrentHashMap<String, BVDocument>()
             documentsLoader.loadDocuments(bvUser, interval) { doc ->
                 documentStorage.updateDocument(doc)
+                if (doc.refs.any { it.docId.id.contains("JV") }) {
+                    log.info("!!!! ${doc.sourceName}:${doc.ids}")
+                }
                 loadedDocs[doc.internalId] = doc
             }.forEach(this::waitForCompletion)
 

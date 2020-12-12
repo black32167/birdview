@@ -45,7 +45,10 @@ class GDriveClient(
                             ?.takeUnless { it.items.isEmpty() }
                 }
 
-                page?.also {  chunkConsumer.invoke(it.items) }
+                page?.also {
+                    log.info("Loaded {} GDrive docs", it.items.size)
+                    chunkConsumer.invoke(it.items)
+                }
                 target = page?.continuation
                         ?.let { nextPageToken->
                             filesTarget(query).queryParam("pageToken", nextPageToken)

@@ -29,7 +29,7 @@ class JiraClient(
         if (jql == null) {
             return
         }
-        log.info("Running jql '{}'", jql)
+        log.info("Running JQL '{}'", jql)
 
         val jiraIssuesRequest = JiraIssuesFilterRequest(
                 startAt = 0,
@@ -43,6 +43,7 @@ class JiraClient(
                 postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt!!))
                         ?.let(this::mapIssuesPage)
                         ?.also { page ->
+                            log.info("Loaded {} jira issues", page.items.size)
                             chunkConsumer.invoke(page.items)
                         }
             }

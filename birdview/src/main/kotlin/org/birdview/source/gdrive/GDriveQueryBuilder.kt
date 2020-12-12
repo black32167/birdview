@@ -13,7 +13,7 @@ class GDriveQueryBuilder (
     fun getQuery(user: String, updatedPeriod: TimeIntervalFilter, sourceName: String): String? {
         val userClause = getUserClause(user, sourceName)
         return listOfNotNull(
-                userClause,
+                "(${userClause})",
                 "mimeType='application/vnd.google-apps.document'",
                 getModifiedAfterTimeClause(updatedPeriod.after),
                 getModifiedBeforeTimeClause(updatedPeriod.before)
