@@ -19,5 +19,4 @@ object BVDocumentViewFactory {
                             ?.run { authorDisplayName?:author },
                     priority = doc.priority
             )
-
 }

@@ -19,7 +19,26 @@ class HierarchyOptimizerTest {
 
         Assert.assertEquals(1, root.subNodes.size)
         Assert.assertEquals(0, root.subNodes.first().subNodes.size)
+        Assert.assertEquals("grandChildrenId", root.subNodes.first().internalId)
      }
+
+    @Test
+    fun redundantNodesShouldBeOptimizedInLargerHierarchy() {
+        val root = node("grandParentId", listOf(
+                node("parentId", listOf(
+                        node("childrenId1", listOf(
+                                node("grandChildrenId"))),
+                        node("childrenId2", listOf(
+                                node("grandChildrenId")))
+                ))
+        ))
+
+        HierarchyOptimizer.optimizeHierarchy(root)
+
+        Assert.assertEquals(2, root.subNodes.size)
+        Assert.assertEquals(0, root.subNodes.first().subNodes.size)
+        Assert.assertEquals("grandChildrenId", root.subNodes.first().internalId)
+    }
 
     @Test
     fun richNodesShouldNotBeOptimized() {

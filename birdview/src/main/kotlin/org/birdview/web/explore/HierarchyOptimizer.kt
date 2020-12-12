@@ -4,10 +4,11 @@ import org.birdview.web.explore.model.BVDocumentViewTreeNode
 
 object HierarchyOptimizer {
     fun optimizeHierarchy(node: BVDocumentViewTreeNode) {
-        node.subNodes = optimizeChildren(node.subNodes)
         node.subNodes.forEach { children ->
             optimizeHierarchy(children)
         }
+        node.subNodes = optimizeChildren(node.subNodes)
+
     }
 
     private fun optimizeChildren(nodes: Set<BVDocumentViewTreeNode>): MutableSet<BVDocumentViewTreeNode> =
