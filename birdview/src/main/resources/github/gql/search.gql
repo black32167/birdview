@@ -50,7 +50,7 @@
                 title
                 updatedAt
                 url
-                timelineItems (last:15) {
+                timelineItems (last:15 itemTypes:[ISSUE_COMMENT,PULL_REQUEST_COMMIT,PULL_REQUEST_COMMIT_COMMENT_THREAD,PULL_REQUEST_REVIEW_THREAD,PULL_REQUEST_REVIEW,REOPENED_EVENT,CLOSED_EVENT,ASSIGNED_EVENT,MENTIONED_EVENT]) {
                     nodes {
                         __typename
                         ... on PullRequestCommit {
