@@ -110,20 +110,36 @@ class BVInMemoryUserDataUpdater (
             }.forEach(this::waitForCompletion)
 
             // Loading missed referred docs:
-            log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
-            val referredDocsIds = BVDocumentUtils.getReferencedDocIds(loadedDocs.values)
-            val missedDocsIds = referredDocsIds.filter { !documentStorage.containsDocWithExternalId(it) }
-            log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)
-            documentsLoader.loadDocsByIds(bvUser, missedDocsIds)  { docChunk ->
-                docChunk.forEach (documentStorage::updateDocument)
-            }.forEach(this::waitForCompletion)
+            var loadedReferredDocs: Collection<BVDocument> = loadedDocs.values
+            for (i in 1..5) {
+                log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)}) #$i")
 
+                loadedReferredDocs = loadReferredDocs(bvUser, loadedReferredDocs)
+
+                if (loadedReferredDocs.isEmpty()) {
+                    break
+                }
+            }
         } catch (e: Exception) {
             log.error("", e)
         } finally {
             log.info(">>>>>>>>> Loaded data for user ${bvUser} ${BVDateTimeUtils.format(interval)},${documentStorage.count()} documents.")
             userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}", logId)
         }
+    }
+
+    private fun loadReferredDocs(bvUser: String, originalDocs: Collection<BVDocument>): Collection<BVDocument> {
+        val referredDocsIds = BVDocumentUtils.getReferencedDocIds(originalDocs)
+        val missedDocsIds = referredDocsIds.filter { !documentStorage.containsDocWithExternalId(it) }
+        val loadedReferredDocs = ConcurrentHashMap<String, BVDocument>()
+        log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)
+        documentsLoader.loadDocsByIds(bvUser, missedDocsIds) { docChunk ->
+            docChunk.forEach { doc->
+                documentStorage.updateDocument(doc)
+                loadedReferredDocs[doc.internalId] = doc
+            }
+        }.forEach(this::waitForCompletion)
+        return loadedReferredDocs.values
     }
 
     private fun waitForCompletion(future: Future<*>) {
