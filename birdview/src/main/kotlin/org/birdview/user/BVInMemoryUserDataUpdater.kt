@@ -102,15 +102,14 @@ class BVInMemoryUserDataUpdater (
         val logId = userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
         try {
 
+            // Loading direct docs:
             val loadedDocs = ConcurrentHashMap<String, BVDocument>()
             documentsLoader.loadDocuments(bvUser, interval) { doc ->
                 documentStorage.updateDocument(doc)
-                if (doc.refs.any { it.docId.id.contains("JV") }) {
-                    log.info("!!!! ${doc.sourceName}:${doc.ids}")
-                }
                 loadedDocs[doc.internalId] = doc
             }.forEach(this::waitForCompletion)
 
+            // Loading missed referred docs:
             log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
             val referredDocsIds = BVDocumentUtils.getReferencedDocIds(loadedDocs.values)
             val missedDocsIds = referredDocsIds.filter { !documentStorage.containsDocWithExternalId(it) }

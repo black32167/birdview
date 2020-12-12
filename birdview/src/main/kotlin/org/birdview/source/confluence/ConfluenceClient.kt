@@ -36,12 +36,9 @@ class ConfluenceClient(val config: BVConfluenceConfig) {
                                     ",content.metadata.comments") //TODO: << how to extract comments?
                             .request()
                             .get()
-//                            .also {
-//                                val stringResponse = it.readEntity(String::class.java)
-//                                println(stringResponse)
-//                            }
                             .also(ResponseValidationUtils::validate)
                     val searchResult = response.readEntity(ConfluenceSearchPageResponseSearchResult::class.java)
+                    log.info("Loaded {} confluence pages", searchResult.results.size)
                     chunkConsumer(searchResult.results)
 
                     startAt = min(searchResult.start + searchResult.size, searchResult.totalSize)

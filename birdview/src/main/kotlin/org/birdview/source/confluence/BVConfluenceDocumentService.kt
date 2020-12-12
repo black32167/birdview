@@ -52,7 +52,7 @@ class BVConfluenceDocumentService (
                 httpUrl = docUrl,
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
                 refs = extractRefs(confluenceDocument), // TODO
-                status = BVDocumentStatus.INHERITED,
+                status = BVDocumentStatus.PROGRESS,
                 operations = extractOperations(confluenceDocument, sourceName),
                 sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW,
