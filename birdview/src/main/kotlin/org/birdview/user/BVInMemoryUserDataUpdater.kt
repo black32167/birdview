@@ -29,49 +29,38 @@ class BVInMemoryUserDataUpdater (
     private data class UserUpdateInfo (val bvUser:String, val timestamp: Long = 0)
     private val executor = Executors.newScheduledThreadPool(1)
 
-    private val userUpdateTimestampInfoHeap = PriorityQueue<UserUpdateInfo> { userInfo1, userInfo2->
-        (userInfo1.timestamp-userInfo2.timestamp).toInt()
-    }
-
     private val userFutures = ConcurrentHashMap<String, CompletableFuture<*>>()
 
+    private val userSemaphores = ConcurrentHashMap<String, Semaphore>()
+
     override fun onUserDeleted(bvUser: String) {
-        userUpdateTimestampInfoHeap
-                .find { it.bvUser == bvUser }
-                ?.also {
-                    userUpdateTimestampInfoHeap.remove(it)
-                }
     }
 
     override fun onUserCreated(bvUser: String) {
-        userUpdateTimestampInfoHeap.add(UserUpdateInfo(bvUser))
     }
 
     @PostConstruct
     private fun init() {
-        userStorage.listUserNames().forEach { userName->
-            userUpdateTimestampInfoHeap.add(UserUpdateInfo(userName))
-        }
         userStorage.addUserCreatedListener(this)
-        executor.scheduleWithFixedDelay(this::refreshMostStaleUser, 0, DELAY_BETWEEN_UPDATES_MINUTES, TimeUnit.MINUTES)
+        executor.scheduleWithFixedDelay(this::refreshUsers, 0, DELAY_BETWEEN_UPDATES_MINUTES, TimeUnit.MINUTES)
     }
 
-    private fun refreshMostStaleUser() {
-        val maybeUserInfo: UserUpdateInfo?
-        synchronized(userUpdateTimestampInfoHeap) {
-            maybeUserInfo = userUpdateTimestampInfoHeap.poll()
-        }
-
-        if (maybeUserInfo != null) {
-            requestUserRefresh(maybeUserInfo.bvUser)
-        }
+    private fun refreshUsers() {
+        requestUserRefresh(*userStorage.listUserNames().toTypedArray())
     }
 
-    override fun requestUserRefresh(bvUser: String) {
-        log.info(">>>>>>>>> Refreshing user ${bvUser}")
-        userUpdateTimestampInfoHeap.offer(UserUpdateInfo(bvUser = bvUser, timestamp = System.currentTimeMillis()))
-        val userFuture = CompletableFuture<Void>()
-        userFutures[bvUser] = userFuture
+    override fun requestUserRefresh(vararg bvUsers: String) {
+        log.info(">>>>>>>>> Refreshing users :${bvUsers.joinToString (",")}")
+
+        val idleBvUsers = bvUsers.filter {
+            userSemaphores.computeIfAbsent(it) { Semaphore(1) }.tryAcquire()
+        }
+        log.info(">>>>>>>>> Idle users :${idleBvUsers.joinToString (",")}")
+
+        idleBvUsers.forEach {
+            userFutures[it] = CompletableFuture<Void>()
+        }
+
 
         executor.submit {
             var endTime = ZonedDateTime.now()
@@ -80,15 +69,22 @@ class BVInMemoryUserDataUpdater (
 
             try {
                 while (startTime > minStartTime) {
-                    loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
+                    for (bvUser in idleBvUsers) {
+                        loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
+                    }
                     endTime = startTime
                     startTime = endTime.minusDays(10)
+
                 }
             } catch (e: Error) {
                 log.error("", e)
             } finally {
-                userFuture.complete(null)
-                log.info(">>>>>>>>> Finished refreshing user ${bvUser}. Overall ${documentStorage.count()} documents loaded.")
+                idleBvUsers.forEach {
+                    userSemaphores.get(it)?.release()
+                    userFutures[it]?.complete(null)
+                }
+                log.info(">>>>>>>>> Finished refreshing users ${bvUsers.joinToString (",")}. " +
+                        "Overall ${documentStorage.count()} documents loaded.")
             }
         }
     }
