@@ -11,11 +11,8 @@ class BVDocumentViewTreeNode (
         var lastUpdated: Date? = null,
         val subNodesComparator: Comparator<BVDocumentViewTreeNode>? = null
 ) {
-    var subNodes: MutableSet<BVDocumentViewTreeNode> = if (subNodesComparator != null) {
-        TreeSet(subNodesComparator)
-    } else {
-        mutableSetOf()
-    }
+    var subNodes = mutableSetOf<BVDocumentViewTreeNode>()
+    val subNodesSorted = subNodesComparator?.let (subNodes::sortedWith ) ?: subNodes
 
     @JsonIgnore
     var referringNodes: MutableSet<BVDocumentViewTreeNode> = mutableSetOf()

@@ -45,7 +45,7 @@ function renderTable(rootElement, nodes, parentId, level) {
         rootElement.append(row)
 
         // Rendering subdocuments:
-        renderTable(rootElement, node.subNodes, nodeId, level+1)
+        renderTable(rootElement, node.subNodesSorted, nodeId, level+1)
     })
 }
 function renderList(rootElement, nodes) {
@@ -60,7 +60,7 @@ function renderList(rootElement, nodes) {
         ul.append(li)
 
         // Rendering subdocuments:
-        renderList(ul, node.subNodes)
+        renderList(ul, node.subNodesSorted)
     })
     rootElement.append(ul)
 }
