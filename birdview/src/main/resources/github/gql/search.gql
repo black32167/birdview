@@ -66,6 +66,17 @@
                                     }
                                   }
                                 }
+                                author {
+                                      name
+                                      email
+                                      date
+                                      user {
+                                        __typename
+                                        ... on User {
+                                          login
+                                        }
+                                      }
+                                    }
                                 commitUrl
                                 committedDate
                                 id

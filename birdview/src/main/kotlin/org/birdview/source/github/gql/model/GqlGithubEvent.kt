@@ -32,7 +32,7 @@ class PullRequestCommit(
 ) : GqlGithubEvent("PullRequestCommit") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.UPDATE
     override val timestamp = commit.committedDate
-    override val user = (commit.committer?.user as? GqlGithubUserActor)?.login
+    override val user = (commit.author?.user as? GqlGithubUserActor)?.login
 }
 
 class GqlGithubIssueComment(
