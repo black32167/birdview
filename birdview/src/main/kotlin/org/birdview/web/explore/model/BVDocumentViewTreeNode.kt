@@ -25,7 +25,7 @@ class BVDocumentViewTreeNode (
         node.referringNodes.add(this)
     }
 
-    fun addAlternative(otherNode: BVDocumentViewTreeNode) {
+    fun mergeAlternative(otherNode: BVDocumentViewTreeNode) {
         alternativeDocs += otherNode.doc
         alternativeDocs.addAll(otherNode.alternativeDocs.filter { it.internalId != this.doc.internalId })
 

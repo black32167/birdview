@@ -11,8 +11,7 @@ import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.storage.memory.BVInMemoryDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import org.mockito.Mockito.mock
 import java.util.*
@@ -49,8 +48,9 @@ class DocumentTreeBuilderTest {
         )
         val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
-        assertFalse(tree.isEmpty())
-        assertFalse(tree.first().alternativeDocs.any() { it.ids.contains("id3") })
+        assertEquals(1, tree.size)
+        val uniqueDoc = tree.first()
+        assertFalse(uniqueDoc.alternativeDocs.any() { it.ids.contains(uniqueDoc.internalId) })
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
     }
 

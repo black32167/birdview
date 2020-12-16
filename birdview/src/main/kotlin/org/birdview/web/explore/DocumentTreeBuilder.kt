@@ -4,6 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.source.BVDocumentsRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
+import java.lang.IllegalStateException
 import java.util.*
 
 object DocumentTreeBuilder {
@@ -12,9 +13,14 @@ object DocumentTreeBuilder {
             private val subNodesComparator: Comparator<BVDocumentViewTreeNode>?
     ) {
         private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
+        private val alternatives = mutableMapOf<String, MutableSet<String>>()
 
-        fun addAndGetDocNode(doc: BVDocument): BVDocumentViewTreeNode {
+        fun addAndGetDocNode(doc: BVDocument, depth: Int): BVDocumentViewTreeNode {
+            if(depth > 100) {
+                throw IllegalStateException("Depth is too high, probably caught up in endless recursion")
+            }
             val existingNode = internalId2Node[doc.internalId]
+
             if (existingNode != null) {
                 return existingNode;
             }
@@ -29,7 +35,7 @@ object DocumentTreeBuilder {
             doc.refs.forEach { ref ->
                 val referencedDocNode: BVDocumentViewTreeNode? = documentStorage.getDocuments(setOf(ref.docId.id))
                         .firstOrNull()
-                        ?.let { addAndGetDocNode(it) }
+                        ?.let { addAndGetDocNode(it, depth+1) }
 
                 if (referencedDocNode != null) {
                     val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyPosition)
@@ -45,11 +51,7 @@ object DocumentTreeBuilder {
                             }
                         }
                     } else {
-                        // Alternatives
-                        docNode.addAlternative(referencedDocNode)
-                        if (internalId2Node.containsKey(docNode.internalId)) {
-                            internalId2Node.remove(referencedDocNode.doc.internalId)
-                        }
+                        alternatives.computeIfAbsent(docNode.internalId) { mutableSetOf() } += referencedDocNode.internalId
                     }
                 }
             }
@@ -57,42 +59,60 @@ object DocumentTreeBuilder {
             return docNode
         }
 
-        fun collapseCycles() {
-            internalId2Node.values.toList().forEach { node->
-                if (internalId2Node.containsKey(node.internalId)) {
-                    while (collapseCycles(
-                                    node, mutableListOf(), mutableSetOf())) {
+        fun mergeAlternatives() {
+            alternatives.forEach { (docId, alternateIds) ->
+                alternateIds.mapNotNull(internalId2Node::get).forEach { alternativeNode->
+                    internalId2Node[docId]?.also { anchorNode->
+                        anchorNode.mergeAlternative(alternativeNode)
+                        internalId2Node.remove(alternativeNode.internalId)
                     }
                 }
             }
         }
 
-        private fun collapseCycles(node: BVDocumentViewTreeNode, visiting: MutableList<BVDocumentViewTreeNode>, visitedIds: MutableSet<String>):Boolean {
+        fun findCycles(): Collection<Collection<String>> {
+            val cyclesMap = mutableMapOf<String, MutableSet<String>>()
+            internalId2Node.values.toList().forEach { node->
+                        findCycles(node, mutableListOf(), mutableSetOf(), cyclesMap)
+            }
+            return cyclesMap.values.distinctBy { it }
+        }
+
+        fun collapseNodes(nodeIds: Collection<String>) {
+            val nodes = nodeIds.mapNotNull (internalId2Node::get)
+            if (nodes.size < nodeIds.size) {
+                throw IllegalStateException("Could not retrieve all the cycle nodes")
+            }
+            val anchorNode = nodes.first()
+            val tail = nodes.subList(1, nodes.size)
+            tail.forEach { alternative->
+                anchorNode.mergeAlternative(alternative)
+                internalId2Node.remove(alternative.internalId)
+            }
+        }
+
+        private fun findCycles(node: BVDocumentViewTreeNode, visiting: MutableList<BVDocumentViewTreeNode>, visitedIds: MutableSet<String>,
+                               cycles: MutableMap<String, MutableSet<String>> // nodeId-><nodes in cycle>
+        ) {
             if (visitedIds.contains(node.internalId)) {
-                return false
+                return
             }
             val cycleIdx = visiting.indexOf(node)
             if (cycleIdx != -1) {
-                val cycle = visiting.subList(cycleIdx+1, visiting.size)
-                // cycle
-                cycle.forEach { cycleNode->
-                    if (internalId2Node.containsKey(node.internalId)) {
-                        node.addAlternative(cycleNode)
-                        internalId2Node.remove(cycleNode.internalId)
-                    }
-                }
-                return true
+                val foundCycle = visiting.subList(cycleIdx, visiting.size).map { it.internalId }
+                val targetCycle = foundCycle.asSequence ().map (cycles::get).firstOrNull()
+                    ?: mutableSetOf()
+                targetCycle.addAll(foundCycle)
+                foundCycle.forEach { cycles[it] = targetCycle }
+                return
             }
 
             visiting += node
             for (subNode in node.subNodes) {
-                if (collapseCycles(subNode, visiting, visitedIds)) {
-                    return true
-                }
+                findCycles(subNode, visiting, visitedIds, cycles)
             }
             visiting -= node
             visitedIds += node.internalId
-            return false
         }
 
         fun getRoots(): List<BVDocumentViewTreeNode> = internalId2Node.values
@@ -105,15 +125,17 @@ object DocumentTreeBuilder {
         val tree = DocumentForest(documentStorage, nodesComparator)
 
         _docs.forEach { doc ->
-            tree.addAndGetDocNode(doc)
+            tree.addAndGetDocNode(doc, 0)
         }
 
         try {
-            tree.collapseCycles()
+            tree.mergeAlternatives()
+            val cycles = tree.findCycles()
+            cycles.forEach {
+                tree.collapseNodes(it)
+            }
 
-            val roots = tree.getRoots()
-
-            return roots
+            return tree.getRoots()
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
