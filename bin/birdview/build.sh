@@ -8,7 +8,7 @@ SCRIPT_DIR="${BASH_SOURCE%/*}"
 MODUE_DIR="${SCRIPT_DIR%/*/*}/birdview"
 
 mbuild() {
-  mvn clean install -DskipTests -pl "${MODUE_DIR}"
+  mvn clean install -pl "${MODUE_DIR}"
 }
 
 dbuild() {
