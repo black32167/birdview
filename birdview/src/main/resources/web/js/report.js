@@ -1,6 +1,6 @@
 
 function applyTree(treeElement) {
-    $(treeElement).treetable({ expandable: true, initialState: "expanded" })
+    $(treeElement).treetable({ expandable: true, initialState: "collapsed" })
 }
 function renderTable(rootElement, nodes, parentId, level) {
     nodes.forEach( node => {
@@ -9,7 +9,8 @@ function renderTable(rootElement, nodes, parentId, level) {
         if (parentId !== null) {
             nodeId = parentId+"/"+nodeId
         }
-        var row = $('<tr>').attr('data-tt-id', nodeId)
+        var row = $('<tr>').attr('data-tt-id', nodeId).attr('level', level)
+        row.addClass('tree-node')
         if(parentId) {
             row.attr('data-tt-parent-id', parentId)
         }
@@ -56,7 +57,7 @@ function renderList(rootElement, nodes) {
     nodes.forEach(node => {
         var doc = node.doc
         var li = $('<li>')
-            .html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
+            .html(`<a href="${doc.httpUrl}">${doc.title}</a>`)
         ul.append(li)
 
         // Rendering subdocuments:
@@ -85,6 +86,14 @@ function renderReport(nodes) {
             renderTable(tableContainer, nodes, null, 0)
             applyTree(tableContainer)
             reportContainer.append(tableContainer)
+
+            $('.tree-node').each(function() {
+                var level = $(this).attr('level')
+                if (level < 1) {
+                    var nodeId = $(this).attr('data-tt-id')
+                    $(tableContainer).treetable("expandNode", nodeId)
+                }
+            })
             break
         case "LIST":
             renderList(reportContainer, nodes)
