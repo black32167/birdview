@@ -57,7 +57,11 @@ function renderList(rootElement, nodes) {
     nodes.forEach(node => {
         var doc = node.doc
         var li = $('<li>')
-            .html(`<a href="${doc.httpUrl}">${doc.title}</a>`)
+        if (doc.httpUrl != '') {
+            li.html(`<a href="${doc.httpUrl}">${doc.title}</a>`)
+        } else {
+            li.html(doc.title)
+        }
         ul.append(li)
 
         // Rendering subdocuments:
