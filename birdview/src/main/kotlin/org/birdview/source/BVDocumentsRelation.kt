@@ -1,6 +1,5 @@
 package org.birdview.source
 
-import org.birdview.analysis.BVDocument
 import org.birdview.model.RelativeHierarchyPosition
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import java.util.*
@@ -10,7 +9,7 @@ class BVDocumentsRelation (
         val child: BVDocumentViewTreeNode
 ) {
     companion object {
-        fun getPriority(sourceType: SourceType): Int = when (sourceType) {
+        fun getHierarchyLevel(sourceType: SourceType): Int = when (sourceType) {
             SourceType.JIRA, SourceType.TRELLO -> 1
             SourceType.SLACK -> 2
             SourceType.GDRIVE, SourceType.CONFLUENCE -> 3
@@ -22,7 +21,7 @@ class BVDocumentsRelation (
         fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyPosition: RelativeHierarchyPosition): BVDocumentsRelation? =
             when (hierarchyPosition) {
                 RelativeHierarchyPosition.UNSPECIFIED -> {
-                    val sourceTypePriorityDiff = signInt(getPriority(referencedNode.sourceType) - getPriority(node.sourceType))
+                    val sourceTypePriorityDiff = signInt(getHierarchyLevel(referencedNode.sourceType) - getHierarchyLevel(node.sourceType))
 //                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
 //                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
                     when(sourceTypePriorityDiff) {
@@ -49,5 +48,19 @@ class BVDocumentsRelation (
 
         private fun millis(created: Date?): Long =
                 created?.time ?: 0
+
+        fun getHierarchyRelationType(sourceTypeFrom: SourceType, sourceTypeTo: SourceType?): RelativeHierarchyPosition {
+            if (sourceTypeTo == null) {
+                return RelativeHierarchyPosition.LINK_TO_CHILD
+            }
+            val delta = getHierarchyLevel(sourceTypeFrom) - getHierarchyLevel(sourceTypeTo)
+            return if (delta > 0) {
+                RelativeHierarchyPosition.LINK_TO_PARENT
+            } else if (delta < 0) {
+                RelativeHierarchyPosition.LINK_TO_CHILD
+            } else {
+                RelativeHierarchyPosition.UNSPECIFIED
+            }
+        }
     }
 }

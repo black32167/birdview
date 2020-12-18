@@ -5,6 +5,7 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVDocumentsRelation
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
@@ -63,7 +64,9 @@ open class GithubTaskService(
                 httpUrl = pr.url,
                 users = extractUsers(pr, githubConfig, operations),
                 refs = BVFilters.filterRefsFromText(pr.headRefName, pr.title, description)
-                        .map { BVDocumentRef(it) },
+                        .map {
+                            BVDocumentRef(it, BVDocumentsRelation.getHierarchyRelationType(SourceType.GITHUB, it.sourceType))
+                         },
                 status = status,
                 operations = operations,
                 sourceType = getType(),

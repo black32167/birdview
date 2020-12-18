@@ -4,9 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentStatus
 import org.birdview.storage.BVDocumentStorage
-import org.slf4j.LoggerFactory
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Named
 
@@ -14,8 +12,6 @@ import javax.inject.Named
 class BVInMemoryDocumentStorage(
         private val docPredicate: BVDocumentPredicate
 ): BVDocumentStorage {
-    private val log = LoggerFactory.getLogger(BVInMemoryDocumentStorage::class.java)
-
     private class DocHolder (
             @Volatile
             var doc: BVDocument
@@ -49,11 +45,11 @@ class BVInMemoryDocumentStorage(
     }
 
     // docId -> sourceName -> SourceStorage
-    private val name2SourceStorage = ConcurrentHashMap<String, MutableMap<String, SourceStorage>>()
+    private val id2SourceNames = ConcurrentHashMap<String, MutableSet<String>>()
+    private val sourceName2SourceStorage = ConcurrentHashMap<String, SourceStorage>()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
-        return name2SourceStorage.values
-                .flatMap { it.values }
+        return sourceName2SourceStorage.values
                 .flatMap { it.findDocuments(filter) }
                 .toMutableList()
     }
@@ -64,25 +60,24 @@ class BVInMemoryDocumentStorage(
     override fun updateDocument(doc: BVDocument) {
         doc.ids
                 .map { it.id }
-                .forEach { strId->
-                    name2SourceStorage
-                            .computeIfAbsent(strId) {
-                                ConcurrentHashMap<String, SourceStorage>()
-                            }
-                            .computeIfAbsent(doc.sourceName, ::SourceStorage)
-                            .updateDocument(strId, doc)
+                .forEach { docExternalId->
+                    id2SourceNames
+                        .computeIfAbsent(docExternalId) { Collections.newSetFromMap(ConcurrentHashMap()) }
+                        .add(doc.sourceName)
+                    sourceName2SourceStorage
+                        .computeIfAbsent(doc.sourceName, ::SourceStorage)
+                        .updateDocument(docExternalId, doc)
                 }
     }
 
     override fun count(): Int =
-            name2SourceStorage.values
-                    .flatMap { it.values }
-                    .map { it.count() }
-                    .sum()
+        sourceName2SourceStorage.values
+            .map { it.count() }
+            .sum()
 
     override fun containsDocWithExternalId(externalId: String): Boolean =
-        name2SourceStorage.values.flatMap { it.values }
-                .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
+        sourceName2SourceStorage.values
+            .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
 
 
     private fun prepareToFilter(doc: BVDocument): BVDocument =
@@ -92,11 +87,14 @@ class BVInMemoryDocumentStorage(
                 doc
             }
 
-    private fun findDocument(docId: String): BVDocument? =
-            name2SourceStorage[docId]
-                    ?.values
-                    ?.mapNotNull { storage -> storage.findDocument(docId) }
-                    ?.firstOrNull()
+    private fun findDocument(externalDocId: String): BVDocument? =
+        id2SourceNames[externalDocId]
+            ?.asSequence()
+            ?.map { sourceName ->
+                sourceName2SourceStorage[sourceName]
+                    ?.findDocument(externalDocId)
+            }?.firstOrNull()
+
 
     private fun inferDocStatus(doc: BVDocument): BVDocumentStatus? {
 //        if (doc.status == BVDocumentStatus.INHERITED) {
@@ -106,14 +104,4 @@ class BVInMemoryDocumentStorage(
 //        }
         return doc.status
     }
-
-    private fun inferDocStatusFromUpdatedTimestamp(doc:BVDocument): BVDocumentStatus? {
-        val docInstant = doc.updated?.toInstant()
-        return if (docInstant != null && docInstant > Instant.now().minus(7, ChronoUnit.DAYS)) {
-            BVDocumentStatus.PROGRESS
-        } else {
-            BVDocumentStatus.BACKLOG
-        }
-    }
-
 }

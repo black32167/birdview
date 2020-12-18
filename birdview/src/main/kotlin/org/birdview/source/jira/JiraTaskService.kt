@@ -95,7 +95,7 @@ open class JiraTaskService(
                 .map(::BVDocumentRef)
         val issueExternalLinks = issueLinks.map { it._object.url }
                 .flatMap { BVFilters.filterRefsFromText(it) }
-                .map(::BVDocumentRef)
+                .map { id->BVDocumentRef(id, RelativeHierarchyPosition.LINK_TO_CHILD) }
         val issueLinkIds = issue.fields.issuelinks?.mapNotNull { jiraIssueLink->
             mapIssueLink(jiraIssueLink)
         } ?: listOf()
