@@ -1,6 +1,9 @@
 package org.birdview.user
 
 import org.birdview.analysis.BVDocument
+import org.birdview.model.RelativeHierarchyType
+import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
+import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
@@ -9,7 +12,6 @@ import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
-import java.util.*
 import java.util.concurrent.*
 import javax.annotation.PostConstruct
 import javax.inject.Named
@@ -125,7 +127,8 @@ class BVInMemoryUserDataUpdater (
     }
 
     private fun loadReferredDocs(bvUser: String, originalDocs: Collection<BVDocument>): Collection<BVDocument> {
-        val referredDocsIds = BVDocumentUtils.getReferencedDocIds(originalDocs)
+        val referredDocsIds = BVDocumentUtils.getReferencedDocIdsByHierarchyType(
+            originalDocs, setOf(LINK_TO_PARENT, UNSPECIFIED))
         val missedDocsIds = referredDocsIds.filter { !documentStorage.containsDocWithExternalId(it) }
         val loadedReferredDocs = ConcurrentHashMap<String, BVDocument>()
         log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)

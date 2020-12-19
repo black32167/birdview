@@ -4,8 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.RelativeHierarchyPosition
-import org.birdview.model.ReportType
+import org.birdview.model.RelativeHierarchyType
 import org.birdview.source.SourceType
 import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.storage.memory.BVInMemoryDocumentStorage
@@ -29,8 +28,8 @@ class DocumentTreeBuilderTest {
         val GRANDCHILDREN_ID = "grandChildrenId"
         val docs = persistDocs(
                 doc(listOf(PARENT_ID), SourceType.JIRA),
-                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID, RelativeHierarchyPosition.LINK_TO_PARENT))),
-                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID, RelativeHierarchyPosition.LINK_TO_PARENT)))
+                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID, RelativeHierarchyType.LINK_TO_PARENT))),
+                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID, RelativeHierarchyType.LINK_TO_PARENT)))
         )
         val views = DocumentTreeBuilder.buildTree(docs, documentStorage)
         Assert.assertEquals(1, views.size)
@@ -57,10 +56,10 @@ class DocumentTreeBuilderTest {
     @Test
     fun testCyclicDependencie2DoNotCreateCycleInTree() {
         val docs = persistDocs(
-                doc(listOf("id0"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyPosition.LINK_TO_CHILD))),
-                doc(listOf("id1"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD), docRef("id3", RelativeHierarchyPosition.LINK_TO_CHILD))),
-                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyPosition.LINK_TO_CHILD))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyPosition.LINK_TO_CHILD), docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD)))
+                doc(listOf("id0"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id1"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD), docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD), docRef("id2", RelativeHierarchyType.LINK_TO_CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
@@ -73,9 +72,9 @@ class DocumentTreeBuilderTest {
     @Test
     fun testDirectedCyclicDependenciesDoNotCreateCycleInTree() {
         val docs = persistDocs(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD))),
-                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3", RelativeHierarchyPosition.LINK_TO_CHILD))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
@@ -86,9 +85,9 @@ class DocumentTreeBuilderTest {
     @Test
     fun testDirectedBackwardDependency() {
         val docs = persistDocs(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyPosition.LINK_TO_CHILD))),
+                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))),
                 doc(listOf("id2"), SourceType.JIRA, listOf()),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyPosition.LINK_TO_CHILD)))
+                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
         )
         val tree = DocumentTreeBuilder.buildTree(docs, documentStorage)
 
@@ -137,7 +136,7 @@ class DocumentTreeBuilderTest {
         TIME_INSTANT += 10
         return Date(TIME_INSTANT);
     }
-    private fun docRef(ref: String, type: RelativeHierarchyPosition = RelativeHierarchyPosition.UNSPECIFIED) =
+    private fun docRef(ref: String, type: RelativeHierarchyType = RelativeHierarchyType.UNSPECIFIED) =
             BVDocumentRef(BVDocumentId(ref), type)
 
     private fun assertNoCycles(node: BVDocumentViewTreeNode, visited:MutableSet<BVDocumentViewTreeNode>) {

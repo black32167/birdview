@@ -4,9 +4,9 @@ import org.birdview.analysis.BVDocumentId
 
 open class BVDocumentRef (
         val docId: BVDocumentId,
-        val hierarchyPosition: RelativeHierarchyPosition = RelativeHierarchyPosition.UNSPECIFIED
+        val hierarchyType: RelativeHierarchyType = RelativeHierarchyType.UNSPECIFIED
 )
 
-enum class RelativeHierarchyPosition {
+enum class RelativeHierarchyType {
     UNSPECIFIED, LINK_TO_PARENT, LINK_TO_CHILD
 }

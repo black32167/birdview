@@ -2,8 +2,10 @@ package org.birdview
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
+import org.birdview.model.RelativeHierarchyType
 import org.birdview.storage.BVDocumentStorage
-import org.birdview.utils.BVDocumentUtils.getReferencedDocIds
+import org.birdview.utils.BVDocumentUtils
+import org.birdview.utils.BVDocumentUtils.getReferencedDocIdsByHierarchyType
 import org.birdview.utils.BVTimeUtil
 import javax.inject.Named
 
@@ -27,6 +29,8 @@ open class BVTaskService(
 
     // TODO: non-optimal
     private fun getReferencedDocs(filteredDocs: List<BVDocument>): List<BVDocument> {
-        return documentStorage.getDocuments(getReferencedDocIds(filteredDocs))
+        return documentStorage.getDocuments(
+            getReferencedDocIdsByHierarchyType(
+                filteredDocs, setOf(RelativeHierarchyType.LINK_TO_PARENT, RelativeHierarchyType.UNSPECIFIED)))
     }
 }

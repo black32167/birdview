@@ -95,12 +95,12 @@ open class JiraTaskService(
                 .map(::BVDocumentRef)
         val issueExternalLinks = issueLinks.map { it._object.url }
                 .flatMap { BVFilters.filterRefsFromText(it) }
-                .map { id->BVDocumentRef(id, RelativeHierarchyPosition.LINK_TO_CHILD) }
+                .map { id->BVDocumentRef(id, RelativeHierarchyType.LINK_TO_CHILD) }
         val issueLinkIds = issue.fields.issuelinks?.mapNotNull { jiraIssueLink->
             mapIssueLink(jiraIssueLink)
         } ?: listOf()
         val parentIds = listOfNotNull(issue.fields.customfield_10007, issue.fields.parent?.key)
-                .map { BVDocumentRef(BVDocumentId(it, SourceType.JIRA), RelativeHierarchyPosition.LINK_TO_PARENT)  }
+                .map { BVDocumentRef(BVDocumentId(it, SourceType.JIRA), RelativeHierarchyType.LINK_TO_PARENT)  }
         return issueExternalLinks + issueLinkIds + textIds + parentIds
     }
 
@@ -114,9 +114,9 @@ open class JiraTaskService(
         val refInfo = BVDocumentId(issueUrl)
         return when (outwardToken) {
             "blocks", "contributes to", "split to", "resolves", "has to be done before", "has to be finished together with" ->
-                BVDocumentRef(refInfo, RelativeHierarchyPosition.LINK_TO_PARENT)
+                BVDocumentRef(refInfo, RelativeHierarchyType.LINK_TO_PARENT)
             "depends on" ->
-                BVDocumentRef(refInfo, RelativeHierarchyPosition.LINK_TO_CHILD)
+                BVDocumentRef(refInfo, RelativeHierarchyType.LINK_TO_CHILD)
             "relates on", "relates to" ->
                 BVDocumentRef(refInfo)
             "duplicates", "clones"->

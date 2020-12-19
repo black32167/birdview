@@ -38,7 +38,7 @@ object DocumentTreeBuilder {
                         ?.let { addAndGetDocNode(it, depth+1) }
 
                 if (referencedDocNode != null) {
-                    val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyPosition)
+                    val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyType)
 
                     // Hierarchical relation
                     if (relation != null) {

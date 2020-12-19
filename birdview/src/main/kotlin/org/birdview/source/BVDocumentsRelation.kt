@@ -1,6 +1,6 @@
 package org.birdview.source
 
-import org.birdview.model.RelativeHierarchyPosition
+import org.birdview.model.RelativeHierarchyType
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import java.util.*
 
@@ -18,9 +18,9 @@ class BVDocumentsRelation (
             SourceType.NONE -> 1000
         }
 
-        fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyPosition: RelativeHierarchyPosition): BVDocumentsRelation? =
-            when (hierarchyPosition) {
-                RelativeHierarchyPosition.UNSPECIFIED -> {
+        fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyType: RelativeHierarchyType): BVDocumentsRelation? =
+            when (hierarchyType) {
+                RelativeHierarchyType.UNSPECIFIED -> {
                     val sourceTypePriorityDiff = signInt(getHierarchyLevel(referencedNode.sourceType) - getHierarchyLevel(node.sourceType))
 //                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
 //                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
@@ -30,8 +30,8 @@ class BVDocumentsRelation (
                         else  -> null
                     }
                 }
-                RelativeHierarchyPosition.LINK_TO_PARENT -> BVDocumentsRelation(referencedNode, node)
-                RelativeHierarchyPosition.LINK_TO_CHILD -> BVDocumentsRelation(node, referencedNode)
+                RelativeHierarchyType.LINK_TO_PARENT -> BVDocumentsRelation(referencedNode, node)
+                RelativeHierarchyType.LINK_TO_CHILD -> BVDocumentsRelation(node, referencedNode)
             }
 
         private fun signInt(x: Int): Int =
@@ -49,17 +49,17 @@ class BVDocumentsRelation (
         private fun millis(created: Date?): Long =
                 created?.time ?: 0
 
-        fun getHierarchyRelationType(sourceTypeFrom: SourceType, sourceTypeTo: SourceType?): RelativeHierarchyPosition {
+        fun getHierarchyRelationType(sourceTypeFrom: SourceType, sourceTypeTo: SourceType?): RelativeHierarchyType {
             if (sourceTypeTo == null) {
-                return RelativeHierarchyPosition.LINK_TO_CHILD
+                return RelativeHierarchyType.LINK_TO_CHILD
             }
             val delta = getHierarchyLevel(sourceTypeFrom) - getHierarchyLevel(sourceTypeTo)
             return if (delta > 0) {
-                RelativeHierarchyPosition.LINK_TO_PARENT
+                RelativeHierarchyType.LINK_TO_PARENT
             } else if (delta < 0) {
-                RelativeHierarchyPosition.LINK_TO_CHILD
+                RelativeHierarchyType.LINK_TO_CHILD
             } else {
-                RelativeHierarchyPosition.UNSPECIFIED
+                RelativeHierarchyType.UNSPECIFIED
             }
         }
     }

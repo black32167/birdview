@@ -24,16 +24,19 @@ class BVInMemoryDocumentStorage(
 
         fun findDocument(docId: String): BVDocument? = externalId2docHolder[docId]?.doc
 
-        fun updateDocument(id: String, doc: BVDocument) {
-            val docHolder = internalId2docHolder.computeIfAbsent(doc.internalId) {
+        fun updateDocument(externalId: String, doc: BVDocument) {
+            val existingDocHolder = externalId2docHolder.computeIfAbsent(externalId) {
                 DocHolder(doc)
             }
-            docHolder.doc = doc
-            externalId2docHolder[id] = docHolder
+            val internalId = existingDocHolder.doc.internalId
+
+            existingDocHolder.doc = doc.copy(internalId = internalId)
+
+            internalId2docHolder[internalId] = existingDocHolder
         }
 
         fun findDocuments(filter: BVDocumentFilter): List<BVDocument> =
-                externalId2docHolder.values
+            internalId2docHolder.values
                         .map (DocHolder::doc)
                         .map (::prepareToFilter)
                         .filter { docPredicate.test(it, filter) }

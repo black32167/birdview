@@ -21,9 +21,9 @@ data class BVDocument (
         val operations: List<BVDocumentOperation> = emptyList(),
         val sourceType: SourceType,
         val sourceName: String,
-        val priority: Priority = Priority.NORMAL
+        val priority: Priority = Priority.NORMAL,
+        val internalId: String = UUID.randomUUID().toString()
 ) {
-    val internalId = UUID.randomUUID().toString()
     val lastOperations: List<BVDocumentOperation> = getLastUsersOperations(operations)
 
     fun getPrimaryId() = ids.first().id
