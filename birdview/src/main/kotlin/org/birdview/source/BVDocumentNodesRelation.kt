@@ -1,10 +1,15 @@
 package org.birdview.source
 
+import org.birdview.analysis.BVDocument
 import org.birdview.model.RelativeHierarchyType
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import java.util.*
 
 class BVDocumentsRelation (
+    val parent: BVDocument,
+    val child: BVDocument
+)
+class BVDocumentNodesRelation (
         val parent: BVDocumentViewTreeNode,
         val child: BVDocumentViewTreeNode
 ) {
@@ -18,12 +23,10 @@ class BVDocumentsRelation (
             SourceType.NONE -> 1000
         }
 
-        fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyType: RelativeHierarchyType): BVDocumentsRelation? =
+        fun from(referencedNode: BVDocument, node: BVDocument, hierarchyType: RelativeHierarchyType): BVDocumentsRelation? =
             when (hierarchyType) {
                 RelativeHierarchyType.UNSPECIFIED -> {
                     val sourceTypePriorityDiff = signInt(getHierarchyLevel(referencedNode.sourceType) - getHierarchyLevel(node.sourceType))
-//                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
-//                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
                     when(sourceTypePriorityDiff) {
                         -1 -> BVDocumentsRelation(referencedNode, node)
                         1 -> BVDocumentsRelation(node, referencedNode)
@@ -32,6 +35,22 @@ class BVDocumentsRelation (
                 }
                 RelativeHierarchyType.LINK_TO_PARENT -> BVDocumentsRelation(referencedNode, node)
                 RelativeHierarchyType.LINK_TO_CHILD -> BVDocumentsRelation(node, referencedNode)
+            }
+
+        fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyType: RelativeHierarchyType): BVDocumentNodesRelation? =
+            when (hierarchyType) {
+                RelativeHierarchyType.UNSPECIFIED -> {
+                    val sourceTypePriorityDiff = signInt(getHierarchyLevel(referencedNode.sourceType) - getHierarchyLevel(node.sourceType))
+//                    val diff = sourceTypePriorityDiff.takeIf { it != 0 }
+//                            ?: signLong(millis(referncedDoc.created) - millis(doc.created))
+                    when(sourceTypePriorityDiff) {
+                        -1 -> BVDocumentNodesRelation(referencedNode, node)
+                        1 -> BVDocumentNodesRelation(node, referencedNode)
+                        else  -> null
+                    }
+                }
+                RelativeHierarchyType.LINK_TO_PARENT -> BVDocumentNodesRelation(referencedNode, node)
+                RelativeHierarchyType.LINK_TO_CHILD -> BVDocumentNodesRelation(node, referencedNode)
             }
 
         private fun signInt(x: Int): Int =

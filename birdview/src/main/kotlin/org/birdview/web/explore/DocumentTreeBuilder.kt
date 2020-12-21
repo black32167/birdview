@@ -2,7 +2,7 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentRef
-import org.birdview.source.BVDocumentsRelation
+import org.birdview.source.BVDocumentNodesRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.slf4j.LoggerFactory
@@ -139,12 +139,12 @@ object DocumentTreeBuilder {
             log.info("Linking docs: ${_docs.map { "\n\t${it.title}(${it.ids.firstOrNull()?.id})" }.joinToString()}")
 
             val processedIds = mutableSetOf<String>()
-            var docsToProcess = _docs.filter { !processedIds.contains(it.internalId) }
+            var docsToProcess:Map<String, BVDocument> = _docs.filter { !processedIds.contains(it.internalId) }.associateBy { it.internalId }
 
             while (docsToProcess.isNotEmpty()) {
                 log.info("resolving refs for docs ({})", docsToProcess.size)
-                val refDocs = mutableListOf<BVDocument>()
-                docsToProcess.forEach { originalDoc ->
+                val refDocs = mutableMapOf<String, BVDocument>()
+                docsToProcess.values.forEach { originalDoc ->
                     processedIds += originalDoc.internalId
                     val originalDocNode = createNode(originalDoc)
 
@@ -158,28 +158,31 @@ object DocumentTreeBuilder {
                     for (ref in (outgoingLinks + incomingLinks)) {
                         val referredDoc = documentStorage.getDocuments(setOf(ref.docId.id)).firstOrNull()
                         if (referredDoc != null) {
-                            refDocs += referredDoc
-                            val referencedDocNode = createNode(referredDoc)
+
                             val relation =
-                                BVDocumentsRelation.from(referencedDocNode, originalDocNode, ref.hierarchyType)
+                                BVDocumentNodesRelation.from(referredDoc, originalDoc, ref.hierarchyType)
+
                             if (relation != null /*&& relation.child.internalId == originalDocNode.internalId */) {
-                                relation.apply {
-                                    parent.addSubNode(child)
-                                    val parentNodeLastUpdated = parent.lastUpdated
+                                if (relation.child.internalId == originalDocNode.internalId) {
+                                    val parentNode = createNode(relation.parent)
+                                    val childNode = createNode(relation.child)
+                                    refDocs[referredDoc.internalId] = referredDoc
+                                    parentNode.addSubNode(childNode)
+                                    val parentNodeLastUpdated = parentNode.lastUpdated
                                     if (parentNodeLastUpdated == null ||
-                                        parentNodeLastUpdated.before(child.lastUpdated)
+                                        parentNodeLastUpdated.before(childNode.lastUpdated)
                                     ) {
-                                        parent.lastUpdated = child.lastUpdated
+                                        parentNode.lastUpdated = childNode.lastUpdated
                                     }
                                 }
                             } else {
                                 alternatives.computeIfAbsent(originalDocNode.internalId) { mutableSetOf() } +=
-                                    referencedDocNode.internalId
+                                    createNode(referredDoc).internalId
                             }
                         }
                     }
                 }
-                docsToProcess = refDocs.filter { !processedIds.contains(it.internalId) }
+                docsToProcess = refDocs.filter { (internalId, _) -> !processedIds.contains(internalId) }
             }
         }
     }
