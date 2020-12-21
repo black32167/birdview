@@ -43,7 +43,9 @@ class BVConfluenceDocumentService (
         val lastModified = parseDate(confluenceDocument.lastModified)
         val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument.url.trimStart('/')}"
         return BVDocument(
-                ids = setOf(BVDocumentId(id = docUrl)),
+                ids = setOf(
+                    BVDocumentId(id = docUrl),
+                    BVDocumentId("https://canvadev.atlassian.net/wiki/pages/viewpage.action?pageId=${confluenceDocument.content.id}")),
                 title = confluenceDocument.title,
                 key = "open",
                 body = confluenceDocument.excerpt ?: "",

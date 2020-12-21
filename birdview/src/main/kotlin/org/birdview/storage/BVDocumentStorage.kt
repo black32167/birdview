@@ -3,6 +3,7 @@ package org.birdview.storage
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentFilter
+import org.birdview.model.BVDocumentRef
 
 interface BVDocumentStorage {
     fun findDocuments(filter: BVDocumentFilter): List<BVDocument>
@@ -10,4 +11,5 @@ interface BVDocumentStorage {
     fun updateDocument(doc: BVDocument)
     fun count(): Int
     fun containsDocWithExternalId(externalId: String): Boolean
+    fun getIncomingRefsByExternalIds(externalIds: Set<String>): List<BVDocumentRef>
 }

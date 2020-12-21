@@ -1,8 +1,12 @@
 package org.birdview.storage.memory
 
 import org.birdview.analysis.BVDocument
+import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentFilter
+import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
+import org.birdview.model.RelativeHierarchyType
+import org.birdview.model.RelativeHierarchyType.*
 import org.birdview.storage.BVDocumentStorage
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +26,7 @@ class BVInMemoryDocumentStorage(
         val externalId2docHolder: MutableMap<String, DocHolder> = ConcurrentHashMap() // id -> doc
         val internalId2docHolder: MutableMap<String, DocHolder> = ConcurrentHashMap()
 
-        fun findDocument(docId: String): BVDocument? = externalId2docHolder[docId]?.doc
+        fun findDocument(externalId: String): BVDocument? = externalId2docHolder[externalId]?.doc
 
         fun updateDocument(externalId: String, doc: BVDocument) {
             val existingDocHolder = externalId2docHolder.computeIfAbsent(externalId) {
@@ -48,7 +52,7 @@ class BVInMemoryDocumentStorage(
     }
 
     // docId -> sourceName -> SourceStorage
-    private val id2SourceNames = ConcurrentHashMap<String, MutableSet<String>>()
+    private val externalId2SourceNames = ConcurrentHashMap<String, MutableSet<String>>()
     private val sourceName2SourceStorage = ConcurrentHashMap<String, SourceStorage>()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
@@ -64,7 +68,7 @@ class BVInMemoryDocumentStorage(
         doc.ids
                 .map { it.id }
                 .forEach { docExternalId->
-                    id2SourceNames
+                    externalId2SourceNames
                         .computeIfAbsent(docExternalId) { Collections.newSetFromMap(ConcurrentHashMap()) }
                         .add(doc.sourceName)
                     sourceName2SourceStorage
@@ -82,6 +86,28 @@ class BVInMemoryDocumentStorage(
         sourceName2SourceStorage.values
             .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
 
+    override fun getIncomingRefsByExternalIds(externalIds: Set<String>): List<BVDocumentRef> =
+        externalIds.flatMap { externalId ->
+            val refs: List<BVDocumentRef> = sourceName2SourceStorage.values.flatMap { source ->
+                val refs: List<BVDocumentRef> = source.internalId2docHolder.values.map(DocHolder::doc)
+                    .flatMap { parentCandidateDoc ->
+                        parentCandidateDoc.refs.filter { ref ->
+                            ref.docId.id == externalId
+                        }.mapNotNull { originalRef->parentCandidateDoc.ids.firstOrNull()?.let { parentId->
+                            val newRelType = if (originalRef.hierarchyType == LINK_TO_PARENT) {
+                                LINK_TO_CHILD
+                            } else if (originalRef.hierarchyType == LINK_TO_CHILD) {
+                                LINK_TO_PARENT
+                            } else {
+                                UNSPECIFIED
+                            }
+                            BVDocumentRef(parentId, newRelType)
+                        }}
+                    }
+                refs
+            }.toList()
+            refs
+        }
 
     private fun prepareToFilter(doc: BVDocument): BVDocument =
             if (doc.status == BVDocumentStatus.INHERITED) {
@@ -91,7 +117,7 @@ class BVInMemoryDocumentStorage(
             }
 
     private fun findDocument(externalDocId: String): BVDocument? =
-        id2SourceNames[externalDocId]
+        externalId2SourceNames[externalDocId]
             ?.asSequence()
             ?.map { sourceName ->
                 sourceName2SourceStorage[sourceName]

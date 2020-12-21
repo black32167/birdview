@@ -4,7 +4,6 @@ import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.RelativeHierarchyType
 import org.birdview.storage.BVDocumentStorage
-import org.birdview.utils.BVDocumentUtils
 import org.birdview.utils.BVDocumentUtils.getReferencedDocIdsByHierarchyType
 import org.birdview.utils.BVTimeUtil
 import javax.inject.Named

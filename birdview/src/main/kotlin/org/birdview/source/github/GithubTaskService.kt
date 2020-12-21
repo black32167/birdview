@@ -54,7 +54,7 @@ open class GithubTaskService(
         val operations = extractOperations(pr, sourceName = githubConfig.sourceName)
         val status = mapStatus(pr.state)
         return BVDocument(
-                ids = setOf(BVDocumentId(id = pr.id)),
+                ids = setOf(BVDocumentId(id = pr.id), BVDocumentId(id = pr.url)),
                 title = title,
                 key = pr.url.replace(".*/".toRegex(), "#"),
                 body = description,
