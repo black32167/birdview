@@ -81,11 +81,7 @@ function renderList(rootElement, nodes) {
         var doc = node.doc
         var li = $('<li>')
         if (doc.httpUrl != '') {
-            if (node.subNodes.length == 0) {
-                li.html(`<a href="${doc.httpUrl}">${doc.title}</a>`)
-            } else {
-                li.html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
-            }
+            li.html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
         } else {
             li.html(doc.title)
         }
