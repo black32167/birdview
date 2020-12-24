@@ -1,7 +1,30 @@
 
 function applyTree(treeElement) {
-    $(treeElement).treetable({ expandable: true, initialState: "collapsed" })
+    $(treeElement)
+        .treetable({
+            expandable: true,
+            initialState: "collapsed",
+            expanderTemplate: "<a class='expander' onclick='onExpand(this)' href='#'>&nbsp;</a>",
+        })
 }
+
+// This function is responsible for complete branch expansion
+function onExpand(element) {
+    var el = element
+    while(el != undefined && $(el).attr('data-tt-id') == undefined) {
+      el = $(el).parent()
+    }
+    if (el != undefined && $(el).attr('level') == 1) {
+        var idPrefix = $(el).attr('data-tt-id')
+        $('.tree-node').each(function() {
+            if ($(this).attr('data-tt-id').startsWith(idPrefix+'/')) {
+                console.log("Expanding " + $(this).attr('data-tt-id'))
+                $('#reportTable').treetable("expandNode", $(this).attr('data-tt-id'))
+            }
+        })
+    }
+}
+
 function renderTable(rootElement, nodes, parentId, level) {
     nodes.forEach( node => {
         var doc = node.doc
@@ -20,7 +43,7 @@ function renderTable(rootElement, nodes, parentId, level) {
             .map(d=>`<a href="${d.httpUrl}">${d.key}</a>`)
         var title = doc.title
         if (doc.key !== "") {
-          title += `(${alternativeLinks.join(",")})`
+          title += ` (${alternativeLinks.join(",")})`
         }
         var titleCol = $('<td>')
             .html(title)
@@ -58,7 +81,11 @@ function renderList(rootElement, nodes) {
         var doc = node.doc
         var li = $('<li>')
         if (doc.httpUrl != '') {
-            li.html(`<a href="${doc.httpUrl}">${doc.title}</a>`)
+            if (node.subNodes.length == 0) {
+                li.html(`<a href="${doc.httpUrl}">${doc.title}</a>`)
+            } else {
+                li.html(`${doc.title} (<a href="${doc.httpUrl}">${doc.key}</a>)`)
+            }
         } else {
             li.html(doc.title)
         }
