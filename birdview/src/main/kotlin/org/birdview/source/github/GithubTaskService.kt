@@ -9,6 +9,7 @@ import org.birdview.source.BVDocumentNodesRelation
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
+import org.birdview.source.github.gql.GithubGqlClient
 import org.birdview.source.github.gql.model.GqlGithubEvent
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
@@ -23,7 +24,7 @@ import javax.inject.Named
 @Named
 open class GithubTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val githubClientProvider: GithubClientProvider,
+        private val gqlClient: GithubGqlClient,
         private val githubQueryBuilder: GithubQueryBuilder,
         private val secretsStorage: BVSourceSecretsStorage
 ): BVTaskSource {
@@ -33,9 +34,8 @@ open class GithubTaskService(
             sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
         val githubConfig = sourceConfig as BVGithubConfig
-        val gqlClient = githubClientProvider.getGithubGqlClient(githubConfig)
         val githubQuery = githubQueryBuilder.getFilterQueries(bvUser, updatedPeriod, githubConfig)
-        gqlClient.getPullRequests(githubQuery) { prs ->
+        gqlClient.getPullRequests(githubConfig, githubQuery) { prs ->
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
             chunkConsumer.invoke(docs)
         }
@@ -43,8 +43,7 @@ open class GithubTaskService(
 
     override fun resolveSourceUserId(sourceName:String, email: String):String {
         val githubConfig = secretsStorage.getConfigByName(sourceName, BVGithubConfig::class.java)!!
-        val client = githubClientProvider.getGithubGqlClient(githubConfig)
-        val userName = client.getUserByEmail(email)
+        val userName = gqlClient.getUserByEmail(githubConfig, email)
         return userName ?: email
     }
 

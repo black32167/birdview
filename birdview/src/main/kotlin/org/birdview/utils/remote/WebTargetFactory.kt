@@ -37,7 +37,11 @@ class WebTargetFactory(url:String, enableLogging:Boolean = false, val authProvid
 
     private val baseTarget = client.target(URI.create(url))
 
-    fun getTarget(subPath: String): WebTarget {
-        return baseTarget.path(subPath)
+    fun getTarget(subPath: String? = null): WebTarget {
+        return if (subPath != null) {
+            baseTarget.path(subPath)
+        } else {
+            baseTarget
+        }
     }
 }

@@ -9,6 +9,7 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
+import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -19,8 +20,9 @@ import javax.inject.Named
 
 @Named
 open class GDriveTaskService(
-        private val clientProvider: GDriveClientProvider,
+        private val client: GDriveClient,
         private val sourceSecretsStorage: BVSourceSecretsStorage,
+        private val tokenStorage: OAuthRefreshTokenStorage,
         private val gDriveQueryBuilder: GDriveQueryBuilder
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
@@ -32,10 +34,11 @@ open class GDriveTaskService(
         try {
             sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->
-                        clientProvider.getGoogleApiClient(config)
-                                .getFiles(gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)) { files ->
-                                    chunkConsumer.invoke(files.map { file -> toBVDocument(file, config) })
-                                }
+                        client.getFiles(
+                            config,
+                            gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)) { files ->
+                                chunkConsumer.invoke(files.map { file -> toBVDocument(file, config) })
+                            }
                     }
         } catch (e: Exception) {
             log.error("", e)
@@ -46,7 +49,7 @@ open class GDriveTaskService(
 
     override fun isAuthenticated(sourceName: String): Boolean =
         sourceSecretsStorage.getConfigByName(sourceName, BVGDriveConfig::class.java)
-                ?.let { config -> clientProvider.isAuthenticated(config) }
+                ?.let { config -> tokenStorage.hasToken(config) }
                 ?: false
 
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) = try {

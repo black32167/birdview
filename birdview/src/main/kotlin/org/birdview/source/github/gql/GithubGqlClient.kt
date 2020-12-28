@@ -5,23 +5,23 @@ import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubResponse
 import org.birdview.source.github.gql.model.GqlGithubSearchContainer
 import org.birdview.source.github.gql.model.GqlGithubUser
+import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVGithubConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
-import org.birdview.utils.remote.ResponseValidationUtils
-import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory
-import javax.ws.rs.client.Entity
+import javax.inject.Named
 import javax.ws.rs.core.GenericType
 
+@Named
 class GithubGqlClient (
-        private val githubConfig: BVGithubConfig
+        private val httpClientFactory: BVHttpClientFactory
 ) {
     private val log = LoggerFactory.getLogger(GithubGqlClient::class.java)
     private class GQL(
             val query: String
     )
-    fun getPullRequests(githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
+    fun getPullRequests(githubConfig: BVGithubConfig, githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
         log.info("Running Github query:{}", githubQuery)
         return BVTimeUtil.logTime("getPullRequests-GQL") {
 
@@ -39,16 +39,15 @@ class GithubGqlClient (
 
                 val response: GqlGithubResponse<GqlGithubSearchContainer<GqlGithubPullRequest>> =
                         BVTimeUtil.logTime("getPullRequests-GQL-page") {
-                            getTarget()
-                                    .request()
-                                    .post(Entity.json(GQL(query)))
-                                    .also(ResponseValidationUtils::validate)
-                                    .readEntity(object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubPullRequest>>>() {})
-                                    .also {
-                                        if (it.errors.isNotEmpty()) {
-                                            throw RuntimeException("Error: ${it.errors.map { "  ${it.message}" }.joinToString("\n")}")
-                                        }
+                            getHttpClient(githubConfig)
+                                .post(
+                                    resultType = object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubPullRequest>>>() {},
+                                    GQL(query))
+                                .also {
+                                    if (it.errors.isNotEmpty()) {
+                                        throw RuntimeException("Error: ${it.errors.map { "  ${it.message}" }.joinToString("\n")}")
                                     }
+                                }
                         }
                 val data = response.data!!
                 val edges = data.search.edges //?.sortedBy { it.node.updatedAt }
@@ -63,18 +62,17 @@ class GithubGqlClient (
         }
     }
 
-    fun getUserByEmail(email: String): String? {
+    fun getUserByEmail(githubConfig: BVGithubConfig, email: String): String? {
         val gqlQuery = javaClass
                 .getResourceAsStream("/github/gql/search-user.gql")
                 .let(Streams::asString)
                 .let {
                     interpolate(it, mapOf("query" to "${email} in:email"))
                 }
-        val response = getTarget()
-                .request()
-                .post(Entity.json(GQL(gqlQuery)))
-                .also(ResponseValidationUtils::validate)
-                .readEntity(object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubUser>>>() {})
+        val response = getHttpClient(githubConfig)
+                .post(
+                    object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubUser>>>() {},
+                    GQL(gqlQuery))
         return response.data?.search?.edges?.firstOrNull()?.node?.login
     }
 
@@ -86,10 +84,8 @@ class GithubGqlClient (
         return query
     }
 
-    private fun getTarget() = getTarget(githubConfig.baseGqlUrl)
-
-    private fun getTarget(url: String) =
-            WebTargetFactory(url) {
-                BasicAuth(githubConfig.user, githubConfig.token)
-            }.getTarget("")
+    private fun getHttpClient(githubConfig: BVGithubConfig) =
+        httpClientFactory.getHttpClient(
+            url = githubConfig.baseGqlUrl
+        ) { BasicAuth(githubConfig.user, githubConfig.token) }
 }
