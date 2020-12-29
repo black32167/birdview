@@ -17,7 +17,7 @@ import javax.inject.Named
 
 @Named
 open class JiraTaskService(
-        private val jiraClientProvider: JiraClientProvider,
+        private val jiraClient: JiraClient,
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val jqlBuilder: JqlBuilder
 ): BVTaskSource {
@@ -31,9 +31,8 @@ open class JiraTaskService(
             sourceConfig: BVAbstractSourceConfig,
             chunkConsumer: (List<BVDocument>) -> Unit) {
         val jiraConfig = sourceConfig as BVJiraConfig
-        jiraClientProvider
-                .getJiraClient(jiraConfig)
-                .findIssues(jqlBuilder.getJql(bvUser, updatedPeriod, jiraConfig)) { jiraIssues->
+        jiraClient
+                .findIssues(jiraConfig, jqlBuilder.getJql(bvUser, updatedPeriod, jiraConfig)) { jiraIssues->
                     chunkConsumer.invoke(
                             jiraIssues
                                     .map { executor.submit(Callable<BVDocument> { mapDocument( it, jiraConfig) }) }
@@ -49,12 +48,12 @@ open class JiraTaskService(
         val issueKeys = idList.filter { BVFilters.JIRA_KEY_REGEX.matches(it) }
         val issueUrls = idList.filter { JIRA_REST_URL_REGEX.matches(it) }
         sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java)?.also { config ->
-            val client = jiraClientProvider.getJiraClient(config)
-            client.loadByKeys(issueKeys.distinct()) { issues ->
+            val client = jiraClient
+            client.loadByKeys(config, issueKeys.distinct()) { issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })
             }
             val docsByUrls = issueUrls.distinct()
-                    .map { url->executor.submit(Callable { client.loadByUrl(url) }) }
+                    .map { url->executor.submit(Callable { client.loadByUrl(config, url) }) }
                     .map {
                         mapDocument(it.get(), config)
                     }
@@ -64,7 +63,7 @@ open class JiraTaskService(
 
     private fun mapDocument(issue: JiraIssue, config: BVJiraConfig): BVDocument {
         val description = issue.fields.description ?: ""
-        val issueLinks = jiraClientProvider.getJiraClient(config).getIssueLinks(issue.key)
+        val issueLinks = jiraClient.getIssueLinks(config, issue.key)
 
         try {
             return BVDocument(

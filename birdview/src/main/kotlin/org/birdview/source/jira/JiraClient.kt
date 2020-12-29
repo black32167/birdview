@@ -1,6 +1,6 @@
 package org.birdview.source.jira
 
-import org.birdview.source.ItemsPage
+import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
@@ -9,23 +9,21 @@ import org.birdview.storage.BVJiraConfig
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
-import org.birdview.utils.remote.ResponseValidationUtils
-import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import javax.ws.rs.client.Entity
-import javax.ws.rs.client.WebTarget
-import javax.ws.rs.core.Response
+import javax.inject.Named
 
+@Named
 class JiraClient(
-        private val jiraConfig: BVJiraConfig) {
+    private val httpClientFactory: BVHttpClientFactory
+) {
     private val API_SUFFIX  = "/rest/api/2"
     private val log = LoggerFactory.getLogger(JiraClient::class.java)
     private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun findIssues(jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
+    fun findIssues(jiraConfig: BVJiraConfig, jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
         if (jql == null) {
             return
         }
@@ -39,22 +37,36 @@ class JiraClient(
 
         var startAt:Int? = 0
         do {
-            val page = BVTimeUtil.logTime("jira-findIssues-page") {
-                postIssuesSearch(jiraIssuesRequest.copy(startAt = startAt!!))
-                        ?.let(this::mapIssuesPage)
-                        ?.also { page ->
-                            log.info("Loaded {} jira issues", page.items.size)
-                            chunkConsumer.invoke(page.items)
-                        }
+            val response = BVTimeUtil.logTime("jira-findIssues-page") {
+                getHttpClient(jiraConfig)
+                    .post(
+                        resultClass = JiraIssuesFilterResponse::class.java,
+                        subPath = "search",
+                        postEntity = jiraIssuesRequest.copy(startAt = startAt!!))
+                    .also { issuesResponse ->
+                        val issues = issuesResponse.issues
+                            .map { executor.submit(Callable { loadByUrl(jiraConfig, it.self) }) }
+                            .mapNotNull { future ->
+                                try {
+                                    future.get()
+                                } catch (e:Exception) {
+                                    log.error(e.message)
+                                    null
+                                }
+                            }
+
+                        log.info("Loaded {} jira issues", issues.size)
+                        chunkConsumer.invoke(issues)
+                    }
             }
-            startAt = page?.continuation
-        } while (startAt != null)
+            startAt = response.startAt + response.issues.size
+        } while (!response.isLast && !response.issues.isEmpty())
     }
 
-    fun loadByKeys(issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
+    fun loadByKeys(jiraConfig: BVJiraConfig, issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
         val issues = issueKeys
-                .map { "${getApiRootUrl()}/issue/${it}" }
-                .map { executor.submit(Callable { loadByUrl(it) }) }
+                .map { "${getApiRootUrl(jiraConfig)}/issue/${it}" }
+                .map { executor.submit(Callable { loadByUrl(jiraConfig, it) }) }
                 .mapNotNull { future ->
                     try {
                         future.get()
@@ -66,59 +78,28 @@ class JiraClient(
         chunkConsumer(issues)
     }
 
-    private fun postIssuesSearch(jiraIssuesRequest: JiraIssuesFilterRequest) =
-            getTarget()
-                    .path("search")
-                    .request()
-                    .post(Entity.json(jiraIssuesRequest))
-
-    private fun mapIssuesPage(response: Response): ItemsPage<JiraIssue, Int> =
-            response
-                    .also (ResponseValidationUtils::validate)
-                    .let { resp ->
-                        val issuesResponse = resp.readEntity(JiraIssuesFilterResponse::class.java)
-                        val issues = issuesResponse.issues
-                                .map { executor.submit(Callable { loadByUrl(it.self) }) }
-                                .mapNotNull { future ->
-                                    try {
-                                        future.get()
-                                    } catch (e:Exception) {
-                                        log.error(e.message)
-                                        null
-                                    }
-                                }
-                        ItemsPage(
-                                issues,
-                                issuesResponse
-                                        .takeUnless { it.isLast || issues.size   < it.maxResults || issues.isEmpty() }
-                                        ?.run { startAt + maxResults })
-                    }
-
-    fun loadByUrl(url:String): JiraIssue =
-            getTargetFactory(url).getTarget("")
-                .queryParam("expand", "changelog")
-                .request()
-                .get()
-                .also { response -> if(response.status != 200) {
-                    throw RuntimeException("Error loading Jira issue (${url}):\n${response.readEntity(String::class.java)}")
-                } }
-                .readEntity(JiraIssue::class.java)
-
-    fun getIssueLinks(issueKey: String): Array<JiraRemoteLink> =
-            getTarget().path("issue").path(issueKey).path("remotelink")
-                    .request()
-                    .get()
-                    .also(ResponseValidationUtils::validate)
-                    .readEntity(Array<JiraRemoteLink>::class.java)
-
-
-    private fun getTarget(): WebTarget = getTargetFactory().getTarget(API_SUFFIX)
-
-    private fun getApiRootUrl() = "${jiraConfig.baseUrl}${API_SUFFIX}"
-
-    private fun getTargetFactory() = getTargetFactory(jiraConfig.baseUrl)
-
-    private fun getTargetFactory(url: String) = WebTargetFactory(url, enableLogging = false) {
-        BasicAuth(jiraConfig.user, jiraConfig.token)
+    fun loadByUrl(jiraConfig: BVJiraConfig, url:String): JiraIssue {
+        if (!url.startsWith(getApiRootUrl(jiraConfig))) {
+            throw IllegalArgumentException("Can't load ${url} from ${jiraConfig.baseUrl}")
+        }
+        return getHttpClient(jiraConfig).get(
+            resultClass = JiraIssue::class.java,
+            subPath = url.substring(getApiRootUrl(jiraConfig).length),
+            parameters = mapOf("expand" to "changelog")
+        )
     }
+
+    fun getIssueLinks(jiraConfig: BVJiraConfig, issueKey: String): Array<JiraRemoteLink> =
+        getHttpClient(jiraConfig).get(
+            resultClass = Array<JiraRemoteLink>::class.java,
+            subPath = "issue/${issueKey}/remotelink",
+            parameters = mapOf("expand" to "changelog")
+        )
+
+    private fun getHttpClient(jiraConfig: BVJiraConfig) =
+        httpClientFactory.getHttpClient(getApiRootUrl(jiraConfig)) {
+            BasicAuth(jiraConfig.user, jiraConfig.token)
+        }
+
+    private fun getApiRootUrl(jiraConfig: BVJiraConfig) = "${jiraConfig.baseUrl}${API_SUFFIX}"
 }

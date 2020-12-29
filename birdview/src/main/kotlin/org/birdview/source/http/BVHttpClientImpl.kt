@@ -22,7 +22,7 @@ class BVHttpClientImpl (
             .readEntity(resultClass)
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
-        post(subPath, Entity.json(postEntity), parameters)
+        post(subPath, postEntity, parameters)
             .readEntity(resultClass)
 
     override fun <T> post(resultType: GenericType<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
