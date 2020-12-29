@@ -20,19 +20,19 @@ import javax.inject.Named
 
 @Named
 class BVConfluenceDocumentService (
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val userSourceStorage: BVUserSourceStorage
+    private val client: ConfluenceClient,
+    private val sourceSecretsStorage: BVSourceSecretsStorage,
+    private val userSourceStorage: BVUserSourceStorage
 ): BVTaskSource {
     // 2020-03-10T05:43:13.000Z
     private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
         val confluenceConfig = sourceConfig as BVConfluenceConfig
-        val client = ConfluenceClient(config = confluenceConfig)
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
         val cql = "type=page AND contributor=\"${confluenceUser}\"" +
                 (updatedPeriod.after?.let { after -> " AND lastmodified >= \"${formatDate(after)}\" " } ?: "") +
                 " ORDER BY lastmodified DESC"
-        client.findDocuments(cql) { confluenceDocuments ->
+        client.findDocuments(confluenceConfig, cql) { confluenceDocuments ->
             chunkConsumer(confluenceDocuments.map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) })
         }
     }
