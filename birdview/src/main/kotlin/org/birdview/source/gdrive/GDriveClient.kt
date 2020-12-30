@@ -1,6 +1,5 @@
 package org.birdview.source.gdrive
 
-import org.birdview.source.ItemsPage
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
 import org.birdview.source.http.BVHttpClientFactory
@@ -10,19 +9,16 @@ import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
-import org.birdview.utils.remote.ResponseValidationUtils
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 import javax.ws.rs.client.Entity
-import javax.ws.rs.client.WebTarget
 import javax.ws.rs.core.Form
-import javax.ws.rs.core.Response
 
 @Named
 class GDriveClient(
     private val httpClientFactory: BVHttpClientFactory,
     tokenStorage: OAuthRefreshTokenStorage
-): AbstractOAuthClient(tokenStorage) {
+): AbstractOAuthClient<GAccessTokenResponse>(tokenStorage, httpClientFactory) {
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val filesPerPage = 500
 
@@ -75,12 +71,12 @@ class GDriveClient(
                     .param("grant_type", "refresh_token")
                     .param("refresh_token", refreshToken))
 
-    override fun readAccessTokenResponse(response: Response): String = response
-                    .readEntity(GAccessTokenResponse::class.java)
-                    .access_token
+    override fun readAccessTokenResponse(response: GAccessTokenResponse): String = response.access_token
 
     private fun getHttpClient(config: BVGDriveConfig) =
         httpClientFactory.getHttpClient("https://www.googleapis.com/drive/v3") {
             authCodeProvider(config)
         }
+
+    override fun getAccessTokenResponseClass(): Class<GAccessTokenResponse> = GAccessTokenResponse::class.java
 }

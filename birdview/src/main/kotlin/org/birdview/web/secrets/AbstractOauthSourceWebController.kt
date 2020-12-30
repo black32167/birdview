@@ -1,8 +1,8 @@
 package org.birdview.web.secrets
 
+import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.utils.remote.WebTargetFactory
 import org.birdview.web.BVWebPaths
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
@@ -10,19 +10,18 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import org.springframework.web.servlet.view.RedirectView
-import javax.ws.rs.client.Entity
-import javax.ws.rs.core.Form
-import javax.ws.rs.core.Response
 
-abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
-        sourceSecretsStorage: BVSourceSecretsStorage
+abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSourceConfig, F>(
+    private val httpClientFactory: BVHttpClientFactory,
+    sourceSecretsStorage: BVSourceSecretsStorage,
 ): AbstractSourceWebController<T, F>(sourceSecretsStorage) {
     companion object {
         const val CODE_ENDPOINT_PATH = "code"
     }
     private val log = LoggerFactory.getLogger(AbstractOauthSourceWebController::class.java)
 
-    protected abstract fun consumeAuthCodeExchangeResponse(sourceName: String, rawResponse: Response)
+    protected abstract fun consumeAuthCodeExchangeResponse(sourceName: String, rawResponse: AuthCodeResponse)
+    protected abstract fun getAuthCodeResponseClass(): Class<AuthCodeResponse>
 
     protected abstract fun getControllerPath():String
 
@@ -54,22 +53,17 @@ abstract class AbstractOauthSourceWebController<T : BVOAuthSourceConfig, F>(
 
     private fun exchangeAuthorizationCode(sourceName: String, authCode:String) {
         val config = sourceSecretsStorage.getConfigByName(sourceName) as BVOAuthSourceConfig
-        val formEntity = Entity.form(Form()
-                .param("client_id", config.clientId)
-                .param("client_secret", config.clientSecret)
-                .param("access_type", "offline")
-                .param("code", authCode)
-                .param("grant_type", "authorization_code")
-                .param("redirect_uri", getRedirectCodeUrl(config.sourceName)))
-        val authCodeExchangeResponse = WebTargetFactory(config.tokenExchangeUrl)
-                .getTarget("")
-                .request()
-                .post(formEntity)
-                .also { response ->
-                    if (response.status != 200) {
-                        throw RuntimeException("Error reading access token: ${response.readEntity(String::class.java)}")
-                    }
-                }
+        val authCodeExchangeResponse =
+            httpClientFactory.getHttpClient(config.tokenExchangeUrl).postForm(
+                resultClass = getAuthCodeResponseClass(),
+                formFields = mapOf(
+                    "client_id" to config.clientId,
+                    "client_secret" to config.clientSecret,
+                    "access_type" to "offline",
+                    "code" to authCode,
+                    "grant_type" to "authorization_code",
+                    "redirect_uri" to getRedirectCodeUrl(config.sourceName))
+                )
         consumeAuthCodeExchangeResponse(sourceName, authCodeExchangeResponse)
     }
 

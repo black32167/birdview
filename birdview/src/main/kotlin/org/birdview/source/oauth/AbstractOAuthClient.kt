@@ -1,13 +1,13 @@
 package org.birdview.source.oauth
 
+import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVOAuthSourceConfig
-import org.birdview.utils.remote.WebTargetFactory
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.Form
-import javax.ws.rs.core.Response
 
-abstract class AbstractOAuthClient(
-        protected val tokenStorage: OAuthRefreshTokenStorage
+abstract class AbstractOAuthClient<RT>(
+        protected val tokenStorage: OAuthRefreshTokenStorage,
+        private val httpClientFactory: BVHttpClientFactory
 ) {
     protected open fun getToken(config: BVOAuthSourceConfig): String? =
             tokenStorage.loadLocalRefreshToken(config.sourceName)?.let { refreshToken-> getRemoteAccessToken(refreshToken, config) }
@@ -17,18 +17,14 @@ abstract class AbstractOAuthClient(
         if (accessToken != null) {
             return accessToken
         }
-        return WebTargetFactory(config.tokenExchangeUrl)
-                .getTarget("")
-                .request()
-                .post(getTokenRefreshFormEntity(refreshToken, config))
-                .also { response ->
-                    if (response.status != 200) {
-                        throw RuntimeException("Error reading access token: ${response.readEntity(String::class.java)}")
-                    }
-                }
-                .let { readAccessTokenResponse(it) }
+        return httpClientFactory.getHttpClient(config.tokenExchangeUrl)
+            .post(
+                resultClass = getAccessTokenResponseClass(),
+                postEntity = getTokenRefreshFormEntity(refreshToken, config))
+            .let { readAccessTokenResponse(it) }
     }
 
     protected abstract fun getTokenRefreshFormEntity(refreshToken:String, config: BVOAuthSourceConfig): Entity<Form>
-    protected abstract fun readAccessTokenResponse(response: Response): String
+    protected abstract fun readAccessTokenResponse(response: RT): String
+    protected abstract fun getAccessTokenResponseClass(): Class<RT>
 }

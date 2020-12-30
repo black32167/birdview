@@ -5,6 +5,7 @@ import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
 import javax.ws.rs.client.Entity
 import javax.ws.rs.client.Invocation
+import javax.ws.rs.core.Form
 import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.Response
 
@@ -22,17 +23,28 @@ class BVHttpClientImpl (
             .readEntity(resultClass)
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
-        post(subPath, postEntity, parameters)
+        post(postEntity, subPath, parameters)
             .readEntity(resultClass)
 
     override fun <T> post(resultType: GenericType<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
-        post(subPath, postEntity, parameters)
+        post(postEntity, subPath, parameters)
             .readEntity(resultType)
 
-    private fun post(path: String?, postEntity: Any, parameters: Map<String, Any>): Response =
-        request(path, parameters)
-            .post(Entity.json(postEntity))
+    override fun <T> postForm(resultClass: Class<T>, subPath: String?, formFields: Map<String, String>): T =
+        request(subPath, emptyMap())
+            .post(Entity.form(Form().also { form->formFields.forEach (form::param) }))
             .also(ResponseValidationUtils::validate)
+            .readEntity(resultClass)
+
+    private fun post(postEntity: Any, subPath: String?, parameters: Map<String, Any>): Response {
+        val preparedEntity = if (postEntity is Entity<*>)
+            postEntity
+        else
+            Entity.json(postEntity)
+        return request(subPath, parameters)
+            .post(preparedEntity)
+            .also(ResponseValidationUtils::validate)
+    }
 
     private fun get(path: String?, parameters: Map<String, Any>): Response =
         request(path, parameters)

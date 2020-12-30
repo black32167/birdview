@@ -6,12 +6,8 @@ import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVConfluenceConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
-import org.birdview.utils.remote.ResponseValidationUtils
-import org.birdview.utils.remote.WebTargetFactory
 import org.slf4j.LoggerFactory
-import java.lang.Integer.min
 import javax.inject.Named
-import javax.ws.rs.client.WebTarget
 
 @Named
 class ConfluenceClient(

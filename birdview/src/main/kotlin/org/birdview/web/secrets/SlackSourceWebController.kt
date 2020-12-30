@@ -1,5 +1,6 @@
 package org.birdview.web.secrets
 
+import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.source.slack.SlackTokenResponse
 import org.birdview.storage.BVSlackConfig
@@ -13,9 +14,13 @@ import javax.ws.rs.core.Response
 @Controller
 @RequestMapping(CONTROLLER_PATH)
 class SlackSourceWebController(
-        sourceSecretsStorage: BVSourceSecretsStorage,
-        private val tokenStorage: OAuthRefreshTokenStorage
-): AbstractOauthSourceWebController<BVSlackConfig, SlackSourceWebController.SlackSourceFormData>(sourceSecretsStorage) {
+    sourceSecretsStorage: BVSourceSecretsStorage,
+    httpClientFactory: BVHttpClientFactory,
+    private val tokenStorage: OAuthRefreshTokenStorage
+): AbstractOauthSourceWebController<SlackTokenResponse, BVSlackConfig, SlackSourceWebController.SlackSourceFormData>(
+    httpClientFactory,
+    sourceSecretsStorage
+) {
     companion object {
         const val CONTROLLER_PATH = "${BVWebPaths.SECRETS}/slack"
     }
@@ -27,9 +32,7 @@ class SlackSourceWebController(
             val clientSecret: String?
     ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "slack")
 
-
-    override fun consumeAuthCodeExchangeResponse(sourceName: String, rawResponse: Response) {
-        val slackTokenResponse = rawResponse.readEntity(SlackTokenResponse::class.java)
+    override fun consumeAuthCodeExchangeResponse(sourceName: String, slackTokenResponse: SlackTokenResponse) {
         val userAccessToken = slackTokenResponse.authed_user
                 ?.access_token
                 ?: throw IllegalStateException("Cannot obtain refresh token from auth code exchange response")
@@ -54,4 +57,6 @@ class SlackSourceWebController(
                     clientId = config.clientId,
                     clientSecret = config.clientSecret,
                     user = config.user)
+
+    override fun getAuthCodeResponseClass(): Class<SlackTokenResponse> = SlackTokenResponse::class.java
 }
