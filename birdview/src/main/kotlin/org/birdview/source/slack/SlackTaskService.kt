@@ -14,7 +14,8 @@ import javax.inject.Named
 @Named
 class SlackTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val tokenStorage: OAuthRefreshTokenStorage
+        private val tokenStorage: OAuthRefreshTokenStorage,
+        private val slackClient: SlackClient
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(SlackTaskService::class.java)
     override fun getTasks(
@@ -24,8 +25,7 @@ class SlackTaskService(
             chunkConsumer: (List<BVDocument>) -> Unit) {
         val slackConfig = sourceConfig as BVSlackConfig
         try {
-            val client = SlackClient(slackConfig, tokenStorage)
-            client.findMessages(slackConfig, chunkConsumer)
+            slackClient.findMessages(slackConfig, chunkConsumer)
         } catch (e: Exception) {
             log.error("Error reading Slack data (source {})", sourceConfig.sourceName, e)
         }

@@ -20,7 +20,7 @@ import javax.inject.Named
 @Named
 open class TrelloTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val trelloClientProvider: TrelloClientProvider,
+        private val trelloClient: TrelloClient,
         private val trelloQueryBuilder: TrelloQueryBuilder
 ) : BVTaskSource {
     companion object {
@@ -38,9 +38,8 @@ open class TrelloTaskService(
         val trelloConfig = sourceConfig as BVTrelloConfig
         val query = trelloQueryBuilder.getQueries(bvUser, updatedPeriod, trelloConfig)
 
-        trelloClientProvider.getTrelloClient(trelloConfig).getCards(query) { cards->
-            val listsMap = trelloClientProvider.getTrelloClient(trelloConfig)
-                    .loadLists(cards.map { it.idList  })
+        trelloClient.getCards(trelloConfig, query) { cards->
+            val listsMap = trelloClient.loadLists(trelloConfig, cards.map { it.idList  })
                     .associateBy { it.id }
 
             val tasks = cards.map { card ->

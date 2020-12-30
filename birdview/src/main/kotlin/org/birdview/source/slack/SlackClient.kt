@@ -7,12 +7,13 @@ import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.source.slack.model.SlackMessage
 import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.BVSlackConfig
+import javax.inject.Named
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.Form
 
+@Named
 class SlackClient  (
     private val httpClientFactory: BVHttpClientFactory,
-    private val config: BVSlackConfig,
     tokenStorage: OAuthRefreshTokenStorage
 ): AbstractOAuthClient<SlackTokenResponse>(tokenStorage, httpClientFactory) {
 //    private val targetFactory =
