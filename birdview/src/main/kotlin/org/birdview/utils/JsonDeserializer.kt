@@ -16,8 +16,19 @@ class JsonDeserializer {
     } catch (e: Exception) {
         throw RuntimeException("Error deserializing $jsonFile", e)
     }
+
+    fun <T> deserializeString(payload: String, resultClass: Class<T>): T = try {
+        objectMapper.readValue(payload, resultClass)
+    } catch (e: Exception) {
+        throw RuntimeException("Error deserializing from string to ${resultClass.simpleName}", e)
+    }
+
     fun serialize(jsonFile: Path, payload: Any) =
             objectMapper.writeValue(jsonFile.toFile(), payload)
+
     inline fun <reified T> deserialize(jsonFile: Path): T =
             deserialize(jsonFile, T::class.java)
+
+    fun <T> serializetoString(payload: T): String =
+        objectMapper.writeValueAsString(payload)
 }

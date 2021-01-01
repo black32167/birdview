@@ -36,15 +36,10 @@ class BVHttpClientImpl (
             .also(ResponseValidationUtils::validate)
             .readEntity(resultClass)
 
-    private fun post(postEntity: Any, subPath: String?, parameters: Map<String, Any>): Response {
-        val preparedEntity = if (postEntity is Entity<*>)
-            postEntity
-        else
-            Entity.json(postEntity)
-        return request(subPath, parameters)
-            .post(preparedEntity)
+    private fun post(postEntity: Any, subPath: String?, parameters: Map<String, Any>): Response =
+        request(subPath, parameters)
+            .post(Entity.json(postEntity))
             .also(ResponseValidationUtils::validate)
-    }
 
     private fun get(path: String?, parameters: Map<String, Any>): Response =
         request(path, parameters)

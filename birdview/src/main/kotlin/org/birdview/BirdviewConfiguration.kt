@@ -1,5 +1,6 @@
 package org.birdview
 
+import org.birdview.BVCacheNames.HTTP_CLIENT_CACHE_NAME
 import org.birdview.BVCacheNames.SOURCE_SECRET_CACHE_NAME
 import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
@@ -16,6 +17,6 @@ open class BirdviewConfiguration {
     @Bean
     open fun cacheManager(): CacheManager {
         return ConcurrentMapCacheManager(
-                USER_SETTINGS_CACHE, USER_NAMES_CACHE, USER_SOURCE_CACHE, SOURCE_SECRET_CACHE_NAME)
+                USER_SETTINGS_CACHE, USER_NAMES_CACHE, USER_SOURCE_CACHE, SOURCE_SECRET_CACHE_NAME, HTTP_CLIENT_CACHE_NAME)
     }
 }

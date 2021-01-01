@@ -3,6 +3,7 @@ package org.birdview.config
 import org.springframework.beans.factory.annotation.Value
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import javax.inject.Named
 
 @Named
@@ -11,6 +12,9 @@ class BVFoldersConfig (
     val sourcesSharedSecretsConfigsFolder = Files.createDirectories(configFolder.resolve("sources"))
     val usersConfigFolder = Files.createDirectories(configFolder.resolve("users"))
     val oauthTokenDir = Files.createDirectories(configFolder.resolve("tokens"))
+
+    fun getHttpInteractionsLogFolder(): Path = Paths.get("/tmp/birdview/http")
+    fun getHttpInteractionsReplayFolder(): Path = Paths.get("/tmp/birdview/http")
 
     fun getUserConfigFolder(userName: String): Path =
             usersConfigFolder.resolve(userName)

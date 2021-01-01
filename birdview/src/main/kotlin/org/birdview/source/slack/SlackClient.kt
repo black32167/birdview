@@ -53,12 +53,12 @@ class SlackClient  (
     override fun getToken(config: BVOAuthSourceConfig): String? =
             tokenStorage.getAccessToken(config)
 
-    override fun getTokenRefreshFormEntity(refreshToken:String, config: BVOAuthSourceConfig): Entity<Form> =
-            Entity.form(Form()
-                    .param("client_id", config.clientId)
-                    .param("client_secret", config.clientSecret)
-                 //   .param("grant_type", "refresh_token")
-                    .param("code", refreshToken))
+    override fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceConfig): Map<String, String> =
+            mapOf(
+                    "client_id" to config.clientId,
+                    "client_secret" to config.clientSecret,
+                 //   "grant_type" to "refresh_token",
+                    "code" to refreshToken)
 
     override fun readAccessTokenResponse(response: SlackTokenResponse): String = response.access_token!!
     override fun getAccessTokenResponseClass(): Class<SlackTokenResponse> = SlackTokenResponse::class.java

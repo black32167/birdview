@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile
 import javax.inject.Named
 
 @Named
-@Profile("record-responses")
+//@Profile("record-responses")
 class SourceLoggingBeanPostProcessor: BeanPostProcessor {
     private val log = LoggerFactory.getLogger(SourceLoggingBeanPostProcessor::class.java)
 

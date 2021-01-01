@@ -18,13 +18,13 @@ abstract class AbstractOAuthClient<RT>(
             return accessToken
         }
         return httpClientFactory.getHttpClient(config.tokenExchangeUrl)
-            .post(
+            .postForm(
                 resultClass = getAccessTokenResponseClass(),
-                postEntity = getTokenRefreshFormEntity(refreshToken, config))
+                formFields = getTokenRefreshFormContent(refreshToken, config))
             .let { readAccessTokenResponse(it) }
     }
 
-    protected abstract fun getTokenRefreshFormEntity(refreshToken:String, config: BVOAuthSourceConfig): Entity<Form>
+    protected abstract fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceConfig): Map<String, String>
     protected abstract fun readAccessTokenResponse(response: RT): String
     protected abstract fun getAccessTokenResponseClass(): Class<RT>
 }
