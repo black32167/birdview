@@ -2,11 +2,14 @@ package org.birdview.source.http.log.record
 
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.log.HttpInteraction
+import org.birdview.utils.BVConversionUtils
+import org.birdview.utils.BVConversionUtils.objectToMap
 import org.birdview.utils.JsonDeserializer
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import javax.ws.rs.core.GenericType
+import kotlin.reflect.full.memberProperties
 
 class LoggingDelegateHttpClient(
     private val delegate: BVHttpClient,
@@ -27,11 +30,11 @@ class LoggingDelegateHttpClient(
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
         delegate.post(resultClass, postEntity, subPath, parameters).also { serialize(
             HttpInteraction(
-            endpointUrl = subPath,
-            resultType = resultClass.simpleName,
-            parameters = parameters,
-            responsePayload = serializePayload(it)
-        )
+                endpointUrl = subPath,
+                resultType = resultClass.simpleName,
+                parameters = parameters + objectToMap(postEntity),
+                responsePayload = serializePayload(it)
+            )
         ) }
 
     override fun <T> post(
@@ -43,7 +46,7 @@ class LoggingDelegateHttpClient(
         HttpInteraction(
         endpointUrl = subPath,
         resultType = resultType.rawType.simpleName,
-        parameters = parameters,
+        parameters = parameters + objectToMap(postEntity),
         responsePayload = serializePayload(it)
     )
     ) }
@@ -70,6 +73,7 @@ class LoggingDelegateHttpClient(
             interaction)
     }
 
-    private fun <T> serializePayload(payload: T): String =
-        jsonDeserializer.serializetoString(payload)
+    private fun serializePayload(payload: Any?): String =
+        jsonDeserializer.serializeToString(payload)
+
 }

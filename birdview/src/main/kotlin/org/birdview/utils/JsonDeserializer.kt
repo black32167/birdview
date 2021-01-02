@@ -29,6 +29,6 @@ class JsonDeserializer {
     inline fun <reified T> deserialize(jsonFile: Path): T =
             deserialize(jsonFile, T::class.java)
 
-    fun <T> serializetoString(payload: T): String =
+    fun <T> serializeToString(payload: T): String =
         objectMapper.writeValueAsString(payload)
 }
