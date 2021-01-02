@@ -10,13 +10,14 @@ import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager
 import org.springframework.context.annotation.Bean
+import org.springframework.core.Ordered
 
-@EnableCaching
+@EnableCaching(order = Ordered.HIGHEST_PRECEDENCE)
 @SpringBootApplication
 open class BirdviewConfiguration {
     @Bean
     open fun cacheManager(): CacheManager {
-        return ConcurrentMapCacheManager(
+             return ConcurrentMapCacheManager(
                 USER_SETTINGS_CACHE, USER_NAMES_CACHE, USER_SOURCE_CACHE, SOURCE_SECRET_CACHE_NAME, HTTP_CLIENT_CACHE_NAME)
     }
 }

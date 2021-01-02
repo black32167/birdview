@@ -5,6 +5,7 @@ import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.utils.JsonDeserializer
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.annotation.Profile
+import org.springframework.core.Ordered
 import javax.inject.Named
 
 @Named
@@ -12,9 +13,11 @@ import javax.inject.Named
 class BVReplayingHttpClientFactoryBeanPostProcessor(
     private val foldersConfig: BVFoldersConfig,
     private val jsonDeserializer: JsonDeserializer
-): BeanPostProcessor {
+): BeanPostProcessor, Ordered {
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any =
         (bean as? BVHttpClientFactory)
             ?.let { BVReplayingHttpClientFactory(foldersConfig, jsonDeserializer) }
             ?: bean
+
+    override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE
 }

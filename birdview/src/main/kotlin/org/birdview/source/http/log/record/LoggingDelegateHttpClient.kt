@@ -1,13 +1,11 @@
 package org.birdview.source.http.log.record
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.log.HttpInteraction
 import org.birdview.utils.JsonDeserializer
-import java.io.OutputStream
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import javax.ws.rs.core.GenericType
 
 class LoggingDelegateHttpClient(
@@ -15,15 +13,16 @@ class LoggingDelegateHttpClient(
     private val outputFolder: Path,
     private val jsonDeserializer: JsonDeserializer
 ): BVHttpClient {
+    private val resultType2Counter: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
+
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T =
         delegate.get(resultClass, subPath, parameters).also { serialize(
             HttpInteraction(
-            endpointUrl = subPath,
-            resultType = resultClass.simpleName,
-            parameters = parameters,
-            responsePayload = serializePayload(it)
-        )
-        ) }
+                endpointUrl = subPath,
+                resultType = resultClass.simpleName,
+                parameters = parameters,
+                responsePayload = serializePayload(it)
+            )) }
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
         delegate.post(resultClass, postEntity, subPath, parameters).also { serialize(
@@ -63,8 +62,11 @@ class LoggingDelegateHttpClient(
     ) }
 
     private fun serialize(interaction: HttpInteraction) {
+        val responseCount = resultType2Counter
+            .computeIfAbsent(interaction.resultType) { AtomicInteger() }
+            .incrementAndGet()
         jsonDeserializer.serialize(
-            outputFolder.resolve("${interaction.resultType}-${UUID.randomUUID()}.json"),
+            outputFolder.resolve("${interaction.resultType}-${responseCount}.json"),
             interaction)
     }
 

@@ -25,7 +25,6 @@ class BVReplayingHttpClient(
     ): T =
         deserializeInteraction(resultType.rawType as Class<T>, subPath, parameters)
 
-
     override fun <T> postForm(resultClass: Class<T>, subPath: String?, formFields: Map<String, String>): T =
         deserializeInteraction(resultClass, subPath, formFields)
 
