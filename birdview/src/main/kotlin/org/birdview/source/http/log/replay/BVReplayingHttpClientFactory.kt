@@ -11,5 +11,5 @@ class BVReplayingHttpClientFactory(
     private val jsonDeserializer: JsonDeserializer
 ): BVHttpClientFactory {
     override fun getHttpClient(url: String, authProvider: () -> ApiAuth?): BVHttpClient =
-        BVReplayingHttpClient(foldersConfig.getHttpInteractionsReplayFolder(), jsonDeserializer)
+        BVReplayingHttpClient(foldersConfig.getHttpInteractionsLogFolder(), jsonDeserializer)
 }

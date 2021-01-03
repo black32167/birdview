@@ -14,7 +14,9 @@ class BVFoldersConfig (
     val oauthTokenDir = Files.createDirectories(configFolder.resolve("tokens"))
 
     fun getHttpInteractionsLogFolder(): Path = Paths.get("/tmp/birdview/http")
-    fun getHttpInteractionsReplayFolder(): Path = Paths.get("/tmp/birdview/http")
+
+    fun getSingularTimeFile(): Path = Files.createDirectories(Paths.get("/tmp/birdview"))
+        .resolve("instant")
 
     fun getUserConfigFolder(userName: String): Path =
             usersConfigFolder.resolve(userName)
@@ -32,5 +34,4 @@ class BVFoldersConfig (
             Files.createDirectory(path)
         }
     }
-
 }

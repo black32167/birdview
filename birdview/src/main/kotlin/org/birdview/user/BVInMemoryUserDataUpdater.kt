@@ -1,12 +1,12 @@
 package org.birdview.user
 
 import org.birdview.analysis.BVDocument
-import org.birdview.model.RelativeHierarchyType
 import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
 import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
+import org.birdview.time.BVTimeService
 import org.birdview.user.document.BVDocumentsLoader
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVDocumentUtils
@@ -21,7 +21,8 @@ class BVInMemoryUserDataUpdater (
         private val userStorage: BVUserStorage,
         private val documentsLoader: BVDocumentsLoader,
         private val documentStorage: BVDocumentStorage,
-        private val userLog: BVUserLog
+        private val userLog: BVUserLog,
+        private val timeService: BVTimeService
 ): BVUserDataUpdater, BVUserStorage.UserChangedListener {
     companion object {
         private const val DELAY_BETWEEN_UPDATES_MINUTES: Long = 30
@@ -63,9 +64,8 @@ class BVInMemoryUserDataUpdater (
             userFutures[it] = CompletableFuture<Void>()
         }
 
-
         executor.submit {
-            var endTime = ZonedDateTime.now()
+            var endTime = timeService.getNow()
             var startTime = endTime.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
             val minStartTime = ZonedDateTime.now().minusDays(MAX_DAYS_BACK)
 
@@ -76,7 +76,6 @@ class BVInMemoryUserDataUpdater (
                     }
                     endTime = startTime
                     startTime = endTime.minusDays(10)
-
                 }
             } catch (e: Error) {
                 log.error("", e)

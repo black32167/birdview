@@ -2,6 +2,8 @@ package org.birdview.source.http.log.replay
 
 import org.birdview.config.BVFoldersConfig
 import org.birdview.source.http.BVHttpClientFactory
+import org.birdview.source.http.log.record.BVSingularTimeService
+import org.birdview.time.BVTimeService
 import org.birdview.utils.JsonDeserializer
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.annotation.Profile
@@ -15,9 +17,11 @@ class BVReplayingHttpClientFactoryBeanPostProcessor(
     private val jsonDeserializer: JsonDeserializer
 ): BeanPostProcessor, Ordered {
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any =
-        (bean as? BVHttpClientFactory)
-            ?.let { BVReplayingHttpClientFactory(foldersConfig, jsonDeserializer) }
-            ?: bean
+        when (bean) {
+            is BVHttpClientFactory -> BVReplayingHttpClientFactory(foldersConfig, jsonDeserializer)
+            is BVTimeService -> BVFrozenTimeService(foldersConfig)
+            else -> bean
+        }
 
     override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE
 }

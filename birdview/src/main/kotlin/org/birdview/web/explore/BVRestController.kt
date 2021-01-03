@@ -6,6 +6,7 @@ import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
+import org.birdview.time.BVTimeService
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.user.BVUserLog
 import org.birdview.web.explore.model.BVDocumentView
@@ -14,7 +15,6 @@ import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Comparator
 
@@ -24,7 +24,8 @@ class BVRestController(
         private val taskService: BVTaskService,
         private val userUpdater: BVUserDataUpdater,
         private val documentStorage: BVDocumentStorage,
-        private val userLog: BVUserLog
+        private val userLog: BVUserLog,
+        private val timeService: BVTimeService
 ) {
     class DocumentRequest(
             val user: String?,
@@ -39,7 +40,7 @@ class BVRestController(
     fun documents(
             documentRequest: DocumentRequest
     ): Collection<BVDocumentViewTreeNode> {
-        val today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
+        val today = timeService.getNow().truncatedTo(ChronoUnit.DAYS)
         val user = documentRequest.user.takeUnless { it == "" } ?: UserContext.getUserName()
         val userRoles = documentRequest.userRole?.let { listOf(it) } ?: inferRolesFromReportType(documentRequest.reportType)
         val topNodes = ArrayList<BVDocumentViewTreeNode>()
