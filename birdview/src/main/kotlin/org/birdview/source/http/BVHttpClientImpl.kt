@@ -6,7 +6,6 @@ import org.birdview.utils.remote.WebTargetFactory
 import javax.ws.rs.client.Entity
 import javax.ws.rs.client.Invocation
 import javax.ws.rs.core.Form
-import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.Response
 
 class BVHttpClientImpl (
@@ -25,10 +24,6 @@ class BVHttpClientImpl (
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
         post(postEntity, subPath, parameters)
             .readEntity(resultClass)
-
-    override fun <T> post(resultType: GenericType<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
-        post(postEntity, subPath, parameters)
-            .readEntity(resultType)
 
     override fun <T> postForm(resultClass: Class<T>, subPath: String?, formFields: Map<String, String>): T =
         request(subPath, emptyMap())

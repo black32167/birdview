@@ -2,14 +2,11 @@ package org.birdview.source.http.log.record
 
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.log.HttpInteraction
-import org.birdview.utils.BVConversionUtils
 import org.birdview.utils.BVConversionUtils.objectToMap
 import org.birdview.utils.JsonDeserializer
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import javax.ws.rs.core.GenericType
-import kotlin.reflect.full.memberProperties
 
 class LoggingDelegateHttpClient(
     private val delegate: BVHttpClient,
@@ -36,20 +33,6 @@ class LoggingDelegateHttpClient(
                 responsePayload = serializePayload(it)
             )
         ) }
-
-    override fun <T> post(
-        resultType: GenericType<T>,
-        postEntity: Any,
-        subPath: String?,
-        parameters: Map<String, Any>
-    ): T = delegate.post(resultType, postEntity, subPath, parameters).also { serialize(
-        HttpInteraction(
-        endpointUrl = subPath,
-        resultType = resultType.rawType.simpleName,
-        parameters = parameters + objectToMap(postEntity),
-        responsePayload = serializePayload(it)
-    )
-    ) }
 
     override fun <T> postForm(
         resultClass: Class<T>,

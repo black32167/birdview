@@ -1,10 +1,7 @@
 package org.birdview.source.github.gql
 
 import org.apache.tomcat.util.http.fileupload.util.Streams
-import org.birdview.source.github.gql.model.GqlGithubPullRequest
-import org.birdview.source.github.gql.model.GqlGithubResponse
-import org.birdview.source.github.gql.model.GqlGithubSearchContainer
-import org.birdview.source.github.gql.model.GqlGithubUser
+import org.birdview.source.github.gql.model.*
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVGithubConfig
 import org.birdview.utils.BVTimeUtil
@@ -41,7 +38,7 @@ class GithubGqlClient (
                         BVTimeUtil.logTime("getPullRequests-GQL-page") {
                             getHttpClient(githubConfig)
                                 .post(
-                                    resultType = object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubPullRequest>>>() {},
+                                    GqlGithubSearchPullRequestResponse::class.java,
                                     GQL(query))
                                 .also {
                                     if (it.errors.isNotEmpty()) {
@@ -71,7 +68,7 @@ class GithubGqlClient (
                 }
         val response = getHttpClient(githubConfig)
                 .post(
-                    object : GenericType<GqlGithubResponse<GqlGithubSearchContainer<GqlGithubUser>>>() {},
+                    GqlGithubSearchUserResponse::class.java,
                     GQL(gqlQuery))
         return response.data?.search?.edges?.firstOrNull()?.node?.login
     }
