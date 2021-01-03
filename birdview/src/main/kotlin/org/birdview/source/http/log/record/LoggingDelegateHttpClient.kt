@@ -2,9 +2,10 @@ package org.birdview.source.http.log.record
 
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.log.HttpInteraction
-import org.birdview.utils.BVConversionUtils.objectToMap
 import org.birdview.utils.JsonDeserializer
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -29,7 +30,7 @@ class LoggingDelegateHttpClient(
             HttpInteraction(
                 endpointUrl = subPath,
                 resultType = resultClass.simpleName,
-                parameters = parameters + objectToMap(postEntity),
+                parameters = parameters + jsonDeserializer.objectToMap(postEntity),
                 responsePayload = serializePayload(it)
             )
         ) }
@@ -48,11 +49,13 @@ class LoggingDelegateHttpClient(
     ) }
 
     private fun serialize(interaction: HttpInteraction) {
-        val responseCount = resultType2Counter
-            .computeIfAbsent(interaction.resultType) { AtomicInteger() }
-            .incrementAndGet()
+        val responseSuffix = UUID.randomUUID().toString()
+        val outputFile = outputFolder.resolve("${interaction.resultType}-${responseSuffix}.json")
+        if (Files.exists(outputFile)) {
+            throw IllegalStateException("File ${outputFile} already exists")
+        }
         jsonDeserializer.serialize(
-            outputFolder.resolve("${interaction.resultType}-${responseCount}.json"),
+            outputFile,
             interaction)
     }
 

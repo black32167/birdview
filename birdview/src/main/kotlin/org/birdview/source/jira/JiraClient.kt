@@ -32,7 +32,7 @@ class JiraClient(
         val jiraIssuesRequest = JiraIssuesFilterRequest(
                 startAt = 0,
                 maxResults = issuesPerPage,
-                fields = arrayOf("*all"),
+                fields = listOf("*all"),
                 jql = jql)
 
         var startAt:Int? = 0

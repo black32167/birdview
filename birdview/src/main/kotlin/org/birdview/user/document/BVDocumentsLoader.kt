@@ -37,7 +37,7 @@ class BVDocumentsLoader (
                                         docChunk.forEach (documentConsumer)
 
                                     }
-                                } catch (e: Exception) {
+                                } catch (e: Throwable) {
                                     log.error("Error loading documents for ${sourceConfig.sourceType}", e)
                                 }
                             }

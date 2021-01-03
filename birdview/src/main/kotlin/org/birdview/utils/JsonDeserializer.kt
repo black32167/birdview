@@ -1,5 +1,6 @@
 package org.birdview.utils
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -31,4 +32,9 @@ class JsonDeserializer {
 
     fun <T> serializeToString(payload: T): String =
         objectMapper.writeValueAsString(payload)
+
+    fun objectToMap(obj: Any): Map<String, Any> {
+        val serialized = objectMapper.writeValueAsString(obj)
+        return objectMapper.readValue(serialized, object: TypeReference<Map<String, Any>>() {})
+    }
 }
