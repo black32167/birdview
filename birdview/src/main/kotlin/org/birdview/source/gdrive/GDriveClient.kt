@@ -45,10 +45,10 @@ class GDriveClient(
                             parameters = qParameters)
                 }
                 .also {
-                    log.info("Loaded {} GDrive docs", it.files.size)
+                    log.info("Loaded {} GDrive docs for query ${query}", it.files.size)
                     chunkConsumer.invoke(it.files)
                 }
-                .takeUnless { it.nextPageToken != null }
+                .takeIf { it.nextPageToken != null }
                 ?.also {
                     qParameters = mainParameters + (it.nextPageToken?.let { nextPageToken->
                         mapOf("pageToken" to nextPageToken)

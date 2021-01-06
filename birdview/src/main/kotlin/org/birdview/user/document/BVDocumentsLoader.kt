@@ -30,12 +30,12 @@ class BVDocumentsLoader (
                     .map { sourceConfig ->
 
                         CompletableFuture.runAsync(Runnable {
-                            BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType}") {
+                            log.info("Loading data from ${sourceConfig.sourceType} for ${bvUser}...")
+                            BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType} for ${bvUser}") {
                                 val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
                                 try {
                                     sourceManager.getTasks(bvUser, timeIntervalFilter, sourceConfig) { docChunk ->
                                         docChunk.forEach (documentConsumer)
-
                                     }
                                 } catch (e: Throwable) {
                                     log.error("Error loading documents for ${sourceConfig.sourceType}", e)

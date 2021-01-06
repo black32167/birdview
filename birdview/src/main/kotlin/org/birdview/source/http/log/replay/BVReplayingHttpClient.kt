@@ -32,7 +32,7 @@ class BVReplayingHttpClient(
             }
             .collect(Collectors.toList())
         if (found.isEmpty()) {
-            throw AssertionError("Could not find logged response")
+            throw AssertionError("Could not find logged response ${resultClass.simpleName} (path='${subPath}',parameters=${parameters})")
         }
         if (found.size != 1) {
             log.warn("Multiple responses match")
