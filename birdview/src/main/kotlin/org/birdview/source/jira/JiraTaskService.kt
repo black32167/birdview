@@ -151,7 +151,6 @@ open class JiraTaskService(
         issue.changelog
                 ?.histories
                 ?.flatMap { toOperation(it, config.sourceName) }
-                ?.filter { it.author == config.user }
                 ?: emptyList()
 
     private fun toOperation(changelogItem: JiraChangelogItem, sourceName: String): List<BVDocumentOperation> =
