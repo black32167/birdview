@@ -22,10 +22,10 @@ class JqlBuilder(
                     }
 
     private fun getIssueUpdateAfterClause(after: ZonedDateTime?): String? =
-            after?.let {  "updatedDate >= \"${formatDate(it)}\" " }
+            after?.let {  "updatedDate > \"${formatDate(it)}\" " }
 
     private fun getIssueUpdateBeforeClause(before: ZonedDateTime?): String? =
-            before?.let {  "updatedDate < \"${formatDate(it)}\" " }
+            before?.let {  "updatedDate <= \"${formatDate(it)}\" " }
 
     private fun formatDate(date: ZonedDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))

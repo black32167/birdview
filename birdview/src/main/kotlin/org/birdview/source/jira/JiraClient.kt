@@ -11,7 +11,9 @@ import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import javax.inject.Named
 
 @Named
@@ -64,17 +66,22 @@ class JiraClient(
     }
 
     fun loadByKeys(jiraConfig: BVJiraConfig, issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
-        val issues = issueKeys
-                .map { "${getApiRootUrl(jiraConfig)}/issue/${it}" }
-                .map { executor.submit(Callable { loadByUrl(jiraConfig, it) }) }
-                .mapNotNull { future ->
-                    try {
-                        future.get()
-                    } catch (e:Exception) {
-                        log.error(e.message)
-                        null
-                    }
-                }
+        val issueFutures = ConcurrentHashMap<String, Future<JiraIssue>>()
+        issueKeys.forEach { issueKey ->
+            issueFutures.computeIfAbsent(issueKey) {
+                val url = "${getApiRootUrl(jiraConfig)}/issue/${issueKey}"
+                executor.submit(Callable { loadByUrl(jiraConfig, url) })
+            }
+        }
+        val issues = issueFutures.mapNotNull { (issueKey, issueFuture) ->
+            try {
+                issueFuture.get()
+            } catch (e:Exception) {
+                log.error("Error loading issue #${issueKey}: ${e.message}")
+                null
+            }
+        }
+
         chunkConsumer(issues)
     }
 

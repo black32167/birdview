@@ -15,11 +15,22 @@ class GithubQueryBuilder(
                 listOfNotNull(
                         "type:pr ",
                         userClause(user, githubConfig),
-                        getUpdatePeriodClause(updatedPeriod.after!!, updatedPeriod.before!!)
+                        getUpdatePeriodClause(updatedPeriod.after, updatedPeriod.before)
                 ).joinToString(" ")
 
-    private fun getUpdatePeriodClause(after: ZonedDateTime, before: ZonedDateTime):String? =
-            "updated:${after.format(DateTimeFormatter.ISO_LOCAL_DATE)}..${before.format(DateTimeFormatter.ISO_LOCAL_DATE)}"
+    private fun getUpdatePeriodClause(after: ZonedDateTime?, before: ZonedDateTime?):String? =
+        if (after != null && before != null) {
+            "updated:${format(after)}..${format(before)}"
+        } else if (after != null) {
+            "updated:>${format(after)}"
+        } else if (before != null) {
+            "updated:<=${format(before)}"
+        } else {
+            null
+        }
+
+    private fun format(time: ZonedDateTime) = time.format(DateTimeFormatter.ISO_LOCAL_DATE)
+
 
     private fun userClause(userAlias: String, githubConfig: BVGithubConfig): String? {
         val user = getGithubUser(userAlias, githubConfig)

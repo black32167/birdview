@@ -65,9 +65,10 @@ class BVInMemoryUserDataUpdater (
         }
 
         executor.submit {
-            var endTime = timeService.getNow()
-            var startTime = endTime.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
-            val minStartTime = ZonedDateTime.now().minusDays(MAX_DAYS_BACK)
+            val now = timeService.getNow()
+            var endTime:ZonedDateTime? = null
+            var startTime = now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
+            val minStartTime = now.minusDays(MAX_DAYS_BACK)
 
             try {
                 while (startTime > minStartTime) {
@@ -75,9 +76,9 @@ class BVInMemoryUserDataUpdater (
                         loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
                     }
                     endTime = startTime
-                    startTime = endTime.minusDays(10)
+                    startTime = startTime.minusDays(10)
                 }
-            } catch (e: Error) {
+            } catch (e: Throwable) {
                 log.error("", e)
             } finally {
                 idleBvUsers.forEach {
