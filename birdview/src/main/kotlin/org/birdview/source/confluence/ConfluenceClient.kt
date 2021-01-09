@@ -37,10 +37,12 @@ class ConfluenceClient(
                             "start" to startAt,
                             "limit" to documentsPerPage,
                             "cql" to cql,
-                            "expand" to "content.history" +
-                                    ",content.history.contributors.publishers" +
-                                    ",content.history.contributors.publishers.users" +
-                                    ",content.metadata.comments" //TODO: << how to extract comments?
+                            "expand" to
+                                    //"content.history," +
+//                                    "content.history.contributors.publishers," +
+                                    "content.history.contributors.publishers.users" +
+//                                    ",content.metadata.comments" + //TODO: << how to extract comments?
+                                    ""
                         )
                     ).also {
                         log.info("Loaded {} confluence pages", it.results.size)

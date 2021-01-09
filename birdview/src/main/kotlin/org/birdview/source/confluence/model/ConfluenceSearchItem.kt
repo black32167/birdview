@@ -5,5 +5,5 @@ class ConfluenceSearchItem (
         val url: String,
         val lastModified: String,
         val excerpt: String?,
-        val content: ConfluenceSearchItemContent
+        val content: ConfluenceSearchItemContent?
 )

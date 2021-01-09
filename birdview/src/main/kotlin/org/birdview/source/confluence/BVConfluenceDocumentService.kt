@@ -29,8 +29,11 @@ class BVConfluenceDocumentService (
     override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
         val confluenceConfig = sourceConfig as BVConfluenceConfig
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
-        val cql = "type=page AND contributor=\"${confluenceUser}\"" +
-                (updatedPeriod.after?.let { after -> " AND lastmodified >= \"${formatDate(after)}\" " } ?: "") +
+        val cql =
+            "type=page AND " +
+                "(contributor=\"${confluenceUser}\" OR creator=\"${confluenceUser}\")" +
+                (updatedPeriod.after?.let { after -> " AND lastmodified>\"${formatDate(after)}\" " } ?: "") +
+                (updatedPeriod.before?.let { before -> " AND lastmodified<=\"${formatDate(before)}\" " } ?: "") +
                 " ORDER BY lastmodified DESC"
         client.findDocuments(confluenceConfig, cql) { confluenceDocuments ->
             chunkConsumer(confluenceDocuments.map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) })
@@ -45,7 +48,7 @@ class BVConfluenceDocumentService (
         return BVDocument(
                 ids = setOf(
                     BVDocumentId(id = docUrl),
-                    BVDocumentId("https://canvadev.atlassian.net/wiki/pages/viewpage.action?pageId=${confluenceDocument.content.id}")),
+                    BVDocumentId("https://canvadev.atlassian.net/wiki/pages/viewpage.action?pageId=${confluenceDocument.content?.id}")),
                 title = confluenceDocument.title,
                 key = "open",
                 body = confluenceDocument.excerpt ?: "",
@@ -69,27 +72,32 @@ class BVConfluenceDocumentService (
     }
 
     private fun extractOperations(confluenceDocument: ConfluenceSearchItem, sourceName: String): List<BVDocumentOperation> {
-        val history = confluenceDocument.content.history
-        val creationOperation = BVDocumentOperation(
+        val history = confluenceDocument.content?.history
+        return if (history != null) {
+            val creationOperation = BVDocumentOperation(
                 description = "",
                 author = history.createdBy.accountId,
-                authorDisplayName = history.createdBy.run { email?:displayName },
+                authorDisplayName = history.createdBy.run { email ?: displayName },
                 created = parseDate(history.createdDate),
                 sourceName = sourceName,
                 type = BVDocumentOperationType.UPDATE
-        )
-        val modificationOperations = history.contributors.publishers.users.map { user ->
-            val contributorAccountId = user.accountId
-            BVDocumentOperation(
+            )
+
+            val modificationOperations = history.contributors.publishers.users.map { user ->
+                val contributorAccountId = user.accountId
+                BVDocumentOperation(
                     description = "",
                     author = contributorAccountId,
-                    authorDisplayName = user.run { email?:displayName },
+                    authorDisplayName = user.run { email ?: displayName },
                     created = parseDate(confluenceDocument.lastModified),
                     sourceName = sourceName,
                     type = BVDocumentOperationType.UPDATE
-            )
+                )
+            }
+            return modificationOperations + creationOperation
+        } else {
+            emptyList()
         }
-        return modificationOperations + creationOperation
     }
 
     override fun getType(): SourceType = SourceType.CONFLUENCE
@@ -98,7 +106,7 @@ class BVConfluenceDocumentService (
             sourceSecretsStorage.getConfigByName(sourceName, BVConfluenceConfig::class.java) != null
 
     private fun formatDate(date: ZonedDateTime) =
-            date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
+            date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00"))
 
     private fun parseDate(dateTimeString:String?) =
             BVDateTimeUtils.parse(dateTimeString, CONFLUENCE_DATETIME_PATTERN)

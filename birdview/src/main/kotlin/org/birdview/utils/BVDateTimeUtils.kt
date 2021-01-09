@@ -16,7 +16,7 @@ object BVDateTimeUtils {
     private val zonedFormatterDateTime = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss Z")
 
     fun format(interval: TimeIntervalFilter) = formatterDate.run {
-        "${(interval.after?.let { dateTimeFormat(it) }?: "Now") to (interval.before?.let { dateTimeFormat(it) }?: "Now")}"
+        "${(interval.after?.let { dateTimeFormat(it) }?: "Now")} to ${  (interval.before?.let { dateTimeFormat(it) }?: "Now")}"
     }
 
     fun dateTimeFormat(instant: ZonedDateTime): String =

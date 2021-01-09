@@ -30,9 +30,10 @@ class BVInMemoryUserDataUpdater (
     }
     private val log = LoggerFactory.getLogger(BVInMemoryUserDataUpdater::class.java)
     private data class UserUpdateInfo (val bvUser:String, val timestamp: Long = 0)
-    private val executor = Executors.newScheduledThreadPool(1)
+    private val updateScheduleExecutor = Executors.newScheduledThreadPool(1)
+    private val userUpdateExecutor = Executors.newFixedThreadPool(3)
 
-    private val userFutures = ConcurrentHashMap<String, CompletableFuture<*>>()
+    private val userFutures = ConcurrentHashMap<String, Future<*>>()
 
     private val userSemaphores = ConcurrentHashMap<String, Semaphore>()
 
@@ -45,7 +46,7 @@ class BVInMemoryUserDataUpdater (
     @PostConstruct
     private fun init() {
         userStorage.addUserCreatedListener(this)
-        executor.scheduleWithFixedDelay(this::refreshUsers, 0, DELAY_BETWEEN_UPDATES_MINUTES, TimeUnit.MINUTES)
+        updateScheduleExecutor.scheduleWithFixedDelay(this::refreshUsers, 0, DELAY_BETWEEN_UPDATES_MINUTES, TimeUnit.MINUTES)
     }
 
     private fun refreshUsers() {
@@ -60,34 +61,34 @@ class BVInMemoryUserDataUpdater (
         }
         log.info(">>>>>>>>> Idle users :${idleBvUsers.joinToString (",")}")
 
-        idleBvUsers.forEach {
-            userFutures[it] = CompletableFuture<Void>()
-        }
-
-        executor.submit {
+        updateScheduleExecutor.submit {
             val now = timeService.getNow()
-            var endTime:ZonedDateTime? = null
-            var startTime = now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
-            val minStartTime = now.minusDays(MAX_DAYS_BACK)
 
-            try {
-                while (startTime > minStartTime) {
-                    for (bvUser in idleBvUsers) {
+            for (bvUser in idleBvUsers) {
+                userFutures[bvUser] = userUpdateExecutor.submit {
+                    var endTime: ZonedDateTime? = null
+                    var startTime = now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
+                    val minStartTime = now.minusDays(MAX_DAYS_BACK)
+                    while (startTime > minStartTime) {
                         loadUserData(bvUser, TimeIntervalFilter(after = startTime, before = endTime))
+                        endTime = startTime
+                        startTime = startTime.minusDays(10)
                     }
-                    endTime = startTime
-                    startTime = startTime.minusDays(10)
                 }
-            } catch (e: Throwable) {
-                log.error("", e)
-            } finally {
-                idleBvUsers.forEach {
-                    userSemaphores.get(it)?.release()
-                    userFutures[it]?.complete(null)
-                }
-                log.info(">>>>>>>>> Finished refreshing users ${bvUsers.joinToString (",")}. " +
-                        "Overall ${documentStorage.count()} documents loaded.")
             }
+
+            userFutures.forEach { bvUser, future->
+                try {
+                    future.get()
+                } catch (e: Throwable) {
+                    log.error("", e)
+                } finally {
+                    userSemaphores.get(bvUser)?.release()
+                }
+            }
+
+            log.info(">>>>>>>>> Finished refreshing users ${bvUsers.joinToString (",")}. " +
+                    "Overall ${documentStorage.count()} documents loaded.")
         }
     }
 
