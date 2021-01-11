@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAlias
 
 data class JiraRemoteLink(
         val id: String,
+        val relationship: String?,
         @JsonAlias("object")
         val _object: JiraRemoteLinkObject
 )

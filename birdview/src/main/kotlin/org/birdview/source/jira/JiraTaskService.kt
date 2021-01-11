@@ -92,9 +92,7 @@ open class JiraTaskService(
     private fun extractRefsIds(issue: JiraIssue, issueLinks: Array<JiraRemoteLink>): List<BVDocumentRef> {
         val textIds = BVFilters.filterRefsFromText("${issue.fields.description ?: ""} ${issue.fields.summary}")
                 .map(::BVDocumentRef)
-        val issueExternalLinks = issueLinks.map { it._object.url }
-                .flatMap { BVFilters.filterRefsFromText(it) }
-                .map { id->BVDocumentRef(id, RelativeHierarchyType.LINK_TO_CHILD) }
+        val issueExternalLinks = mapExternalLinks(issueLinks)
         val issueLinkIds = issue.fields.issuelinks?.mapNotNull { jiraIssueLink->
             mapIssueLink(jiraIssueLink)
         } ?: listOf()
@@ -102,6 +100,13 @@ open class JiraTaskService(
                 .map { BVDocumentRef(BVDocumentId(it, SourceType.JIRA), RelativeHierarchyType.LINK_TO_PARENT)  }
         return issueExternalLinks + issueLinkIds + textIds + parentIds
     }
+
+    private fun mapExternalLinks(remoteLinks: Array<JiraRemoteLink>) =
+        remoteLinks
+            .filter { it.relationship?.contains("mentioned")?.not() ?: true }
+            .map { it._object.url }
+            .flatMap { BVFilters.filterRefsFromText(it) }
+            .map { id->BVDocumentRef(id, RelativeHierarchyType.LINK_TO_CHILD) }
 
     private fun mapIssueLink(jiraIssueLink: JiraIssueLink): BVDocumentRef? {
         val referencedIssue = jiraIssueLink.run { outwardIssue ?: inwardIssue }
