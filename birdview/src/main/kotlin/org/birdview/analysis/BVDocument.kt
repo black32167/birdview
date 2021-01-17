@@ -5,17 +5,18 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
 import org.birdview.source.SourceType
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 data class BVDocument (
         val ids: Set<BVDocumentId>,
-        var title: String,
+        val title: String,
         val key: String,
         val body: String = "",
         val updated: Date? = null,
         val created: Date? = null,
         val closed: Date? = null,
         val httpUrl: String,
-        var users: List<BVDocumentUser> = listOf(),
+        val users: List<BVDocumentUser> = listOf(),
         val refs: List<BVDocumentRef> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
@@ -23,25 +24,7 @@ data class BVDocument (
         val sourceName: String,
         val priority: Priority = Priority.NORMAL,
         val internalId: String = UUID.randomUUID().toString()
-) {
-    val lastOperations: List<BVDocumentOperation> = getLastUsersOperations(operations)
-
-    fun getPrimaryId() = ids.first().id
-
-    private fun getLastUsersOperations(operations: List<BVDocumentOperation>): List<BVDocumentOperation> {
-        data class OperationUser (val user: String, val source: String)
-        val encounteredUsers = mutableSetOf<OperationUser>()
-        val lastUsersOperations = mutableListOf<BVDocumentOperation>()
-        for (operation in operations) {
-            val user = OperationUser(operation.author, operation.sourceName)
-            if (!encounteredUsers.contains(user)) {
-                encounteredUsers.add(user)
-                lastUsersOperations.add(operation)
-            }
-        }
-        return lastUsersOperations
-    }
-}
+)
 
 enum class Priority {
     LOW,

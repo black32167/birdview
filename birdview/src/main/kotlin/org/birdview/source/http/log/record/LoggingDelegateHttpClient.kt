@@ -17,36 +17,44 @@ class LoggingDelegateHttpClient(
     private val resultType2Counter: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
 
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T =
-        delegate.get(resultClass, subPath, parameters).also { serialize(
-            HttpInteraction(
+        delegate.get(String::class.java, subPath, parameters).also { payload: String ->
+            serialize( HttpInteraction(
                 endpointUrl = subPath,
                 resultType = resultClass.simpleName,
                 parameters = parameters,
-                responsePayload = serializePayload(it)
+                responsePayload = payload
             )) }
+            .let { payload: String ->
+                jsonDeserializer.deserializeString(payload, resultClass)
+            }
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
-        delegate.post(resultClass, postEntity, subPath, parameters).also { serialize(
-            HttpInteraction(
+        delegate.post(String::class.java, postEntity, subPath, parameters).also { payload: String ->
+            serialize( HttpInteraction(
                 endpointUrl = subPath,
                 resultType = resultClass.simpleName,
                 parameters = parameters + jsonDeserializer.objectToMap(postEntity),
-                responsePayload = serializePayload(it)
-            )
-        ) }
+                responsePayload = payload
+            )) }
+            .let { payload: String ->
+                jsonDeserializer.deserializeString(payload, resultClass)
+            }
+
 
     override fun <T> postForm(
         resultClass: Class<T>,
         subPath: String?,
         formFields: Map<String, String>
-    ): T = delegate.postForm(resultClass, subPath, formFields).also { serialize(
-        HttpInteraction(
-        endpointUrl = subPath,
-        resultType = resultClass.simpleName,
-        parameters = formFields,
-        responsePayload = serializePayload(it)
-    )
-    ) }
+    ): T = delegate.postForm(String::class.java, subPath, formFields).also { payload: String ->
+        serialize( HttpInteraction(
+            endpointUrl = subPath,
+            resultType = resultClass.simpleName,
+            parameters = formFields,
+            responsePayload = payload
+        )) }
+        .let { payload: String ->
+            jsonDeserializer.deserializeString(payload, resultClass)
+        }
 
     private fun serialize(interaction: HttpInteraction) {
         val responseSuffix = UUID.randomUUID().toString()

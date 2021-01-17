@@ -2,6 +2,7 @@ package org.birdview.user.document
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.SourceType
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -25,7 +26,7 @@ class BVDocumentsLoader (
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
 
-    fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: Consumer<BVDocument>):List<Future<*>> =
+    fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: BVSessionDocumentConsumer):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)
                     .map { sourceConfig ->
 
@@ -34,9 +35,7 @@ class BVDocumentsLoader (
                             BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType} for ${bvUser}") {
                                 val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
                                 try {
-                                    sourceManager.getTasks(bvUser, timeIntervalFilter, sourceConfig) { docChunk ->
-                                        docChunk.forEach (documentConsumer)
-                                    }
+                                    sourceManager.getTasks(bvUser, timeIntervalFilter, sourceConfig, documentConsumer)
                                 } catch (e: Throwable) {
                                     log.error("Error loading documents for ${sourceConfig.sourceType}", e)
                                 }

@@ -1,7 +1,9 @@
 package org.birdview.source.confluence
 
 import org.birdview.source.confluence.model.ConfluenceSearchItem
+import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.source.confluence.model.ConfluenceSearchPageResponseSearchResult
+import org.birdview.source.confluence.model.ContentArray
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVConfluenceConfig
 import org.birdview.utils.BVTimeUtil
@@ -15,6 +17,10 @@ class ConfluenceClient(
 ) {
     private val log = LoggerFactory.getLogger(ConfluenceClient::class.java)
     private val documentsPerPage = 50
+    private val pageExpands = listOf(
+        "history.contributors.publishers.users",
+        "version"
+    )
 
     fun findDocuments(
         config: BVConfluenceConfig,
@@ -37,12 +43,7 @@ class ConfluenceClient(
                             "start" to startAt,
                             "limit" to documentsPerPage,
                             "cql" to cql,
-                            "expand" to
-                                    //"content.history," +
-//                                    "content.history.contributors.publishers," +
-                                    "content.history.contributors.publishers.users" +
-//                                    ",content.metadata.comments" + //TODO: << how to extract comments?
-                                    ""
+                            "expand" to pageExpands.map { "content.${it}" }.joinToString (",")
                         )
                     ).also {
                         log.info("Loaded {} confluence pages", it.results.size)
@@ -56,8 +57,27 @@ class ConfluenceClient(
         }
     }
 
+    fun loadPage(config: BVConfluenceConfig, pageUrl: String): ConfluenceSearchItemContent =
+        getHttpClient(config, pageUrl).get(
+            resultClass = ConfluenceSearchItemContent::class.java,
+            parameters = mapOf("expand" to pageExpands.joinToString(","))
+        )
+
+    fun loadComments(config: BVConfluenceConfig, pageId: String): List<ConfluenceSearchItemContent> =
+        getHttpClient(config).get(
+            resultClass = ContentArray::class.java,
+            subPath = "content/${pageId}/child/comment",
+            parameters = mapOf(
+                "limit" to 100,
+                "expand" to pageExpands.joinToString(","))
+        ).results
+
     private fun getHttpClient(config: BVConfluenceConfig) =
-        httpClientFactory.getHttpClient("${config.baseUrl}/rest/api") {
+        getHttpClient(config, "${config.baseUrl}/rest/api")
+
+    private fun getHttpClient(config: BVConfluenceConfig, url: String) =
+        httpClientFactory.getHttpClient(url) {
             BasicAuth(config.user, config.token)
         }
+
 }

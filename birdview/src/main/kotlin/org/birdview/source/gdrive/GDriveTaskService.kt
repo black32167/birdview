@@ -5,6 +5,7 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
@@ -30,14 +31,14 @@ open class GDriveTaskService(
         private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     }
 
-    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: BVSessionDocumentConsumer) {
         try {
             sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
                     ?.also { config ->
                         client.getFiles(
                             config,
                             gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)) { files ->
-                                chunkConsumer.invoke(files.map { file -> toBVDocument(file, config) })
+                                chunkConsumer.consume(files.map { file -> toBVDocument(file, config) })
                             }
                     }
         } catch (e: Exception) {

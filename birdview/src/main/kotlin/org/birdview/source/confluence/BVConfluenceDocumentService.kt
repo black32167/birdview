@@ -5,9 +5,10 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
-import org.birdview.source.confluence.model.ConfluenceSearchItem
+import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVConfluenceConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -24,80 +25,113 @@ class BVConfluenceDocumentService (
     private val sourceSecretsStorage: BVSourceSecretsStorage,
     private val userSourceStorage: BVUserSourceStorage
 ): BVTaskSource {
-    // 2020-03-10T05:43:13.000Z
     private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
+    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: BVSessionDocumentConsumer) {
         val confluenceConfig = sourceConfig as BVConfluenceConfig
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
         val cql =
-            "type=page AND " +
+            "type IN (page,comment) AND " +
                 "(contributor=\"${confluenceUser}\" OR creator=\"${confluenceUser}\")" +
                 (updatedPeriod.after?.let { after -> " AND lastmodified>\"${formatDate(after)}\" " } ?: "") +
                 (updatedPeriod.before?.let { before -> " AND lastmodified<=\"${formatDate(before)}\" " } ?: "") +
                 " ORDER BY lastmodified DESC"
         client.findDocuments(confluenceConfig, cql) { confluenceDocuments ->
-            chunkConsumer(confluenceDocuments.map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) })
+            // Feed loaded pages
+            confluenceDocuments
+                .filter { it.content?.type == "page" }
+                .map { mapDocument(it.content!!, confluenceConfig = sourceConfig, bvUser = bvUser) }
+                .also (chunkConsumer::consume)
+
+            // Load parent pages for comments if not yet
+            confluenceDocuments
+                .filter { it.content?.type == "comment" }
+                .map {
+                    confluenceConfig.baseUrl + it.content!!._expandable.container
+                }
+                .distinct()
+                .filter { pageUrl->!chunkConsumer.isConsumed(pageUrl) }
+                .map { pageUrl ->
+                    client.loadPage(confluenceConfig, pageUrl)
+                }
+                .map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) }
+                .also (chunkConsumer::consume)
         }
     }
 
-    private fun mapDocument(confluenceDocument: ConfluenceSearchItem, confluenceConfig:BVConfluenceConfig, bvUser: String): BVDocument {
+    private fun mapDocument(confluenceDocument: ConfluenceSearchItemContent, confluenceConfig:BVConfluenceConfig, bvUser: String): BVDocument {
         val sourceName = confluenceConfig.sourceName
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceName).sourceUserName
-        val lastModified = parseDate(confluenceDocument.lastModified)
-        val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument.url.trimStart('/')}"
+        val lastModified = parseDate(confluenceDocument.version._when)
+        val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument._links.webui.trimStart('/')}"
+
+        // load document comments
+        val comments:List<ConfluenceSearchItemContent> = client.loadComments(confluenceConfig, confluenceDocument.id)
+
         return BVDocument(
                 ids = setOf(
                     BVDocumentId(id = docUrl),
-                    BVDocumentId("https://canvadev.atlassian.net/wiki/pages/viewpage.action?pageId=${confluenceDocument.content?.id}")),
+                    BVDocumentId("https://canvadev.atlassian.net/wiki/pages/viewpage.action?pageId=${confluenceDocument.id}")),
                 title = confluenceDocument.title,
                 key = "open",
-                body = confluenceDocument.excerpt ?: "",
+                body = confluenceDocument._expandable.body ?: "",
                 updated = lastModified,
                 created = null,
                 httpUrl = docUrl,
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
                 refs = extractRefs(confluenceDocument), // TODO
                 status = BVDocumentStatus.PROGRESS,
-                operations = extractOperations(confluenceDocument, sourceName),
+                operations = extractOperations(confluenceDocument, comments, sourceName),
                 sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW,
                 sourceName = sourceName
         )
     }
 
-    private fun extractRefs(confluenceDocument: ConfluenceSearchItem): List<BVDocumentRef> {
-        val idsFromExcerpt = confluenceDocument.excerpt ?.let { BVFilters.filterRefsFromText(it) } ?: emptySet()
+    private fun extractRefs(confluenceDocument: ConfluenceSearchItemContent): List<BVDocumentRef> {
+        val idsFromExcerpt = confluenceDocument._expandable.body ?.let { BVFilters.filterRefsFromText(it) } ?: emptySet()
         val idsFromTitle = BVFilters.filterRefsFromText(confluenceDocument.title)
         return (idsFromExcerpt + idsFromTitle).map { BVDocumentRef(it) }
     }
 
-    private fun extractOperations(confluenceDocument: ConfluenceSearchItem, sourceName: String): List<BVDocumentOperation> {
-        val history = confluenceDocument.content?.history
-        return if (history != null) {
-            val creationOperation = BVDocumentOperation(
+    private fun extractOperations(
+        confluenceDocument: ConfluenceSearchItemContent,
+        comments: List<ConfluenceSearchItemContent>,
+        sourceName: String
+    ): List<BVDocumentOperation> {
+        val history = confluenceDocument.history
+
+        val commentOperations = comments
+            ?.map { commentContent-> BVDocumentOperation(
                 description = "",
-                author = history.createdBy.accountId,
-                authorDisplayName = history.createdBy.run { email ?: displayName },
-                created = parseDate(history.createdDate),
+                author = commentContent.version.by.accountId,
+                created = parseDate(commentContent.version._when),
+                sourceName = sourceName,
+                type = BVDocumentOperationType.COMMENT
+            ) }
+            ?: emptyList()
+
+        val creationOperation = BVDocumentOperation(
+            description = "",
+            author = history.createdBy.accountId,
+            authorDisplayName = history.createdBy.run { email ?: displayName },
+            created = parseDate(history.createdDate),
+            sourceName = sourceName,
+            type = BVDocumentOperationType.UPDATE
+        )
+
+        val modificationOperations = history.contributors.publishers.users.map { user ->
+            val contributorAccountId = user.accountId
+            BVDocumentOperation(
+                description = "",
+                author = contributorAccountId,
+                authorDisplayName = user.run { email ?: displayName },
+                created = parseDate(confluenceDocument.version._when),
                 sourceName = sourceName,
                 type = BVDocumentOperationType.UPDATE
             )
-
-            val modificationOperations = history.contributors.publishers.users.map { user ->
-                val contributorAccountId = user.accountId
-                BVDocumentOperation(
-                    description = "",
-                    author = contributorAccountId,
-                    authorDisplayName = user.run { email ?: displayName },
-                    created = parseDate(confluenceDocument.lastModified),
-                    sourceName = sourceName,
-                    type = BVDocumentOperationType.UPDATE
-                )
-            }
-            return modificationOperations + creationOperation
-        } else {
-            emptyList()
         }
+
+        return modificationOperations + creationOperation + commentOperations
     }
 
     override fun getType(): SourceType = SourceType.CONFLUENCE

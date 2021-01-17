@@ -2,6 +2,7 @@ package org.birdview.source.jira
 
 import org.birdview.analysis.*
 import org.birdview.model.*
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.jira.model.*
@@ -26,14 +27,15 @@ open class JiraTaskService(
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("JiraTaskService"))
 
     override fun getTasks(
-            bvUser: String,
-            updatedPeriod: TimeIntervalFilter,
-            sourceConfig: BVAbstractSourceConfig,
-            chunkConsumer: (List<BVDocument>) -> Unit) {
+        bvUser: String,
+        updatedPeriod: TimeIntervalFilter,
+        sourceConfig: BVAbstractSourceConfig,
+        chunkConsumer: BVSessionDocumentConsumer
+    ) {
         val jiraConfig = sourceConfig as BVJiraConfig
         jiraClient
                 .findIssues(jiraConfig, jqlBuilder.getJql(bvUser, updatedPeriod, jiraConfig)) { jiraIssues->
-                    chunkConsumer.invoke(
+                    chunkConsumer.consume(
                             jiraIssues
                                     .map { executor.submit(Callable<BVDocument> { mapDocument( it, jiraConfig) }) }
                                     .map { it.get() }

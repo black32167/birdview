@@ -7,6 +7,7 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
@@ -31,10 +32,11 @@ open class TrelloTaskService(
     }
 
     override fun getTasks(
-            bvUser: String,
-            updatedPeriod: TimeIntervalFilter,
-            sourceConfig: BVAbstractSourceConfig,
-            chunkConsumer: (List<BVDocument>) -> Unit) {
+        bvUser: String,
+        updatedPeriod: TimeIntervalFilter,
+        sourceConfig: BVAbstractSourceConfig,
+        chunkConsumer: BVSessionDocumentConsumer
+    ) {
         val trelloConfig = sourceConfig as BVTrelloConfig
         val query = trelloQueryBuilder.getQueries(bvUser, updatedPeriod, trelloConfig)
 
@@ -61,7 +63,7 @@ open class TrelloTaskService(
                 )
             }
 
-            chunkConsumer.invoke(tasks)
+            chunkConsumer.consume(tasks)
         }
     }
 

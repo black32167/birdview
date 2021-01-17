@@ -4,6 +4,7 @@ import org.birdview.analysis.BVDocument
 import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
 import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.time.BVTimeService
@@ -12,6 +13,7 @@ import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
+import java.util.*
 import java.util.concurrent.*
 import javax.annotation.PostConstruct
 import javax.inject.Named
@@ -99,14 +101,23 @@ class BVInMemoryUserDataUpdater (
     private fun loadUserData(bvUser: String, interval: TimeIntervalFilter) {
         log.info(">>>>>>>>> Loading data for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
         val logId = userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
-        try {
 
+        val loadedDocs = ConcurrentHashMap<String, BVDocument>()
+        val loadedIds = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
+        val documentSessionConsumer = object:BVSessionDocumentConsumer {
+            override fun consume(documents: List<BVDocument>) {
+                documents.forEach { doc->
+                    documentStorage.updateDocument(doc)
+                    doc.ids.forEach { loadedIds += it.id }
+                    loadedDocs[doc.internalId] = doc
+                }
+            }
+            override fun isConsumed(externalId: String): Boolean = loadedIds.contains(externalId)
+        }
+        try {
             // Loading direct docs:
-            val loadedDocs = ConcurrentHashMap<String, BVDocument>()
-            documentsLoader.loadDocuments(bvUser, interval) { doc ->
-                documentStorage.updateDocument(doc)
-                loadedDocs[doc.internalId] = doc
-            }.forEach(this::waitForCompletion)
+            documentsLoader.loadDocuments(bvUser, interval, documentSessionConsumer)
+                .forEach(this::waitForCompletion)
 
             // Loading missed referred docs:
             var loadedReferredDocs: Collection<BVDocument> = loadedDocs.values

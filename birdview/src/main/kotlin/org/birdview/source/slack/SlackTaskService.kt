@@ -1,7 +1,7 @@
 package org.birdview.source.slack
 
-import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.oauth.OAuthRefreshTokenStorage
@@ -19,13 +19,14 @@ class SlackTaskService(
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(SlackTaskService::class.java)
     override fun getTasks(
-            bvUser: String,
-            updatedPeriod: TimeIntervalFilter,
-            sourceConfig: BVAbstractSourceConfig,
-            chunkConsumer: (List<BVDocument>) -> Unit) {
+        bvUser: String,
+        updatedPeriod: TimeIntervalFilter,
+        sourceConfig: BVAbstractSourceConfig,
+        chunkConsumer: BVSessionDocumentConsumer
+    ) {
         val slackConfig = sourceConfig as BVSlackConfig
         try {
-            slackClient.findMessages(slackConfig, chunkConsumer)
+            slackClient.findMessages(slackConfig, chunkConsumer::consume)
         } catch (e: Exception) {
             log.error("Error reading Slack data (source {})", sourceConfig.sourceName, e)
         }

@@ -6,6 +6,7 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVDocumentNodesRelation
+import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.github.GithubUtils.parseDate
@@ -29,15 +30,16 @@ open class GithubTaskService(
         private val secretsStorage: BVSourceSecretsStorage
 ): BVTaskSource {
     override fun getTasks(
-            bvUser: String,
-            updatedPeriod: TimeIntervalFilter,
-            sourceConfig: BVAbstractSourceConfig,
-            chunkConsumer: (List<BVDocument>) -> Unit) {
+        bvUser: String,
+        updatedPeriod: TimeIntervalFilter,
+        sourceConfig: BVAbstractSourceConfig,
+        chunkConsumer: BVSessionDocumentConsumer
+    ) {
         val githubConfig = sourceConfig as BVGithubConfig
         val githubQuery = githubQueryBuilder.getFilterQueries(bvUser, updatedPeriod, githubConfig)
         gqlClient.getPullRequests(githubConfig, githubQuery) { prs ->
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
-            chunkConsumer.invoke(docs)
+            chunkConsumer.consume(docs)
         }
     }
 

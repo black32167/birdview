@@ -74,24 +74,9 @@ open class BVDocumentPredicate(
     private fun toInstant(date: Date?): ChronoZonedDateTime<*>? =
         date?.toInstant()?.atZone(ZoneId.of("UTC"))
 
-    private fun getLastOperationForRoles(doc: BVDocument, bvUser:String, roles: List<UserRole>): BVDocumentOperation? {
-//        if (!userFilter.roles.contains(UserRole.IMPLEMENTOR)) {
-//            return null
-//        }
-        return doc.lastOperations.firstOrNull { operation ->
-            resolveUserName(bvUser, operation.sourceName)
-                    ?.let { sourceFilteringUserName->
-                        sourceFilteringUserName == operation.author && mapOperationTypeToRole(operation.type).any { roles.contains(it) }
-                    } ?: false
-        }
-    }
-
     private fun isDocEverModifiedByUser(doc: BVDocument, bvUser: String): Boolean {
         val hasFilteredUser = doc.users.any { docUser ->
-            resolveUserName(bvUser, docUser.sourceName)
-                    ?.let { sourceFilteringUserName ->
-                        sourceFilteringUserName == docUser.userName
-                    } ?: false
+            resolveUserName(bvUser, docUser.sourceName) == docUser.userName
         }
 
         return if (hasFilteredUser)
@@ -108,20 +93,4 @@ open class BVDocumentPredicate(
                     }
         }
     }
-
-    private fun mapOperationTypeToRole(type: BVDocumentOperationType): Set<UserRole> =
-            when (type) {
-                BVDocumentOperationType.UPDATE -> setOf(UserRole.IMPLEMENTOR)
-                else -> setOf(UserRole.WATCHER)
-            }
-
-    private fun getDocDate(doc: BVDocument): Date? =
-            if(doc.closed != null && doc.closed < doc.updated) {
-                doc.closed //doc.closed
-            } else {
-                doc.updated
-            }
-
-
-
 }

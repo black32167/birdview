@@ -4,5 +4,6 @@ class ConfluenceHistory (
         val latest: Boolean,
         val createdBy: ConfluenceUser,
         val createdDate: String,
-        val contributors: ConfluenceContributors
+        val contributors: ConfluenceContributors,
 )
+
