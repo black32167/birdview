@@ -1,9 +1,9 @@
 package org.birdview.source.http.log.replay
 
-import org.apache.juli.logging.LogFactory
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.log.HttpInteraction
 import org.birdview.utils.JsonDeserializer
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
@@ -12,7 +12,7 @@ class BVReplayingHttpClient(
     private val interactionsFolder: Path,
     private val jsonDeserializer: JsonDeserializer
 ): BVHttpClient {
-    private val log = LogFactory.getLog(BVReplayingHttpClient::class.java)
+    private val log = LoggerFactory.getLogger(BVReplayingHttpClient::class.java)
 
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T =
         deserializeInteraction(resultClass, subPath, parameters)
@@ -35,7 +35,7 @@ class BVReplayingHttpClient(
             throw AssertionError("Could not find logged response ${resultClass.simpleName} (path='${subPath}',parameters=${parameters})")
         }
         if (found.size != 1) {
-            log.warn("Multiple responses match")
+            log.warn("Multiple responses ({}) match for type '{}' and subpath '{}'", found.size, resultClass.simpleName, subPath)
         }
         return found.first()
     }

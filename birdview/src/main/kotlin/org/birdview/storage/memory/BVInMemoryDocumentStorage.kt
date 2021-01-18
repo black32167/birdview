@@ -61,7 +61,7 @@ class BVInMemoryDocumentStorage(
                 .toMutableList()
     }
 
-    override fun getDocuments(searchingDocsIds: Set<String>): List<BVDocument> =
+    override fun getDocuments(searchingDocsIds: Collection<String>): List<BVDocument> =
         searchingDocsIds.mapNotNull (this::findDocument)
 
     override fun updateDocument(doc: BVDocument) {
