@@ -98,40 +98,47 @@ class BVConfluenceDocumentService (
         comments: List<ConfluenceSearchItemContent>,
         sourceName: String
     ): List<BVDocumentOperation> {
+        val operations = mutableListOf<BVDocumentOperation>()
+
         val history = confluenceDocument.history
 
-        val commentOperations = comments
-            ?.map { commentContent-> BVDocumentOperation(
+        comments
+            .map { commentContent-> BVDocumentOperation(
                 description = "",
                 author = commentContent.version.by.accountId,
                 created = parseDate(commentContent.version._when),
                 sourceName = sourceName,
                 type = BVDocumentOperationType.COMMENT
             ) }
-            ?: emptyList()
+            .forEach (operations::add)
 
-        val creationOperation = BVDocumentOperation(
-            description = "",
-            author = history.createdBy.accountId,
-            authorDisplayName = history.createdBy.run { email ?: displayName },
-            created = parseDate(history.createdDate),
-            sourceName = sourceName,
-            type = BVDocumentOperationType.UPDATE
-        )
-
-        val modificationOperations = history.contributors.publishers.users.map { user ->
-            val contributorAccountId = user.accountId
-            BVDocumentOperation(
+        val createdBy = history.createdBy
+        if (createdBy != null) {
+            operations.add(BVDocumentOperation(
                 description = "",
-                author = contributorAccountId,
-                authorDisplayName = user.run { email ?: displayName },
-                created = parseDate(confluenceDocument.version._when),
+                author = history.createdBy.accountId,
+                authorDisplayName = history.createdBy.run { email ?: displayName },
+                created = parseDate(history.createdDate),
                 sourceName = sourceName,
                 type = BVDocumentOperationType.UPDATE
-            )
+            ))
         }
 
-        return modificationOperations + creationOperation + commentOperations
+        history.contributors.publishers.users
+            .map { user ->
+                val contributorAccountId = user.accountId
+                BVDocumentOperation(
+                    description = "",
+                    author = contributorAccountId,
+                    authorDisplayName = user.run { email ?: displayName },
+                    created = parseDate(confluenceDocument.version._when),
+                    sourceName = sourceName,
+                    type = BVDocumentOperationType.UPDATE
+                )
+            }
+            .forEach (operations::add)
+
+        return operations
     }
 
     override fun getType(): SourceType = SourceType.CONFLUENCE
