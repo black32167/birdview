@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import java.util.function.Consumer
 import javax.inject.Named
 
 @Named
@@ -24,7 +23,7 @@ class BVDocumentsLoader (
         private val sourcesManager: BVSourcesManager
 ) {
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)
-    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService"))
+    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService-%d"))
 
     fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: BVSessionDocumentConsumer):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)

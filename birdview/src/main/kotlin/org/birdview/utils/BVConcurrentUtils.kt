@@ -1,5 +1,6 @@
 package org.birdview.utils
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import java.util.concurrent.ThreadFactory
 
 object BVConcurrentUtils {
@@ -9,9 +10,8 @@ object BVConcurrentUtils {
         thread
     }
 
-    fun getDaemonThreadFactory(name: String) = ThreadFactory { runnable ->
-        val thread = Thread(runnable, name)
-        thread.isDaemon = true
-        thread
-    }
+    fun getDaemonThreadFactory(name: String) = ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat(name)
+        .build()
 }
