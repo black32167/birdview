@@ -23,12 +23,11 @@ class BVDocumentsLoader (
         private val sourcesManager: BVSourcesManager
 ) {
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)
-    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("BVTaskService-%d"))
+    private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("DocLoader-%d"))
 
     fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: BVSessionDocumentConsumer):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)
                     .map { sourceConfig ->
-
                         CompletableFuture.runAsync(Runnable {
                             log.info("Loading data from ${sourceConfig.sourceType} for ${bvUser}...")
                             BVTimeUtil.logTime("Loading data from ${sourceConfig.sourceType} for ${bvUser}") {

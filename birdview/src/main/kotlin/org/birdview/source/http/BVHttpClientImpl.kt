@@ -3,23 +3,41 @@ package org.birdview.source.http
 import org.birdview.utils.remote.ApiAuth
 import org.birdview.utils.remote.ResponseValidationUtils
 import org.birdview.utils.remote.WebTargetFactory
+import org.slf4j.LoggerFactory
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.ws.rs.client.Entity
 import javax.ws.rs.client.Invocation
 import javax.ws.rs.core.Form
 import javax.ws.rs.core.Response
 
 class BVHttpClientImpl (
-    basePath: String,
+    val basePath: String,
     authProvider: () -> ApiAuth?
 ): BVHttpClient {
+    companion object {
+        private val encounteredUrls:MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+    }
+    private val log = LoggerFactory.getLogger(BVHttpClientImpl::class.java)
     private val targetFactory = WebTargetFactory(
         url = basePath,
         authProvider = authProvider
     )
 
-    override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T =
-        get(subPath, parameters)
+    override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T {
+        val key = "$basePath/$subPath($parameters)"
+        if (encounteredUrls.contains(key)) {
+            log.warn(
+                "Http client was already invoked for {}, stack=\n\t{}",
+                subPath,
+                Thread.currentThread().stackTrace.joinToString("\n\t")
+            )
+        } else {
+            encounteredUrls += key
+        }
+        return get(subPath, parameters)
             .readEntity(resultClass)
+    }
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
         post(postEntity, subPath, parameters)

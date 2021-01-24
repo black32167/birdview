@@ -1,5 +1,6 @@
 package org.birdview.user
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.birdview.analysis.BVDocument
 import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
 import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
@@ -12,6 +13,7 @@ import org.birdview.user.document.BVDocumentsLoader
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.SmartInitializingSingleton
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.*
@@ -25,15 +27,15 @@ class BVInMemoryUserDataUpdater (
         private val documentStorage: BVDocumentStorage,
         private val userLog: BVUserLog,
         private val timeService: BVTimeService
-): BVUserDataUpdater, BVUserStorage.UserChangedListener {
+): BVUserDataUpdater, BVUserStorage.UserChangedListener, SmartInitializingSingleton {
     companion object {
-        private const val DELAY_BETWEEN_UPDATES_MINUTES: Long = 30
+        private const val DELAY_BETWEEN_UPDATES_SECONDS: Long = 30 * 60
         private const val MAX_DAYS_BACK = 30L
     }
     private val log = LoggerFactory.getLogger(BVInMemoryUserDataUpdater::class.java)
     private data class UserUpdateInfo (val bvUser:String, val timestamp: Long = 0)
-    private val updateScheduleExecutor = Executors.newScheduledThreadPool(1)
-    private val userUpdateExecutor = Executors.newFixedThreadPool(3)
+    private val updateScheduleExecutor = Executors.newScheduledThreadPool(1, ThreadFactoryBuilder().setNameFormat("UpdateScheduler-%d").build())
+    private val userUpdateExecutor = Executors.newFixedThreadPool(3, ThreadFactoryBuilder().setNameFormat("UserUpdater-%d").build())
 
     private val userFutures = ConcurrentHashMap<String, Future<*>>()
 
@@ -48,7 +50,10 @@ class BVInMemoryUserDataUpdater (
     @PostConstruct
     private fun init() {
         userStorage.addUserCreatedListener(this)
-        updateScheduleExecutor.scheduleWithFixedDelay(this::refreshUsers, 0, DELAY_BETWEEN_UPDATES_MINUTES, TimeUnit.MINUTES)
+    }
+
+    override fun afterSingletonsInstantiated() {
+        updateScheduleExecutor.scheduleWithFixedDelay(this::refreshUsers, 1, DELAY_BETWEEN_UPDATES_SECONDS, TimeUnit.SECONDS)
     }
 
     private fun refreshUsers() {
