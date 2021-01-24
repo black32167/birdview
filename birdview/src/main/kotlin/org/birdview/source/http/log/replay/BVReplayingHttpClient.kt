@@ -9,6 +9,7 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 
 class BVReplayingHttpClient(
+    override val basePath: String,
     private val interactionsFolder: Path,
     private val jsonDeserializer: JsonDeserializer
 ): BVHttpClient {
@@ -28,7 +29,7 @@ class BVReplayingHttpClient(
             .filter { it.fileName.toString().startsWith(resultClass.simpleName) }
             .map { jsonDeserializer.deserialize(it, HttpInteraction::class.java) }
             .filter { interaction->
-                interaction.parameters == parameters && subPath == interaction.endpointUrl
+                interaction.parameters == parameters && "${basePath}/${subPath}" == interaction.endpointUrl
             }
             .collect(Collectors.toList())
         if (found.isEmpty()) {

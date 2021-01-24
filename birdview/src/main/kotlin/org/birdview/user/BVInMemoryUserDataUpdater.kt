@@ -126,7 +126,7 @@ class BVInMemoryUserDataUpdater (
 
             // Loading missed referred docs:
             var loadedReferredDocs: Collection<BVDocument> = loadedDocs.values
-            for (i in 1..5) {
+            for (i in 1..2) {
                 log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)}) #$i")
 
                 loadedReferredDocs = loadReferredDocs(bvUser, loadedReferredDocs)

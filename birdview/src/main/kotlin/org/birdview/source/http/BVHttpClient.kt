@@ -16,4 +16,6 @@ interface BVHttpClient {
 
     fun <T> postForm(
         resultClass: Class<T>, subPath: String? = null, formFields: Map<String, String> = emptyMap()): T
+
+    val basePath: String
 }

@@ -12,7 +12,7 @@ import javax.ws.rs.core.Form
 import javax.ws.rs.core.Response
 
 class BVHttpClientImpl (
-    val basePath: String,
+    override val basePath: String,
     authProvider: () -> ApiAuth?
 ): BVHttpClient {
     companion object {
@@ -29,7 +29,7 @@ class BVHttpClientImpl (
         if (encounteredUrls.contains(key)) {
             log.warn(
                 "Http client was already invoked for {}, stack=\n\t{}",
-                subPath,
+                key,
                 Thread.currentThread().stackTrace.joinToString("\n\t")
             )
         } else {

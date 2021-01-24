@@ -6,8 +6,11 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
 class BVCachingHttpClient(val delegate: BVHttpClient): BVHttpClient {
-    private val TTL_SECS = 100L
+    private val TTL_SECS = 60*10L
     private val log = LoggerFactory.getLogger(BVCachingHttpClient::class.java)
+    override val basePath: String
+        get() = delegate.basePath
+
     init {
         log.info("BVCachingHttpClient created")
     }
@@ -23,7 +26,7 @@ class BVCachingHttpClient(val delegate: BVHttpClient): BVHttpClient {
         .build()
 
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T {
-        val key = CacheKey("GET", resultClass, subPath, parameters)
+        val key = CacheKey("GET", resultClass, "${basePath}/${subPath}", parameters)
         return cache.get(key) {
             delegate.get(resultClass, subPath, parameters)
         } as T

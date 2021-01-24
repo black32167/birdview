@@ -6,36 +6,37 @@ import org.birdview.utils.JsonDeserializer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 class LoggingDelegateHttpClient(
     private val delegate: BVHttpClient,
     private val outputFolder: Path,
     private val jsonDeserializer: JsonDeserializer
 ): BVHttpClient {
-    private val resultType2Counter: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
+    override val basePath: String
+        get() = delegate.basePath
 
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T =
         delegate.get(String::class.java, subPath, parameters).also { payload: String ->
-            serialize( HttpInteraction(
+            serialize(
                 endpointUrl = subPath,
                 resultType = resultClass.simpleName,
                 parameters = parameters,
                 responsePayload = payload
-            )) }
+            )
+        }
             .let { payload: String ->
                 jsonDeserializer.deserializeString(payload, resultClass)
             }
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
         delegate.post(String::class.java, postEntity, subPath, parameters).also { payload: String ->
-            serialize( HttpInteraction(
+            serialize(
                 endpointUrl = subPath,
                 resultType = resultClass.simpleName,
                 parameters = parameters + jsonDeserializer.objectToMap(postEntity),
                 responsePayload = payload
-            )) }
+            )
+        }
             .let { payload: String ->
                 jsonDeserializer.deserializeString(payload, resultClass)
             }
@@ -46,15 +47,32 @@ class LoggingDelegateHttpClient(
         subPath: String?,
         formFields: Map<String, String>
     ): T = delegate.postForm(String::class.java, subPath, formFields).also { payload: String ->
-        serialize( HttpInteraction(
+        serialize(
             endpointUrl = subPath,
             resultType = resultClass.simpleName,
             parameters = formFields,
             responsePayload = payload
-        )) }
+        )
+    }
         .let { payload: String ->
             jsonDeserializer.deserializeString(payload, resultClass)
         }
+
+    private fun serialize(
+        endpointUrl: String?,
+        resultType: String,
+        parameters: Map<String, Any>,
+        responsePayload: String
+    ) {
+        serialize(
+            HttpInteraction(
+                endpointUrl = "$basePath/$endpointUrl",
+                resultType = resultType,
+                parameters = parameters,
+                responsePayload = responsePayload
+            )
+        )
+    }
 
     private fun serialize(interaction: HttpInteraction) {
         val responseSuffix = UUID.randomUUID().toString()
@@ -64,10 +82,7 @@ class LoggingDelegateHttpClient(
         }
         jsonDeserializer.serialize(
             outputFile,
-            interaction)
+            interaction
+        )
     }
-
-    private fun serializePayload(payload: Any?): String =
-        jsonDeserializer.serializeToString(payload)
-
 }

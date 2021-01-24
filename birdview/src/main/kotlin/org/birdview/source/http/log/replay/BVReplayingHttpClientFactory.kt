@@ -16,5 +16,5 @@ class BVReplayingHttpClientFactory(
         log.info("BVReplayingHttpClientFactory created")
     }
     override fun getHttpClient(url: String, authProvider: () -> ApiAuth?): BVHttpClient =
-        BVReplayingHttpClient(foldersConfig.getHttpInteractionsLogFolder(), jsonDeserializer)
+        BVReplayingHttpClient(url, foldersConfig.getHttpInteractionsLogFolder(), jsonDeserializer)
 }
