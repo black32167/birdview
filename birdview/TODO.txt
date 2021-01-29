@@ -1,2 +1,4 @@
+- implement PostgreSQL storage
+- collect information from PR threads: https://github.community/t/graphql-pullrequest-timeline-review-threads/14273
 - link/group PRs to their issues/cards
 - filter by source type (i.e. github)
