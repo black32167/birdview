@@ -12,7 +12,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
         defaultImpl = GqlGithubActor::class
 )
 @JsonSubTypes(
-        JsonSubTypes.Type(value = GqlGithubUserActor::class, name = "User")
+        JsonSubTypes.Type(value = GqlGithubUserActor::class, name = "User"),
+        JsonSubTypes.Type(value = GqlGithubBotActor::class, name = "Bot")
 )
 open class GqlGithubActor (
         @JsonProperty("__typename") val type: String?
@@ -21,3 +22,5 @@ open class GqlGithubActor (
 class GqlGithubUserActor (
         val login:String
 ) : GqlGithubActor("User")
+
+class GqlGithubBotActor : GqlGithubActor("Bot")

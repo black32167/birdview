@@ -54,10 +54,10 @@ class PullRequestReview(
 }
 
 class MergedEvent(
-        val actor: GqlGithubUserActor,
+        val actor: GqlGithubActor,
         val createdAt: String
 ) : GqlGithubEvent("MergedEvent") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.UPDATE
     override val timestamp = createdAt
-    override val user = actor.login
+    override val user = (actor as? GqlGithubUserActor)?.login ?: "bot"
 }
