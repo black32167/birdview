@@ -1,0 +1,10 @@
+version: "3.3"
+services:
+  birdview:
+    image: black32167/birdview
+    ports:
+      - "8000:8888"
+    volumes:
+      - "${HOME}/.birdview:/config"
+    environment:
+      - BV_HOME:${HOME}
