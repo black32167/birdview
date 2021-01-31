@@ -10,9 +10,11 @@ import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager
 import org.springframework.context.annotation.Bean
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
 @EnableCaching(order = 10)
 @SpringBootApplication
+@EnableJpaRepositories
 open class BirdviewConfiguration {
     @Bean
     open fun cacheManager(): CacheManager {
