@@ -8,3 +8,14 @@ services:
       - "${HOME}/.birdview:/config"
     environment:
       - BV_HOME:${HOME}
+      - PG_PASS:${PG_BV_PASSWD}
+      - PG_USER:${PG_BV_USER}
+      - PG_URL:jdbc:postgresql://localhost:5432/birdview
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - "${HOME}/.birdview/postgres:/var/lib/postgresql/data"
