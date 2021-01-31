@@ -1,7 +1,9 @@
 #!/bin/bash
 
+CMD=${1}
 set -euo pipefail
 
+: ${CMD:=}
 SCRIPT_DIR="$(dirname $0)"
 : ${PG_CONTAINER_NAME:=birdview_postgres_1}
 
@@ -30,7 +32,7 @@ pg_shell() {
   docker exec -it "${PG_CONTAINER_NAME}" psql -U postgres birdview
 }
 
-case "${1}" in
+case "${CMD}" in
   generate)
     generate_pg_init
   ;;
@@ -41,4 +43,6 @@ case "${1}" in
   shell)
     pg_shell
   ;;
+  *)
+    echo "$0 {generate|init|shell}"
 esac
