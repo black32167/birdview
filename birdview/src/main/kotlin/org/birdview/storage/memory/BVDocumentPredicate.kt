@@ -3,7 +3,9 @@ package org.birdview.storage.memory
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentOperation
 import org.birdview.analysis.BVDocumentOperationType
-import org.birdview.model.*
+import org.birdview.model.BVDocumentFilter
+import org.birdview.model.UserFilter
+import org.birdview.model.UserRole
 import org.birdview.storage.BVUserSourceStorage
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
@@ -86,11 +88,13 @@ open class BVDocumentPredicate(
     }
 
     private fun getLastUserOperation(doc: BVDocument, bvUser:String, operationType: BVDocumentOperationType? = null): BVDocumentOperation? {
-        return doc.operations.firstOrNull { operation ->
-            resolveUserName(bvUser, operation.sourceName)
-                    .let { sourceFilteringUserName->
-                        sourceFilteringUserName == operation.author && operationType == operation.type
-                    }
+        return doc.operations
+            .sortedByDescending { it.created }
+            .firstOrNull { operation ->
+                resolveUserName(bvUser, operation.sourceName)
+                        .let { sourceFilteringUserName->
+                            sourceFilteringUserName == operation.author && operationType == operation.type
+                        }
         }
     }
 }
