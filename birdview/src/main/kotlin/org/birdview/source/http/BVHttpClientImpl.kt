@@ -25,16 +25,16 @@ class BVHttpClientImpl (
     )
 
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T {
-        val key = "$basePath/$subPath($parameters)"
-        if (encounteredUrls.contains(key)) {
-            log.warn(
-                "Http client was already invoked for {}, stack=\n\t{}",
-                key,
-                Thread.currentThread().stackTrace.joinToString("\n\t")
-            )
-        } else {
-            encounteredUrls += key
-        }
+//        val key = "$basePath/$subPath($parameters)"
+//        if (encounteredUrls.contains(key)) {
+//            log.warn(
+//                "Http client was already invoked for {}, stack=\n\t{}",
+//                key,
+//                Thread.currentThread().stackTrace.joinToString("\n\t")
+//            )
+//        } else {
+//            encounteredUrls += key
+//        }
         return get(subPath, parameters)
             .readEntity(resultClass)
     }

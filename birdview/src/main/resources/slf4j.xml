@@ -9,8 +9,11 @@
         </layout>
     </appender>
 
-    <logger name="org.birdview" level="debug" additivity="false">
+    <logger name="org.birdview" level="DEBUG" additivity="false">
         <appender-ref ref="DEBUG"/>
+    </logger>
+    <logger name="org.birdview.source.http.BVHttpClientImpl" level="INFO" additivity="false">
+        <appender-ref ref="INFO"/>
     </logger>
 
     <root level="INFO">
