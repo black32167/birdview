@@ -14,7 +14,7 @@ import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.SmartInitializingSingleton
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.*
 import javax.annotation.PostConstruct
@@ -73,7 +73,7 @@ class BVInMemoryUserDataUpdater (
 
             for (bvUser in idleBvUsers) {
                 userFutures[bvUser] = userUpdateExecutor.submit {
-                    var endTime: ZonedDateTime? = null
+                    var endTime: OffsetDateTime? = null
                     var startTime = now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
                     val minStartTime = now.minusDays(MAX_DAYS_BACK)
                     while (startTime > minStartTime) {

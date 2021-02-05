@@ -2,11 +2,9 @@ package org.birdview.utils
 
 import org.birdview.model.TimeIntervalFilter
 import org.slf4j.LoggerFactory
-import java.text.SimpleDateFormat
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
-import java.util.*
 
 object BVDateTimeUtils {
     private val log = LoggerFactory.getLogger(BVDateTimeUtils::class.java)
@@ -19,28 +17,24 @@ object BVDateTimeUtils {
         "${(interval.after?.let { dateTimeFormat(it) }?: "Now")} to ${  (interval.before?.let { dateTimeFormat(it) }?: "Now")}"
     }
 
-    fun dateTimeFormat(instant: ZonedDateTime): String =
+    fun dateTimeFormat(instant: OffsetDateTime): String =
         instant.let(zonedFormatterDateTime::format)
 
     fun timeFormat(instant: TemporalAccessor?): String =
             instant?.let(formatterTime::format) ?: "Now"
 
-    fun format(maybeDate: Date?, format:String): String? =
-            maybeDate?.let { dateTimeString ->
-                SimpleDateFormat(format)
-                        .also { it.timeZone = TimeZone.getTimeZone("UTC") }
-                        .format(dateTimeString)
-            }
+    fun format(maybeDate: OffsetDateTime?, format:String): String? =
+            maybeDate?.format(DateTimeFormatter.ofPattern(format))
 
-    fun parse(maybeDateTimeString: String?, pattern: String): Date? = try {
+    fun parse(maybeDateTimeString: String?, pattern: String): OffsetDateTime? = try {
         maybeDateTimeString?.let { dateTimeString->
-            SimpleDateFormat(pattern).parse(dateTimeString)
+            OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ofPattern(pattern))
         }
     } catch (e: Exception) {
         log.error("Error parsing date '{}'", maybeDateTimeString, e)
         null
     }
 
-    fun parse(serializedDateTime: String): ZonedDateTime =
-        ZonedDateTime.parse(serializedDateTime, zonedFormatterDateTime)
+    fun parse(serializedDateTime: String): OffsetDateTime =
+        OffsetDateTime.parse(serializedDateTime, zonedFormatterDateTime)
 }

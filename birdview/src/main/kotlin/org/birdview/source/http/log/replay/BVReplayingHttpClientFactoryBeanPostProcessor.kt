@@ -2,7 +2,6 @@ package org.birdview.source.http.log.replay
 
 import org.birdview.config.BVFoldersConfig
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.source.http.log.record.BVSingularTimeService
 import org.birdview.time.BVTimeService
 import org.birdview.utils.JsonDeserializer
 import org.springframework.beans.factory.config.BeanPostProcessor

@@ -2,8 +2,6 @@ package org.birdview.source.oauth
 
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVOAuthSourceConfig
-import javax.ws.rs.client.Entity
-import javax.ws.rs.core.Form
 
 abstract class AbstractOAuthClient<RT>(
         protected val tokenStorage: OAuthRefreshTokenStorage,

@@ -6,7 +6,7 @@ import org.birdview.web.explore.model.BVDocumentView
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
+import java.time.OffsetDateTime
 
 class HierarchyOptimizerTest {
     @Test
@@ -77,7 +77,7 @@ class HierarchyOptimizerTest {
                         sourceName = "sourceName",
                         priority = Priority.NORMAL
                     ),
-                    lastUpdated = Date(),
+                    lastUpdated = OffsetDateTime.now(),
                     sourceType = SourceType.JIRA,
                     subNodesComparator = Comparator.comparing { it.lastUpdated }
             ).also {

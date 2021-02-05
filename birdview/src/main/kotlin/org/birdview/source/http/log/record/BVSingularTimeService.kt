@@ -5,7 +5,7 @@ import org.birdview.time.BVTimeService
 import org.birdview.utils.BVDateTimeUtils
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 
 class BVSingularTimeService(
     val delegate: BVTimeService,
@@ -21,5 +21,5 @@ class BVSingularTimeService(
         )
     }
 
-    override fun getNow(): ZonedDateTime = instant
+    override fun getNow(): OffsetDateTime = instant
 }

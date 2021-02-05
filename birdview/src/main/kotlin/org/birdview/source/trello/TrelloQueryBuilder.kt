@@ -3,7 +3,7 @@ package org.birdview.source.trello
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVTrelloConfig
 import org.birdview.storage.BVUserSourceStorage
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Named
 
@@ -18,14 +18,14 @@ class TrelloQueryBuilder(
                     getUpdateBeforeClause(updatedPeriod.before)
             ).joinToString(" ") + " sort:edited"
 
-    private fun getUpdateAfterClause(after: ZonedDateTime?): String? =
+    private fun getUpdateAfterClause(after: OffsetDateTime?): String? =
             after?.let { "edited:${getDaysBackFromNow(it)}" }
 
-    private fun getUpdateBeforeClause(before: ZonedDateTime?): String? =
+    private fun getUpdateBeforeClause(before: OffsetDateTime?): String? =
             before?.let { "-edited:${getDaysBackFromNow(it)}" }
 
-    private fun getDaysBackFromNow(since: ZonedDateTime): Int =
-            ChronoUnit.DAYS.between(since, ZonedDateTime.now()).toInt()
+    private fun getDaysBackFromNow(since: OffsetDateTime): Int =
+            ChronoUnit.DAYS.between(since, OffsetDateTime.now()).toInt()
 
     private fun userClause(bvUser: String, trelloConfig: BVTrelloConfig): String? =
             "@${userSourceStorage.getSourceProfile(bvUser, trelloConfig.sourceName).sourceUserName}"

@@ -15,7 +15,8 @@ import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
@@ -146,8 +147,8 @@ class BVConfluenceDocumentService (
     override fun isAuthenticated(sourceName: String): Boolean =
             sourceSecretsStorage.getConfigByName(sourceName, BVConfluenceConfig::class.java) != null
 
-    private fun formatDate(date: ZonedDateTime) =
-            date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00"))
+    private fun formatDate(date: OffsetDateTime) =
+            date.atZoneSameInstant(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00"))
 
     private fun parseDate(dateTimeString:String?) =
             BVDateTimeUtils.parse(dateTimeString, CONFLUENCE_DATETIME_PATTERN)

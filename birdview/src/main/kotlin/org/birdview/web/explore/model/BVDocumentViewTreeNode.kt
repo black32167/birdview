@@ -2,13 +2,14 @@ package org.birdview.web.explore.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.birdview.source.SourceType
+import java.time.OffsetDateTime
 import java.util.*
 
 // !!! Should NOT be data-class
 class BVDocumentViewTreeNode (
         val doc: BVDocumentView,
         val sourceType: SourceType,
-        var lastUpdated: Date? = null,
+        var lastUpdated: OffsetDateTime? = null,
         val subNodesComparator: Comparator<BVDocumentViewTreeNode>? = null
 ) {
     var subNodes = mutableSetOf<BVDocumentViewTreeNode>()

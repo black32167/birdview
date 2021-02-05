@@ -1,7 +1,10 @@
 package org.birdview.source.jira
 
 import org.birdview.analysis.*
-import org.birdview.model.*
+import org.birdview.model.BVDocumentRef
+import org.birdview.model.RelativeHierarchyType
+import org.birdview.model.TimeIntervalFilter
+import org.birdview.model.UserRole
 import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType

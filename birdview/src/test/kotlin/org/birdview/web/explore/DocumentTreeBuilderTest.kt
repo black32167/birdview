@@ -13,11 +13,12 @@ import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Test
 import org.mockito.Mockito.mock
+import java.time.OffsetDateTime
 import java.util.*
 
 //@RunWith(MockitoJUnitRunner::class)
 class DocumentTreeBuilderTest {
-    private var TIME_INSTANT = System.currentTimeMillis()
+    private var TIME_INSTANT = OffsetDateTime.now()
     private val nodesComparator:Comparator<BVDocumentViewTreeNode> = Comparator.comparing { it.internalId }
     private val documentStorage = BVInMemoryDocumentStorage(mock(BVDocumentPredicate::class.java))
 
@@ -108,16 +109,16 @@ class DocumentTreeBuilderTest {
         val DOC1_ID = "doc1"
         val DOC2_ID = "doc2"
         val docs = listOf(
-                doc(listOf(DOC1_ID), SourceType.JIRA, updated = Date(now)),
-                        doc(listOf(DOC2_ID), SourceType.JIRA, updated = Date(now-10000)))
+                doc(listOf(DOC1_ID), SourceType.JIRA, updated = OffsetDateTime.now()),
+                        doc(listOf(DOC2_ID), SourceType.JIRA, updated = OffsetDateTime.now().minusSeconds(10000)))
         val views1 = DocumentTreeBuilder.buildTree(docs, documentStorage)
-        Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
+        assertTrue(views1[0].doc.ids.contains(DOC1_ID))
 
         val views2 = DocumentTreeBuilder.buildTree(docs.reversed(), documentStorage)
-        Assert.assertTrue(views1[0].doc.ids.contains(DOC1_ID))
+        assertTrue(views1[0].doc.ids.contains(DOC1_ID))
     }
 
-    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:Date = dateSeq()): BVDocument =
+    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:OffsetDateTime = dateSeq()): BVDocument =
             BVDocument(
                     ids = ids.map { BVDocumentId(it) }.toSet(),
                     title = ids.first(),
@@ -132,9 +133,9 @@ class DocumentTreeBuilderTest {
                     sourceType = sourceType,
                     sourceName = "sourceName")
 
-    private fun dateSeq():Date {
-        TIME_INSTANT += 10
-        return Date(TIME_INSTANT);
+    private fun dateSeq(): OffsetDateTime {
+        TIME_INSTANT = TIME_INSTANT.plusSeconds(10)
+        return TIME_INSTANT
     }
     private fun docRef(ref: String, type: RelativeHierarchyType = RelativeHierarchyType.UNSPECIFIED) =
             BVDocumentRef(BVDocumentId(ref), type)

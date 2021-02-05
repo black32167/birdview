@@ -1,7 +1,6 @@
 package org.birdview.model
 
-import java.time.ZonedDateTime
-import java.util.*
+import java.time.OffsetDateTime
 
 data class BVDocumentFilter(
         val docStatuses: List<BVDocumentStatus>,
@@ -10,9 +9,7 @@ data class BVDocumentFilter(
         val userFilter: UserFilter,
         val sourceType:String? = null,
         val representationType: RepresentationType = RepresentationType.LIST
-) {
-    val filterId = UUID.randomUUID().toString()
-}
+)
 
 enum class UserRole {
     COMMENTER,
@@ -26,6 +23,6 @@ data class UserFilter(
 )
 
 data class TimeIntervalFilter(
-    val after: ZonedDateTime? = null,
-    val before: ZonedDateTime? = null
+    val after: OffsetDateTime? = null,
+    val before: OffsetDateTime? = null
 )

@@ -8,9 +8,7 @@ import org.birdview.model.UserFilter
 import org.birdview.model.UserRole
 import org.birdview.storage.BVUserSourceStorage
 import org.slf4j.LoggerFactory
-import java.time.ZoneId
-import java.time.chrono.ChronoZonedDateTime
-import java.util.*
+import java.time.OffsetDateTime
 import javax.inject.Named
 
 @Named
@@ -30,8 +28,7 @@ open class BVDocumentPredicate(
             UserRole.COMMENTER ->
                 getLastUserUpdateDate(doc, filter.userFilter, BVDocumentOperationType.COMMENT)
             UserRole.WATCHER ->
-                toInstant(doc.updated).takeIf { isDocEverModifiedByUser(doc, filter.userFilter.userAlias) }
-            else -> null
+                doc.updated.takeIf { isDocEverModifiedByUser(doc, filter.userFilter.userAlias) }
         }
 
         if (filter.updatedPeriod.after != null) {
@@ -68,13 +65,13 @@ open class BVDocumentPredicate(
     private fun resolveUserName(bvUser:String, sourceName: String) =
             userSourceStorage.getSourceProfile(bvUser, sourceName).sourceUserName
 
-    private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter, operationType: BVDocumentOperationType): ChronoZonedDateTime<*>? {
+    private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter, operationType: BVDocumentOperationType): OffsetDateTime? {
         val date = getLastUserOperation(doc, userFilter.userAlias, operationType) ?.created
-        return toInstant(date)
+        return date
     }
 
-    private fun toInstant(date: Date?): ChronoZonedDateTime<*>? =
-        date?.toInstant()?.atZone(ZoneId.of("UTC"))
+//    private fun toInstant(date: Date?): OffsetDateTime? =
+//        date?.toInstant()?.atZone(ZoneId.of("UTC"))
 
     private fun isDocEverModifiedByUser(doc: BVDocument, bvUser: String): Boolean {
         val hasFilteredUser = doc.users.any { docUser ->

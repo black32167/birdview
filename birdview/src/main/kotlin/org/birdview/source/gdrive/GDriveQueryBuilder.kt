@@ -2,7 +2,7 @@ package org.birdview.source.gdrive
 
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVUserSourceStorage
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
@@ -20,14 +20,14 @@ class GDriveQueryBuilder (
         ).joinToString(" AND ")
     }
 
-    private fun getModifiedAfterTimeClause(after: ZonedDateTime?): String? =
+    private fun getModifiedAfterTimeClause(after: OffsetDateTime?): String? =
             after?.let { "modifiedTime>='${formatDate(it)}'" }
 
 
-    private fun getModifiedBeforeTimeClause(before: ZonedDateTime?): String? =
+    private fun getModifiedBeforeTimeClause(before: OffsetDateTime?): String? =
             before?.let { "modifiedTime<'${formatDate(it)}'" }
 
-    private fun formatDate(date: ZonedDateTime) =
+    private fun formatDate(date: OffsetDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss"))
 
     private fun getUserClause(bvUser: String, sourceName: String): String? {

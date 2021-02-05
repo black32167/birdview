@@ -19,7 +19,7 @@ import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVFilters
-import java.util.*
+import java.time.OffsetDateTime
 import javax.inject.Named
 
 @Named
@@ -75,7 +75,7 @@ open class GithubTaskService(
         )
     }
 
-    private fun extractClosed(operations: List<BVDocumentOperation>, status: BVDocumentStatus?): Date? =
+    private fun extractClosed(operations: List<BVDocumentOperation>, status: BVDocumentStatus?): OffsetDateTime? =
             if (status == BVDocumentStatus.DONE) {
                 operations.find { operation -> operation.description == "merged" } ?.created
             } else {

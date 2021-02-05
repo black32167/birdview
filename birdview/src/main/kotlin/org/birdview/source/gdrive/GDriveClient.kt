@@ -11,8 +11,6 @@ import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
 import org.slf4j.LoggerFactory
 import javax.inject.Named
-import javax.ws.rs.client.Entity
-import javax.ws.rs.core.Form
 
 @Named
 class GDriveClient(

@@ -1,11 +1,9 @@
 package org.birdview.storage.memory
 
 import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.RelativeHierarchyType
 import org.birdview.model.RelativeHierarchyType.*
 import org.birdview.storage.BVDocumentStorage
 import java.util.*

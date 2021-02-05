@@ -10,13 +10,14 @@ import org.birdview.time.BVTimeService
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.user.BVUserLog
 import org.birdview.web.explore.model.BVDocumentView
-import org.birdview.web.explore.model.BVUserLogEntry
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
+import org.birdview.web.explore.model.BVUserLogEntry
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.temporal.ChronoUnit
-import java.util.Comparator
+import java.util.*
+import kotlin.collections.ArrayList
 
 @RestController()
 @RequestMapping("/rest")

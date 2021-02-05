@@ -1,7 +1,7 @@
 package org.birdview.time
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 
 interface BVTimeService {
-    fun getNow(): ZonedDateTime
+    fun getNow(): OffsetDateTime
 }

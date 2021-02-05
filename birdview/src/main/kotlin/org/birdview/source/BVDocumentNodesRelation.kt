@@ -3,7 +3,6 @@ package org.birdview.source
 import org.birdview.analysis.BVDocument
 import org.birdview.model.RelativeHierarchyType
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
-import java.util.*
 
 class BVDocumentsRelation (
     val parent: BVDocument,
@@ -64,9 +63,6 @@ class BVDocumentNodesRelation (
                 } else {
                     0
                 }
-
-        private fun millis(created: Date?): Long =
-                created?.time ?: 0
 
         fun getHierarchyRelationType(sourceTypeFrom: SourceType, sourceTypeTo: SourceType?): RelativeHierarchyType {
             if (sourceTypeTo == null) {

@@ -8,7 +8,6 @@ import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory
 import javax.inject.Named
-import javax.ws.rs.core.GenericType
 
 @Named
 class GithubGqlClient (

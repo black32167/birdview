@@ -1,8 +1,8 @@
 package org.birdview.utils
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
-
-import org.junit.Assert.*
 
 class BVFiltersTest {
     private val ref = "https://some.atlassian.net/wiki/spaces/SOM/pages/7152030627/Design+Some+Feature"

@@ -3,7 +3,7 @@ package org.birdview.source.jira
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVUserSourceStorage
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
@@ -21,13 +21,13 @@ class JqlBuilder(
                         ).joinToString(" AND ") + " ORDER BY updatedDate DESC"
                     }
 
-    private fun getIssueUpdateAfterClause(after: ZonedDateTime?): String? =
+    private fun getIssueUpdateAfterClause(after: OffsetDateTime?): String? =
             after?.let {  "updatedDate > \"${formatDate(it)}\" " }
 
-    private fun getIssueUpdateBeforeClause(before: ZonedDateTime?): String? =
+    private fun getIssueUpdateBeforeClause(before: OffsetDateTime?): String? =
             before?.let {  "updatedDate <= \"${formatDate(it)}\" " }
 
-    private fun formatDate(date: ZonedDateTime) =
+    private fun formatDate(date: OffsetDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
 
     private fun getUserJqlClause(bvUser: String, jiraConfig: BVJiraConfig): String {

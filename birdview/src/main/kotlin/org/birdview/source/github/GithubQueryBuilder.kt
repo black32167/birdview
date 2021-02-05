@@ -3,7 +3,7 @@ package org.birdview.source.github
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVUserSourceStorage
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
@@ -18,7 +18,7 @@ class GithubQueryBuilder(
                         getUpdatePeriodClause(updatedPeriod.after, updatedPeriod.before)
                 ).joinToString(" ")
 
-    private fun getUpdatePeriodClause(after: ZonedDateTime?, before: ZonedDateTime?):String? =
+    private fun getUpdatePeriodClause(after: OffsetDateTime?, before: OffsetDateTime?):String? =
         if (after != null && before != null) {
             "updated:${format(after)}..${format(before)}"
         } else if (after != null) {
@@ -29,7 +29,7 @@ class GithubQueryBuilder(
             null
         }
 
-    private fun format(time: ZonedDateTime) = time.format(DateTimeFormatter.ISO_LOCAL_DATE)
+    private fun format(time: OffsetDateTime) = time.format(DateTimeFormatter.ISO_LOCAL_DATE)
 
 
     private fun userClause(userAlias: String, githubConfig: BVGithubConfig): String? {

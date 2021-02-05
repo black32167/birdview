@@ -4,17 +4,17 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
 import org.birdview.source.SourceType
+import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 data class BVDocument (
         val ids: Set<BVDocumentId>,
         val title: String,
         val key: String,
         val body: String = "",
-        val updated: Date? = null,
-        val created: Date? = null,
-        val closed: Date? = null,
+        val updated: OffsetDateTime? = null,
+        val created: OffsetDateTime? = null,
+        val closed: OffsetDateTime? = null,
         val httpUrl: String,
         val users: List<BVDocumentUser> = listOf(),
         val refs: List<BVDocumentRef> = emptyList(),
@@ -46,7 +46,7 @@ class BVDocumentOperation (
         val description: String,
         val author: String,
         val authorDisplayName: String? = null,
-        val created: Date?,
+        val created: OffsetDateTime?,
         val sourceName: String,
         val type: BVDocumentOperationType = BVDocumentOperationType.COMMENT
 )

@@ -6,7 +6,6 @@ import org.birdview.source.BVDocumentNodesRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.slf4j.LoggerFactory
-import java.lang.IllegalStateException
 import java.util.*
 
 object DocumentTreeBuilder {
@@ -22,7 +21,7 @@ object DocumentTreeBuilder {
             internalId2Node.computeIfAbsent(doc.internalId) {
                 BVDocumentViewTreeNode(
                     doc = BVDocumentViewFactory.create(doc),
-                    lastUpdated = doc.updated,
+                    lastUpdated = doc.updated, //?.atZoneSameInstant(ZoneId.of("UTC")),
                     sourceType = doc.sourceType,
                     subNodesComparator = subNodesComparator
                 )
@@ -170,7 +169,7 @@ object DocumentTreeBuilder {
                                     parentNode.addSubNode(childNode)
                                     val parentNodeLastUpdated = parentNode.lastUpdated
                                     if (parentNodeLastUpdated == null ||
-                                        parentNodeLastUpdated.before(childNode.lastUpdated)
+                                        parentNodeLastUpdated.isBefore(childNode.lastUpdated)
                                     ) {
                                         parentNode.lastUpdated = childNode.lastUpdated
                                     }

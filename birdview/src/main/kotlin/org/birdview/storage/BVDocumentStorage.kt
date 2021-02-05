@@ -1,7 +1,6 @@
 package org.birdview.storage
 
 import org.birdview.analysis.BVDocument
-import org.birdview.analysis.BVDocumentId
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentRef
 

@@ -2,7 +2,7 @@ package org.birdview.user
 
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.web.explore.model.BVUserLogEntry
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Named
 
@@ -25,7 +25,7 @@ class BVUserLog {
                     userLog.removeFirst()
                 }
                 val newEntry = BVUserLogEntry(
-                        timestamp = BVDateTimeUtils.timeFormat(ZonedDateTime.now()),
+                        timestamp = BVDateTimeUtils.timeFormat(OffsetDateTime.now()),
                         message = message)
                 userLog += newEntry
                 return newEntry.id
