@@ -26,7 +26,7 @@ class BVConfluenceDocumentService (
     private val sourceSecretsStorage: BVSourceSecretsStorage,
     private val userSourceStorage: BVUserSourceStorage
 ): BVTaskSource {
-    private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+    private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
     override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: BVSessionDocumentConsumer) {
         val confluenceConfig = sourceConfig as BVConfluenceConfig
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName

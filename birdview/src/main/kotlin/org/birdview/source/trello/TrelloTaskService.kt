@@ -28,7 +28,7 @@ open class TrelloTaskService(
         private const val TRELLO_CARD_SHORTLINK_TYPE = "trelloCardShortLink"
         const val TRELLO_BOARD_TYPE = "trelloBoardId"
         private const val TRELLO_LABEL_TYPE = "trelloLabel"
-        private const val TRELLO_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        private const val TRELLO_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
     }
 
     override fun getTasks(
