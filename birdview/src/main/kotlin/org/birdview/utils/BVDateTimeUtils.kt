@@ -3,6 +3,7 @@ package org.birdview.utils
 import org.birdview.model.TimeIntervalFilter
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
@@ -23,7 +24,7 @@ object BVDateTimeUtils {
     fun timeFormat(instant: TemporalAccessor?): String =
             instant?.let(formatterTime::format) ?: "Now"
 
-    fun format(maybeDate: OffsetDateTime?, format:String): String? =
+    fun format(maybeDate: ZonedDateTime?, format:String): String? =
             maybeDate?.format(DateTimeFormatter.ofPattern(format))
 
     fun parse(maybeDateTimeString: String?, pattern: String): OffsetDateTime? = try {

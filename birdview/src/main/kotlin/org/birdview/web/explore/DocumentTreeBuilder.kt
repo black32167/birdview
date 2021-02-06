@@ -21,9 +21,8 @@ object DocumentTreeBuilder {
             internalId2Node.computeIfAbsent(doc.internalId) {
                 BVDocumentViewTreeNode(
                     doc = BVDocumentViewFactory.create(doc),
-                    lastUpdated = doc.updated, //?.atZoneSameInstant(ZoneId.of("UTC")),
-                    sourceType = doc.sourceType,
-                    subNodesComparator = subNodesComparator
+                    lastUpdated = doc.updated,
+                    sourceType = doc.sourceType
                 )
             }
 //

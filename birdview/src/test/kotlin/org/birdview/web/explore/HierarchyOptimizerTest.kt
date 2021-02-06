@@ -78,8 +78,7 @@ class HierarchyOptimizerTest {
                         priority = Priority.NORMAL
                     ),
                     lastUpdated = OffsetDateTime.now(),
-                    sourceType = SourceType.JIRA,
-                    subNodesComparator = Comparator.comparing { it.lastUpdated }
+                    sourceType = SourceType.JIRA
             ).also {
                 it.subNodes = subNodes.toMutableSet()
             }
