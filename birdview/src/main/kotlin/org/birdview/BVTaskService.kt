@@ -30,6 +30,6 @@ open class BVTaskService(
     private fun getReferencedDocs(filteredDocs: List<BVDocument>): List<BVDocument> {
         return documentStorage.getDocuments(
             getReferencedDocIdsByHierarchyType(
-                filteredDocs, setOf(RelativeHierarchyType.LINK_TO_PARENT, RelativeHierarchyType.UNSPECIFIED)))
+                filteredDocs, setOf(RelativeHierarchyType.LINK_TO_PARENT)))
     }
 }
