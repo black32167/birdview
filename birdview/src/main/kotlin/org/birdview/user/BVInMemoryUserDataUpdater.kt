@@ -104,8 +104,8 @@ class BVInMemoryUserDataUpdater (
     }
 
     private fun loadUserData(bvUser: String, interval: TimeIntervalFilter) {
-        log.info(">>>>>>>>> Loading data for '${bvUser}' (${BVDateTimeUtils.format(interval)})")
-        val logId = userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.format(interval)}")
+        log.info(">>>>>>>>> Loading data for '${bvUser}' (${BVDateTimeUtils.offsetFormat(interval)})")
+        val logId = userLog.logMessage(bvUser, "Updating interval ${BVDateTimeUtils.localDateFormat(interval)}")
 
         val loadedDocs = ConcurrentHashMap<String, BVDocument>()
         val loadedIds = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
@@ -127,7 +127,7 @@ class BVInMemoryUserDataUpdater (
             // Loading missed referred docs:
             var loadedReferredDocs: Collection<BVDocument> = loadedDocs.values
             for (i in 1..2) {
-                log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.format(interval)}) #$i")
+                log.info(">>>>>>>>> Loading missed docs for '${bvUser}' (${BVDateTimeUtils.offsetFormat(interval)}) #$i")
 
                 loadedReferredDocs = loadReferredDocs(bvUser, loadedReferredDocs)
 
@@ -138,8 +138,8 @@ class BVInMemoryUserDataUpdater (
         } catch (e: Exception) {
             log.error("", e)
         } finally {
-            log.info(">>>>>>>>> Loaded data for user ${bvUser} ${BVDateTimeUtils.format(interval)},${documentStorage.count()} documents.")
-            userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.format(interval)}", logId)
+            log.info(">>>>>>>>> Loaded data for user ${bvUser} ${BVDateTimeUtils.offsetFormat(interval)},${documentStorage.count()} documents.")
+            userLog.logMessage(bvUser, "Updated interval ${BVDateTimeUtils.localDateFormat(interval)}", logId)
         }
     }
 

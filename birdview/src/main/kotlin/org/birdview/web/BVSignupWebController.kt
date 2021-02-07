@@ -21,11 +21,13 @@ class BVSignupWebController (
     class SignupFormData(
             val user: String,
             val password: String,
-            val email: String
+            val email: String,
+            val zoneId: String
     )
 
     @GetMapping
-    fun showForm(): String {
+    fun showForm(model:Model): String {
+        model.addAttribute("availableTimeZoneIds", BVWebTimeZonesUtil.getAvailableTimezoneIds())
         return SIGNUP
     }
 
@@ -35,11 +37,13 @@ class BVSignupWebController (
             userStorage.create(
                     formData.user,
                     BVUserSettings(
-                            passwordHash = PasswordUtils.hash(formData.password),
-                            email = formData.email))
+                        passwordHash = PasswordUtils.hash(formData.password),
+                        email = formData.email,
+                        zoneId = formData.zoneId
+                    ))
         } catch (e: BVUserStorage.UserStorageException) {
             model.addAttribute("errorMessage", "User already exists")
-            return SIGNUP
+            return showForm(model)
         }
         return "redirect:${BVWebPaths.LOGIN}"
     }

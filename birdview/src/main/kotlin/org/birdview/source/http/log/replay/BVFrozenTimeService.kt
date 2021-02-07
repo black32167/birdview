@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 class BVFrozenTimeService(
     folderConfig: BVFoldersConfig
 ): BVTimeService {
-    private val instant: OffsetDateTime = BVDateTimeUtils.parse(Files.readString(folderConfig.getSingularTimeFile()))
+    private val instant: OffsetDateTime = BVDateTimeUtils.offsetParse(Files.readString(folderConfig.getSingularTimeFile()))
 
     override fun getNow(): OffsetDateTime =
         instant

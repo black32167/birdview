@@ -23,6 +23,17 @@
             <td class="sign">Password:</td>
             <td><input type="password" name="password"></td>
         </tr>
+        <tr>
+            <td class="sign">Timezone:</td>
+            <td>
+              <select name="zoneId">
+                  <#list availableTimeZoneIds as availableTimeZoneId>
+                  <option value="${availableTimeZoneId}">${availableTimeZoneId}</option>
+                  </#list>
+              </select>
+            </td>
+        </tr>
+
         </table>
         <div class="buttons">
             <input type="submit" value="Signup"> or <a href="/login">Login</a>

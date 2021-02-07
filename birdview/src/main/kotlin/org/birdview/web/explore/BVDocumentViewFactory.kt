@@ -4,8 +4,10 @@ import org.birdview.analysis.BVDocument
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.web.explore.model.BVDocumentView
 import java.time.ZoneId
+import javax.inject.Named
 
-object BVDocumentViewFactory {
+@Named
+class BVDocumentViewFactory {
     val displayTimeZone = ZoneId.of("Australia/NSW") // TODO
     fun create(doc: BVDocument) : BVDocumentView =
             BVDocumentView(

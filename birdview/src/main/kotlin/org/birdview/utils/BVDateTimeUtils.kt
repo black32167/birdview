@@ -11,15 +11,20 @@ object BVDateTimeUtils {
     private val log = LoggerFactory.getLogger(BVDateTimeUtils::class.java)
     private val formatterTime = DateTimeFormatter.ofPattern("HH:mm:ss")
     private val formatterDate = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    private val formatterDateTime = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")
+    private val offsetFormatterDateTime = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss Z")
 
-    private val zonedFormatterDateTime = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss Z")
+    fun offsetFormat(interval: TimeIntervalFilter) =
+        format(interval, offsetFormatterDateTime)
 
-    fun format(interval: TimeIntervalFilter) = formatterDate.run {
-        "${(interval.after?.let { dateTimeFormat(it) }?: "Now")} to ${  (interval.before?.let { dateTimeFormat(it) }?: "Now")}"
-    }
+    fun localDateFormat(interval: TimeIntervalFilter) =
+        format(interval, formatterDate)
+
+    fun format(interval: TimeIntervalFilter, formatter:DateTimeFormatter) =
+        "${(interval.after?.let (formatter::format)?: "Now")} to ${  (interval.before?.let (formatter::format)?: "Now")}"
 
     fun dateTimeFormat(instant: OffsetDateTime): String =
-        instant.let(zonedFormatterDateTime::format)
+        instant.let(offsetFormatterDateTime::format)
 
     fun timeFormat(instant: TemporalAccessor?): String =
             instant?.let(formatterTime::format) ?: "Now"
@@ -36,6 +41,6 @@ object BVDateTimeUtils {
         null
     }
 
-    fun parse(serializedDateTime: String): OffsetDateTime =
-        OffsetDateTime.parse(serializedDateTime, zonedFormatterDateTime)
+    fun offsetParse(serializedDateTime: String): OffsetDateTime =
+        OffsetDateTime.parse(serializedDateTime, offsetFormatterDateTime)
 }

@@ -19,6 +19,7 @@ import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.utils.BVFilters
+import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 import javax.inject.Named
 
@@ -29,6 +30,8 @@ open class GithubTaskService(
         private val githubQueryBuilder: GithubQueryBuilder,
         private val secretsStorage: BVSourceSecretsStorage
 ): BVTaskSource {
+    private val log = LoggerFactory.getLogger(GithubTaskService::class.java)
+
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
@@ -45,7 +48,12 @@ open class GithubTaskService(
 
     override fun resolveSourceUserId(sourceName:String, email: String):String {
         val githubConfig = secretsStorage.getConfigByName(sourceName, BVGithubConfig::class.java)!!
-        val userName = gqlClient.getUserByEmail(githubConfig, email)
+        val userName = try {
+            gqlClient.getUserByEmail(githubConfig, email)
+        } catch (e: Throwable) {
+            log.error("error resolving Github user by email", e)
+            null
+        }
         return userName ?: email
     }
 

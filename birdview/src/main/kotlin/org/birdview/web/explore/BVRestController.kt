@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.temporal.ChronoUnit
-import java.util.*
-import kotlin.collections.ArrayList
 
 @RestController()
 @RequestMapping("/rest")
@@ -26,7 +24,8 @@ class BVRestController(
         private val userUpdater: BVUserDataUpdater,
         private val documentStorage: BVDocumentStorage,
         private val userLog: BVUserLog,
-        private val timeService: BVTimeService
+        private val timeService: BVTimeService,
+        private val documentTreeBuilder: DocumentTreeBuilder
 ) {
     class DocumentRequest(
             val user: String?,
@@ -56,8 +55,8 @@ class BVRestController(
             //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
             val docs = taskService.getDocuments(docFilter)
 
-            val docViewsRoots = DocumentTreeBuilder
-                    .buildTree(docs, documentStorage, documentsComparator(documentRequest.reportType))
+            val docViewsRoots = documentTreeBuilder
+                    .buildTree(docs, documentStorage)
                     .toMutableList()
 
             if (documentRequest.representationType == RepresentationType.LIST) {
@@ -83,15 +82,6 @@ class BVRestController(
     @GetMapping("documents/status")
     fun getDocumentUpdateStatus(): List<BVUserLogEntry> =
         userLog.getUserLog(UserContext.getUserName())
-
-    private fun documentsComparator(reportType: ReportType): Comparator<BVDocumentViewTreeNode> =
-            if (reportType == ReportType.WORKED) {
-                compareByDescending<BVDocumentViewTreeNode> { it.lastUpdated }
-                        .thenByDescending { it.doc.priority.ordinal }
-            } else {
-                compareByDescending<BVDocumentViewTreeNode>{ it.doc.priority.ordinal }
-                        .thenByDescending { it.lastUpdated }
-            }
 
     private fun inferRolesFromReportType(reportType: ReportType): List<UserRole> = when(reportType) {
         ReportType.PLANNED -> listOf(UserRole.WATCHER, UserRole.IMPLEMENTOR)

@@ -30,7 +30,7 @@
     </div>
 
     <div class="menu-item">
-        <a href="/user/sources">Sources...</a>
+        <a href="/user/settings">Settings...</a>
         |
         <a href="#" onclick="reindex()" class="refresh">Update</a>
         |

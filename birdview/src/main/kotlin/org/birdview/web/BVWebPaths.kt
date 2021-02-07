@@ -5,7 +5,7 @@ object BVWebPaths {
     const val SECRETS = "${ADMIN_ROOT}/secrets"
     const val USER_ROOT = "/user"
     const val EXPLORE = "${USER_ROOT}/explore"
-    const val USER_SOURCES = "${USER_ROOT}/sources"
+    const val USER_SETTINGS = "${USER_ROOT}/settings"
     const val LOGIN = "/login"
     const val SIGNUP = "/signup"
 }

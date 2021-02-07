@@ -6,9 +6,9 @@
 </head>
 <body>
     <div class="menu">
-       <a href="/user/sources">< Sources</a>
+       <a href="/user/settings">< Settings</a>
     </div>
-    <form class="center" action="/user/sources" method="POST">
+    <form class="center" action="/user/settings/source" method="POST">
         <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <table>
             <tr>

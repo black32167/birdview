@@ -6,12 +6,14 @@ import org.birdview.source.BVDocumentNodesRelation
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.slf4j.LoggerFactory
-import java.util.*
+import javax.inject.Named
 
-object DocumentTreeBuilder {
-    class DocumentForest (
-            private val documentStorage: BVDocumentStorage,
-            private val subNodesComparator: Comparator<BVDocumentViewTreeNode>?
+@Named
+class DocumentTreeBuilder(
+    val documentViewFactory: BVDocumentViewFactory
+) {
+    inner class DocumentForestBuilder (
+            private val documentStorage: BVDocumentStorage
     ) {
         private val log = LoggerFactory.getLogger(DocumentTreeBuilder::class.java)
         private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
@@ -20,57 +22,11 @@ object DocumentTreeBuilder {
         fun createNode(doc: BVDocument): BVDocumentViewTreeNode =
             internalId2Node.computeIfAbsent(doc.internalId) {
                 BVDocumentViewTreeNode(
-                    doc = BVDocumentViewFactory.create(doc),
+                    doc = documentViewFactory.create(doc),
                     lastUpdated = doc.updated,
                     sourceType = doc.sourceType
                 )
             }
-//
-//        fun addAndGetDocNode(doc: BVDocument, depth: Int): BVDocumentViewTreeNode {
-//            if(depth > 100) {
-//                throw IllegalStateException("Depth is too high, probably caught up in endless recursion")
-//            }
-//            val existingNode = internalId2Node[doc.internalId]
-//
-//            if (existingNode != null) {
-//                return existingNode;
-//            }
-//
-//            val docNode = BVDocumentViewTreeNode(
-//                    doc = BVDocumentViewFactory.create(doc),
-//                    lastUpdated = doc.updated,
-//                    sourceType = doc.sourceType,
-//                    subNodesComparator = subNodesComparator
-//            )
-//            internalId2Node[doc.internalId] = docNode
-//
-//            // Collect references
-//            val referencedNodes = doc.refs.mapNotNull { ref ->
-//                documentStorage.getDocuments(setOf(ref.docId.id))
-//                    .firstOrNull()
-//                    ?.let { addAndGetDocNode(it, depth + 1) }
-//            } + documentStorage.findParentsByInternalId(doc.internalId) {}
-//
-//            referencedNodes.forEach { referencedDocNode->
-//                val relation = BVDocumentsRelation.from(referencedDocNode, docNode, ref.hierarchyType)
-//
-//                // Hierarchical relation
-//                if (relation != null) {
-//                    relation.apply {
-//                        parent.addSubNode(child)
-//                        val parentNodeLastUpdated = parent.lastUpdated
-//                        if (parentNodeLastUpdated == null ||
-//                                parentNodeLastUpdated.before(child.lastUpdated)) {
-//                            parent.lastUpdated = child.lastUpdated
-//                        }
-//                    }
-//                } else {
-//                    alternatives.computeIfAbsent(docNode.internalId) { mutableSetOf() } += referencedDocNode.internalId
-//                }
-//            }
-//
-//            return docNode
-//        }
 
         fun mergeAlternatives() {
             alternatives.forEach { (docId, alternateIds) ->
@@ -185,8 +141,8 @@ object DocumentTreeBuilder {
         }
     }
 
-    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage, nodesComparator: Comparator<BVDocumentViewTreeNode>? = null): List<BVDocumentViewTreeNode> {
-        val tree = DocumentForest(documentStorage, nodesComparator)
+    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage): List<BVDocumentViewTreeNode> {
+        val tree = DocumentForestBuilder(documentStorage)
 
         tree.addAndLinkNodes(_docs)
 
