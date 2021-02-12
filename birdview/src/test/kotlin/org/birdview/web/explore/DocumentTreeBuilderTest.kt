@@ -8,19 +8,39 @@ import org.birdview.model.RelativeHierarchyType
 import org.birdview.source.SourceType
 import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.storage.memory.BVInMemoryDocumentStorage
+import org.birdview.utils.TestConfig
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
+import org.springframework.test.context.junit4.SpringRunner
 import java.time.OffsetDateTime
+import javax.inject.Inject
 
-//@RunWith(MockitoJUnitRunner::class)
+@Import(TestConfig::class)
+@SpringBootTest("spring.main.allow-bean-definition-overriding=true")
+@RunWith(SpringRunner::class)
 class DocumentTreeBuilderTest {
     private var TIME_INSTANT = OffsetDateTime.now()
     private val documentStorage = BVInMemoryDocumentStorage(mock(BVDocumentPredicate::class.java))
 
-    private val documentTreeBuilder = DocumentTreeBuilder(BVDocumentViewFactory())
+    @Inject
+    private lateinit var documentTreeBuilder: DocumentTreeBuilder
+
+    @Before
+    fun init() {
+//        Mockito.`when`(docViewFactory.create(Mockito.any())).thenAnswer { invocation->
+//            val doc = invocation.getArgumentAt(0, BVDocument::class.java)
+//            BVDocumentView()
+//        }
+
+//        documentTreeBuilder = DocumentTreeBuilder(docViewFactory)
+    }
 
     @Test
     fun testSimpleTreeBuilt() {
