@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import javax.inject.Named
 
 @Named
-class FileUserDetailsService (
+class BVUserDetailsService (
         val userStorage: BVUserStorage,
         @Value("\${birdview.admin.password}") val adninPassword: String
 ): UserDetailsService {
