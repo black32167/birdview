@@ -36,7 +36,7 @@ class PullRequestCommit(
 }
 
 class GqlGithubIssueComment(
-        val author: GqlGithubActor,
+        val author: GqlGithubActor?,
         val publishedAt: String
 ) : GqlGithubEvent("IssueComment") {
     override val contributionType: BVDocumentOperationType = BVDocumentOperationType.COMMENT
