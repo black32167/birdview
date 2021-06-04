@@ -13,4 +13,9 @@ data class BVDocumentView (
         val key: String,
         val lastUpdater: String?,
         val priority: Priority
-)
+) {
+        companion object {
+                fun grouping(internalId: String, title: String) =
+                        BVDocumentView(internalId, listOf(), title, null, "", "", "", "", null, Priority.NORMAL)
+        }
+}

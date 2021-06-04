@@ -21,7 +21,8 @@ class BVHttpClientImpl (
     private val log = LoggerFactory.getLogger(BVHttpClientImpl::class.java)
     private val targetFactory = WebTargetFactory(
         url = basePath,
-        authProvider = authProvider
+        authProvider = authProvider,
+        enableLogging = System.getenv("BV_HTTP_TRACING_ENABLED")?.toBoolean() ?: false
     )
 
     override fun <T> get(resultClass: Class<T>, subPath: String?, parameters: Map<String, Any>): T {

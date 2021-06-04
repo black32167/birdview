@@ -15,6 +15,9 @@ import javax.ws.rs.client.ClientBuilder
 import javax.ws.rs.client.WebTarget
 
 class WebTargetFactory(url:String, enableLogging:Boolean = false, val authProvider: () -> ApiAuth? = {null}) {
+    companion object {
+        private val MAX_HTTP_TRACE_PAYLOAD_SIZE = 2048
+    }
     private val timeoutMs = 1000000
     private val client = buildClient(enableLogging)
 
@@ -31,7 +34,7 @@ class WebTargetFactory(url:String, enableLogging:Boolean = false, val authProvid
                                 .registerModule(KotlinModule())))
                         .also { if (enableLogging) {
                             it.register(LoggingFeature(Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                                    Level.INFO, LoggingFeature.Verbosity.PAYLOAD_TEXT, Integer.MAX_VALUE/2))
+                                    Level.INFO, LoggingFeature.Verbosity.PAYLOAD_TEXT, MAX_HTTP_TRACE_PAYLOAD_SIZE))
                         }}
         )
 

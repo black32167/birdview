@@ -3,7 +3,9 @@ package org.birdview.web.explore
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentRef
 import org.birdview.source.BVDocumentNodesRelation
+import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
+import org.birdview.web.explore.model.BVDocumentView
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.slf4j.LoggerFactory
 import javax.inject.Named
@@ -153,7 +155,24 @@ class DocumentTreeBuilder(
                 tree.collapseNodes(it)
             }
 
-            return tree.getRoots()
+            // Group ungrouped by types
+            val roots = tree.getRoots();
+            val (singles, trees) = roots.partition { it.subNodes.isEmpty() }
+
+            val groupedSingles = singles.groupBy { it.sourceType }
+                .map { (sourceType, nodes) ->
+                    BVDocumentViewTreeNode(
+                        doc = BVDocumentView.grouping(sourceType.name, sourceType.name.toLowerCase().capitalize()),
+                        sourceType = SourceType.NONE
+                    ).also { groupingNode -> nodes.forEach { groupingNode.addSubNode(it) } }
+            }
+
+            val otherDocNode = BVDocumentViewTreeNode(
+                doc = BVDocumentView.grouping("other_docs", "Other..."),
+                sourceType = SourceType.NONE
+            ).also { groupingNode -> groupedSingles.forEach { groupingNode.addSubNode(it) } }
+
+            return trees + otherDocNode
         } catch (e: Exception) {
             throw RuntimeException(e)
         }

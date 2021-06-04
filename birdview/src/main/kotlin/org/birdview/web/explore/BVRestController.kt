@@ -1,7 +1,6 @@
 package org.birdview.web.explore
 
 import org.birdview.BVTaskService
-import org.birdview.analysis.Priority
 import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.source.SourceType
@@ -65,7 +64,7 @@ class BVRestController(
 
             if (docViewsRoots.isNotEmpty()) {
                 val roleNode = BVDocumentViewTreeNode(
-                        doc = BVDocumentView(role.name, listOf(), role.name, null, "", "", "", "", null, Priority.NORMAL),
+                        doc = BVDocumentView.grouping(role.name, role.name),
                         sourceType = SourceType.NONE)
                 roleNode.subNodes.addAll(docViewsRoots)
                 topNodes += roleNode
