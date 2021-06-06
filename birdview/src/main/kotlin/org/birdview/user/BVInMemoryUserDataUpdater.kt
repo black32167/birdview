@@ -2,6 +2,7 @@ package org.birdview.user
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.birdview.analysis.BVDocument
+import org.birdview.config.EnvironmentVariables
 import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
 import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
 import org.birdview.model.TimeIntervalFilter
@@ -69,7 +70,8 @@ class BVInMemoryUserDataUpdater (
         log.info(">>>>>>>>> Idle users :${idleBvUsers.joinToString (",")}")
 
         updateScheduleExecutor.submit {
-            val now = timeService.getNow()
+            val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
+                ?: timeService.getNow()
 
             for (bvUser in idleBvUsers) {
                 userFutures[bvUser] = userUpdateExecutor.submit {
