@@ -124,18 +124,20 @@ class DocumentTreeBuilderTest {
     }
 
     @Test
-    fun nodesShoyldOrderedByModifiedDate() {
+    fun nodesShouldOrderedByModifiedDate() {
         val now = System.currentTimeMillis()
         val DOC1_ID = "doc1"
         val DOC2_ID = "doc2"
         val docs = listOf(
                 doc(listOf(DOC1_ID), SourceType.JIRA, updated = OffsetDateTime.now()),
                         doc(listOf(DOC2_ID), SourceType.JIRA, updated = OffsetDateTime.now().minusSeconds(10000)))
-        val views1 = documentTreeBuilder.buildTree(docs, documentStorage)
-        assertTrue(views1[0].doc.ids.contains(DOC1_ID))
+        val othersGroup1 = documentTreeBuilder.buildTree(docs, documentStorage)[0]
+        val jiraGroup1 = othersGroup1.subNodes.first()
+        assertTrue(jiraGroup1.subNodes.first().doc.ids.contains(DOC1_ID))
 
-        val views2 = documentTreeBuilder.buildTree(docs.reversed(), documentStorage)
-        assertTrue(views1[0].doc.ids.contains(DOC1_ID))
+        val othersGroup2 = documentTreeBuilder.buildTree(docs.reversed(), documentStorage)[0]
+        val jiraGroup2 = othersGroup2.subNodes.first()
+        assertTrue(jiraGroup2.subNodes.first().doc.ids.contains(DOC1_ID))
     }
 
     private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:OffsetDateTime = dateSeq()): BVDocument =

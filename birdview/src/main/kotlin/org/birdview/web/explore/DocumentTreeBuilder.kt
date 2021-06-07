@@ -159,20 +159,25 @@ class DocumentTreeBuilder(
             val roots = tree.getRoots();
             val (singles, trees) = roots.partition { it.subNodes.isEmpty() }
 
-            val groupedSingles = singles.groupBy { it.sourceType }
-                .map { (sourceType, nodes) ->
-                    BVDocumentViewTreeNode(
-                        doc = BVDocumentView.grouping(sourceType.name, sourceType.name.toLowerCase().capitalize()),
-                        sourceType = SourceType.NONE
-                    ).also { groupingNode -> nodes.forEach { groupingNode.addSubNode(it) } }
+            if (singles.isEmpty()) {
+                return trees
+            } else {
+                val groupedSingles = singles.groupBy { it.sourceType }
+                    .map { (sourceType, nodes) ->
+                        BVDocumentViewTreeNode(
+                            doc = BVDocumentView.grouping(sourceType.name, sourceType.name.toLowerCase().capitalize()),
+                            sourceType = SourceType.NONE
+                        ).also { groupingNode -> nodes.forEach { groupingNode.addSubNode(it) } }
+                    }
+
+
+                val otherDocNode = BVDocumentViewTreeNode(
+                    doc = BVDocumentView.grouping("other_docs", "Other..."),
+                    sourceType = SourceType.NONE
+                ).also { groupingNode -> groupedSingles.forEach { groupingNode.addSubNode(it) } }
+
+                return trees + otherDocNode
             }
-
-            val otherDocNode = BVDocumentViewTreeNode(
-                doc = BVDocumentView.grouping("other_docs", "Other..."),
-                sourceType = SourceType.NONE
-            ).also { groupingNode -> groupedSingles.forEach { groupingNode.addSubNode(it) } }
-
-            return trees + otherDocNode
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
