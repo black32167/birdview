@@ -1,0 +1,14 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: bv-storage
+  namespace: birdview
+parameters:
+  billingType: hourly
+  classVersion: "2"
+  iopsPerGB: "2"
+  sizeRange: '[1-10]Gi'
+  type: Endurance
+provisioner: ibm.io/ibmc-file
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
