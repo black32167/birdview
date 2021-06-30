@@ -2,6 +2,7 @@ package org.birdview.storage.file
 
 import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
+import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVSourcesManager
@@ -12,12 +13,13 @@ import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.context.annotation.Profile
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.stream.Collectors
 import javax.inject.Named
 
+@Profile(BVProfiles.FILESTORE)
 @Named
 class BVFileUserStorage (
         private val bvFoldersConfig: BVFoldersConfig,
@@ -27,7 +29,6 @@ class BVFileUserStorage (
         private val userSourceStorage: BVUserSourceStorage
 ) : BVUserStorage {
     private val log = LoggerFactory.getLogger(BVFileUserStorage::class.java)
-    private val userCreatedListeners = CopyOnWriteArrayList<BVUserStorage.UserChangedListener>()
 
     companion object {
         val userSettingsFile = "user.json"
@@ -35,8 +36,8 @@ class BVFileUserStorage (
 
     // TODO: not transactional
     @CacheEvict(USER_NAMES_CACHE, allEntries = true)
-    override fun create(bvUserName:String, userSettings: BVUserSettings) {
-        val userSettingsFile = getUserSettingsFile(bvUserName)
+    override fun create(userName:String, userSettings: BVUserSettings) {
+        val userSettingsFile = getUserSettingsFile(userName)
         if (Files.exists(userSettingsFile)) {
             throw BVUserStorage.UserStorageException("User already exists")
         }
@@ -58,7 +59,7 @@ class BVFileUserStorage (
                                 } ?: ""
 
                         userSourceStorage.create(
-                                bvUserName = bvUserName,
+                                bvUserName = userName,
                                 sourceName = sourceName,
                                 sourceUserName = sourceUserId
                         )
@@ -87,15 +88,11 @@ class BVFileUserStorage (
         update(userName, userSettings.copy(enabled = enabled))
     }
 
-    override fun addUserCreatedListener(userChangedListener: BVUserStorage.UserChangedListener) {
-        userCreatedListeners.add(userChangedListener)
-    }
-
     @CacheEvict(cacheNames = [USER_SETTINGS_CACHE, USER_NAMES_CACHE], allEntries = true)
     @Synchronized
-    override fun delete(bvUserName: String) {
-        userSourceStorage.deleteAll(bvUserName)
-        Files.walk(bvFoldersConfig.getUserConfigFolder(bvUserName))
+    override fun delete(userName: String) {
+        userSourceStorage.deleteAll(userName)
+        Files.walk(bvFoldersConfig.getUserConfigFolder(userName))
                 .sorted(Comparator.reverseOrder())
                 .forEach(Files::delete)
     }
