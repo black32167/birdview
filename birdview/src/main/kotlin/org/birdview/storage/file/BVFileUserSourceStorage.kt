@@ -1,18 +1,21 @@
 package org.birdview.storage.file
 
 import org.birdview.BVCacheNames.USER_SOURCE_CACHE
+import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
 import org.birdview.utils.JsonDeserializer
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.context.annotation.Profile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors.toList
 import javax.inject.Named
 
+@Profile(BVProfiles.FILESTORE)
 @Named
 class BVFileUserSourceStorage(
         private val bvFoldersConfig: BVFoldersConfig,
