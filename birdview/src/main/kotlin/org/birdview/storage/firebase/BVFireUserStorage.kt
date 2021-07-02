@@ -17,7 +17,7 @@ class BVFireUserStorage(clienProvider: BVFirebaseClientProvider): BVUserStorage 
     }
 
     override fun create(userName: String, userSettings: BVUserSettings) {
-        userCollectionRef.document(userName).set(userSettings)
+        update(userName, userSettings)
     }
 
     override fun update(userName: String, userSettings: BVUserSettings) {
