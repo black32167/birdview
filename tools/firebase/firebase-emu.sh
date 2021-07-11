@@ -12,7 +12,7 @@ run)
     -p 4000:4000 \
     firebase firebase emulators:start \
     --only firestore \
-    --project birdview-test \
+    --project birdview-286612 \
     --config /fire.json
   ;;
 *)
