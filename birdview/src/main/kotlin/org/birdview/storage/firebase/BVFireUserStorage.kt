@@ -8,8 +8,8 @@ import javax.inject.Named
 
 @Profile(BVProfiles.FIRESTORE)
 @Named
-class BVFireUserStorage(clienProvider: BVFirebaseClientProvider): BVUserStorage {
-    private val userCollectionRef = clienProvider.getClientForCollection("users")
+class BVFireUserStorage(clientProvider: BVFirebaseClientProvider): BVUserStorage {
+    private val userCollectionRef = clientProvider.getClientForCollection("users")
 
     override fun listUserNames(): List<String> {
         return userCollectionRef.listDocuments()

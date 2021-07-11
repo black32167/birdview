@@ -8,7 +8,7 @@ import javax.inject.Named
 
 @Profile(BVProfiles.FIRESTORE)
 @Named
-class BVFileUserSourceStorage(clienProvider: BVFirebaseClientProvider): BVUserSourceStorage {
+class BVFireUserSourceStorage(clienProvider: BVFirebaseClientProvider): BVUserSourceStorage {
     private val userCollectionRef = clienProvider.getClientForCollection("users")
 
     override fun getSourceProfile(bvUserName: String, sourceName: String): BVUserSourceConfig =
