@@ -13,21 +13,13 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors
 import javax.inject.Named
+
 @Named
 open class BVFileSourceSecretsStorage(
         open val bvFoldersConfig: BVFoldersConfig,
         open val jsonDeserializer: JsonDeserializer
 ): BVSourceSecretsStorage {
     private val log = LoggerFactory.getLogger(BVSourceSecretsStorage::class.java)
-
-    override fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T> =
-            getSourceConfigs()
-                    .filter { configClass.isAssignableFrom(it.javaClass) }
-                    .map { configClass.cast(it) }
-                    .toList()
-
-    override fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T? =
-            getConfigsOfType(configClass).firstOrNull()
 
     @Cacheable(SOURCE_SECRET_CACHE_NAME)
     override fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =

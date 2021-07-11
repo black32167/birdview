@@ -31,16 +31,20 @@ open class GDriveTaskService(
         private const val GDRIVE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
     }
 
-    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: BVSessionDocumentConsumer) {
+    override fun getTasks(
+        bvUser: String,
+        updatedPeriod: TimeIntervalFilter,
+        sourceConfig: BVAbstractSourceConfig,
+        chunkConsumer: BVSessionDocumentConsumer
+    ) {
+        val config = sourceConfig as BVGDriveConfig
         try {
-            sourceSecretsStorage.getConfigOfType(BVGDriveConfig::class.java)
-                    ?.also { config ->
-                        client.getFiles(
-                            config,
-                            gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)) { files ->
-                                chunkConsumer.consume(files.map { file -> toBVDocument(file, config) })
-                            }
-                    }
+            client.getFiles(
+                config,
+                gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)
+            ) { files ->
+                chunkConsumer.consume(files.map { file -> toBVDocument(file, config) })
+            }
         } catch (e: Exception) {
             log.error("", e)
         }

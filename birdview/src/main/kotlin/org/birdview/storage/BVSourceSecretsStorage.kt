@@ -5,11 +5,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.birdview.source.SourceType
 
 interface BVSourceSecretsStorage {
-
-    fun <T: BVAbstractSourceConfig> getConfigsOfType(configClass: Class<T>):List<T>
-
-    fun <T: BVAbstractSourceConfig> getConfigOfType(configClass: Class<T>): T?
-
     fun getConfigByName(sourceName: String): BVAbstractSourceConfig?
 
     fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>) : T?
