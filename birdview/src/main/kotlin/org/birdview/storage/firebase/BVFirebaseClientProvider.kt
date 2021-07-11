@@ -19,4 +19,5 @@ class BVFirebaseClientProvider {
     fun getClientForCollection(collectionName: String) =
         delegateClient.collection(collectionName)
 
+    fun getClient() = delegateClient
 }
