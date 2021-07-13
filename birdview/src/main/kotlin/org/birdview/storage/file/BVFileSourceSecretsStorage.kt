@@ -1,6 +1,7 @@
 package org.birdview.storage.file
 
 import org.birdview.BVCacheNames.SOURCE_SECRET_CACHE_NAME
+import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
@@ -8,12 +9,14 @@ import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.context.annotation.Profile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors
 import javax.inject.Named
 
+@Profile(BVProfiles.FILESTORE)
 @Named
 open class BVFileSourceSecretsStorage(
         open val bvFoldersConfig: BVFoldersConfig,
