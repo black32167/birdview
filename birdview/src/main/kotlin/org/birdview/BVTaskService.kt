@@ -15,7 +15,7 @@ open class BVTaskService(
     open fun getDocuments(filter: BVDocumentFilter): List<BVDocument> {
         BVTimeUtil.printStats()
 
-        val filteredDocs = BVTimeUtil.logTime("Filtering documents") {
+        val filteredDocs = BVTimeUtil.logTimeAndReturn("Filtering documents") {
             documentStorage.findDocuments(filter)
         }
 

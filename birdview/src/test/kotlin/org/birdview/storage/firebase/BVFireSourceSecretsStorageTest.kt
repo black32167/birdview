@@ -1,17 +1,17 @@
 package org.birdview.storage.firebase
 
+import org.birdview.BVProfiles
 import org.birdview.firebase.AbstractFirebaseStorageTest
-import org.birdview.storage.BVConfluenceConfig
-import org.birdview.storage.BVGDriveConfig
-import org.birdview.storage.BVGithubConfig
-import org.birdview.storage.BVJiraConfig
+import org.birdview.storage.*
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import javax.inject.Inject
 
 @RunWith(SpringRunner::class)
+@ActiveProfiles(BVProfiles.FIRESTORE)
 class BVFireSourceSecretsStorageTest : AbstractFirebaseStorageTest() {
     private companion object {
         private const val SOURCE_NAME_GITHUB = "github-source-name"
@@ -54,7 +54,7 @@ class BVFireSourceSecretsStorageTest : AbstractFirebaseStorageTest() {
     }
 
     @Inject
-    private lateinit var storage: BVFireSourceSecretsStorage
+    private lateinit var storage: BVSourceSecretsStorage
 
     @Test
     fun testGetConfigByNameUntyped() {

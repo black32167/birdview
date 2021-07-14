@@ -19,7 +19,7 @@ class GithubGqlClient (
     )
     fun getPullRequests(githubConfig: BVGithubConfig, githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
         log.info("Running Github query:{}", githubQuery)
-        return BVTimeUtil.logTime("getPullRequests-GQL") {
+        return BVTimeUtil.logTimeAndReturn("getPullRequests-GQL") {
 
             val queryTemplate = javaClass
                     .getResourceAsStream("/github/gql/search.gql")
@@ -34,7 +34,7 @@ class GithubGqlClient (
                         "cursor" to (cursor?.let { "\"${cursor}\"" } ?: "null")))
 
                 val response: GqlGithubResponse<GqlGithubSearchContainer<GqlGithubPullRequest>> =
-                        BVTimeUtil.logTime("getPullRequests-GQL-page") {
+                        BVTimeUtil.logTimeAndReturn("getPullRequests-GQL-page") {
                             getHttpClient(githubConfig)
                                 .post(
                                     GqlGithubSearchPullRequestResponse::class.java,

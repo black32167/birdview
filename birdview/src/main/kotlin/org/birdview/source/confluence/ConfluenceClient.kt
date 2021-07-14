@@ -35,7 +35,7 @@ class ConfluenceClient(
         var startAt: Int = 0
         try {
             do {
-                val response = BVTimeUtil.logTime("confluence-findDocs-page") {
+                val response = BVTimeUtil.logTimeAndReturn("confluence-findDocs-page") {
                     getHttpClient(config).get(
                         resultClass = ConfluenceSearchPageResponseSearchResult::class.java,
                         subPath = "search",

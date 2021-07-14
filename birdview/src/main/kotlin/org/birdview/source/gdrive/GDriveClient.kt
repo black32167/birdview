@@ -35,7 +35,7 @@ class GDriveClient(
             )
             var qParameters:Map<String, Any> = mainParameters + mapOf("q" to query)
             do {
-                val filesResponse = BVTimeUtil.logTime("gdrive-getFiles-page") {
+                val filesResponse = BVTimeUtil.logTimeAndReturn("gdrive-getFiles-page") {
                     getHttpClient(config)
                         .get(
                             resultClass = GDriveFileListResponse::class.java,

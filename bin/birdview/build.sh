@@ -8,7 +8,9 @@ SCRIPT_DIR="${BASH_SOURCE%/*}"
 MODUE_DIR="${SCRIPT_DIR%/*/*}/birdview"
 
 mbuild() {
-  mvn clean install -pl "${MODUE_DIR}"
+  FIRESTORE_EMULATOR_HOST=localhost:8080 \
+  GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud/birdview-creds.json \
+    mvn clean install -pl "${MODUE_DIR}"
 }
 
 dbuild() {

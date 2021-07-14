@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 open class TimeLoggingAspect {
     @Around("within(@org.springframework.stereotype.Repository *) && execution(* *(..))")
-    fun aroundRepositoryMethods(pjp: ProceedingJoinPoint): Any {
+    fun aroundRepositoryMethods(pjp: ProceedingJoinPoint): Any? {
         val methodName = pjp.signature.name
-        return BVTimeUtil.logTime(methodName, pjp::proceed)
+        return BVTimeUtil.logTimeAndMaybeReturn(methodName, pjp::proceed)
     }
 }

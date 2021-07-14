@@ -39,7 +39,7 @@ class JiraClient(
 
         var startAt:Int? = 0
         do {
-            val response = BVTimeUtil.logTime("jira-findIssues-page") {
+            val response = BVTimeUtil.logTimeAndReturn("jira-findIssues-page") {
                 getHttpClient(jiraConfig)
                     .post(
                         resultClass = JiraIssuesFilterResponse::class.java,
