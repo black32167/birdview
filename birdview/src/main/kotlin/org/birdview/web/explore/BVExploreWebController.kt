@@ -7,12 +7,12 @@ import org.birdview.security.UserContext
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.web.BVWebPaths
+import org.birdview.web.WebUtils
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @Controller
 @RequestMapping(BVWebPaths.EXPLORE)
@@ -27,7 +27,7 @@ class BVExploreWebController(
               @RequestParam(value = "user", required = false) user: String?,
               @RequestParam(value = "report", required = false) report: String?
     ): String? {
-        val baseUrl = getBaseUrl()
+        val baseUrl = WebUtils.getBaseUrl()
 
         model.asMap().putAll(mapOf(
                 "user" to (user ?: UserContext.getUserName()),
@@ -43,8 +43,4 @@ class BVExploreWebController(
 
     private fun listUsers() =
             userStorage.listUserNames()
-
-    private fun getBaseUrl() =
-            ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-
 }

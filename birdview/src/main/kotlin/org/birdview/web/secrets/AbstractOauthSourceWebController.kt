@@ -4,11 +4,11 @@ import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
+import org.birdview.web.WebUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import org.springframework.web.servlet.view.RedirectView
 
 abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSourceConfig, F>(
@@ -68,5 +68,5 @@ abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSou
     }
 
     protected fun getRedirectCodeUrl(source: String) =
-            "${ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()}${getControllerPath()}/${CODE_ENDPOINT_PATH}?source=${source}"
+            "${WebUtils.getBaseUrl()}${getControllerPath()}/${CODE_ENDPOINT_PATH}?source=${source}"
 }
