@@ -44,26 +44,29 @@ abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSou
             RedirectView(getProviderAuthCodeUrl(config))
 
     private fun getProviderAuthCodeUrl(oAuthConfig: BVOAuthSourceConfig): String {
-        return oAuthConfig.authCodeUrl +
+        val req = oAuthConfig.authCodeUrl +
                 "client_id=${oAuthConfig.clientId}" +
                 "&response_type=code" +
                 "&redirect_uri=${getRedirectCodeUrl(oAuthConfig.sourceName)}" +
-                "&scope=${oAuthConfig.scope}"
+                "&scope=${oAuthConfig.scope}" +
+                "&access_type=offline"
+        return req
     }
 
     private fun exchangeAuthorizationCode(sourceName: String, authCode:String) {
         val config = sourceSecretsStorage.getConfigByName(sourceName) as BVOAuthSourceConfig
+        val fields = mapOf(
+            "client_id" to config.clientId,
+            "client_secret" to config.clientSecret,
+            "access_type" to "offline",
+            "code" to authCode,
+            "grant_type" to "authorization_code",
+            "redirect_uri" to getRedirectCodeUrl(config.sourceName))
         val authCodeExchangeResponse =
             httpClientFactory.getHttpClient(config.tokenExchangeUrl).postForm(
                 resultClass = getAuthCodeResponseClass(),
-                formFields = mapOf(
-                    "client_id" to config.clientId,
-                    "client_secret" to config.clientSecret,
-                    "access_type" to "offline",
-                    "code" to authCode,
-                    "grant_type" to "authorization_code",
-                    "redirect_uri" to getRedirectCodeUrl(config.sourceName))
-                )
+                formFields = fields)
+
         consumeAuthCodeExchangeResponse(sourceName, authCodeExchangeResponse)
     }
 

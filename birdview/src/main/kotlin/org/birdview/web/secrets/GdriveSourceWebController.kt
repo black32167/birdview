@@ -7,6 +7,7 @@ import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
 import org.birdview.web.secrets.GdriveSourceWebController.Companion.CONTROLLER_PATH
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 
@@ -29,11 +30,13 @@ class GdriveSourceWebController(
             val key: String?,
             val secret: String?
     ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "gdrive")
+    private val log = LoggerFactory.getLogger(GdriveSourceWebController::class.java)
 
     override fun consumeAuthCodeExchangeResponse(sourceName: String, rawResponse: GAccessTokenResponse) {
-        val refreshToken = rawResponse.refresh_token
-                ?: throw IllegalStateException("Cannot obtain refresh token from auth code exchange response")
-        tokenStorage.saveRefreshToken(sourceName, refreshToken)
+        rawResponse.refresh_token?.also { refreshToken->
+            tokenStorage.saveRefreshToken(sourceName, refreshToken)
+        }
+        tokenStorage.saveAccessToken(sourceName, rawResponse.access_token)
     }
 
     override fun getControllerPath() = CONTROLLER_PATH
