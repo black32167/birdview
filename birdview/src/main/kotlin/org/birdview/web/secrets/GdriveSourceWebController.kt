@@ -1,8 +1,8 @@
 package org.birdview.web.secrets
 
 import org.birdview.source.gdrive.GAccessTokenResponse
+import org.birdview.source.gdrive.GDriveOAuthClient
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.web.BVWebPaths
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 @Controller
 @RequestMapping(CONTROLLER_PATH)
 class GdriveSourceWebController(
-        sourceSecretsStorage: BVSourceSecretsStorage,
-        httpClientFactory: BVHttpClientFactory,
-        private val tokenStorage: OAuthRefreshTokenStorage,
+    sourceSecretsStorage: BVSourceSecretsStorage,
+    httpClientFactory: BVHttpClientFactory,
+    private val oauthClient: GDriveOAuthClient,
 ): AbstractOauthSourceWebController<GAccessTokenResponse, BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(
     httpClientFactory,
     sourceSecretsStorage
@@ -33,10 +33,7 @@ class GdriveSourceWebController(
     private val log = LoggerFactory.getLogger(GdriveSourceWebController::class.java)
 
     override fun consumeAuthCodeExchangeResponse(sourceName: String, rawResponse: GAccessTokenResponse) {
-        rawResponse.refresh_token?.also { refreshToken->
-            tokenStorage.saveRefreshToken(sourceName, refreshToken)
-        }
-        tokenStorage.saveAccessToken(sourceName, rawResponse.access_token)
+        oauthClient.saveOAuthTokens(sourceName, rawResponse)
     }
 
     override fun getControllerPath() = CONTROLLER_PATH

@@ -10,10 +10,9 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
-import org.birdview.source.oauth.OAuthRefreshTokenStorage
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGDriveConfig
-import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.OAuthTokenStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
@@ -21,10 +20,9 @@ import javax.inject.Named
 
 @Named
 open class GDriveTaskService(
-        private val client: GDriveClient,
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val tokenStorage: OAuthRefreshTokenStorage,
-        private val gDriveQueryBuilder: GDriveQueryBuilder
+    private val client: GDriveClient,
+    private val tokenStorage: OAuthTokenStorage,
+    private val gDriveQueryBuilder: GDriveQueryBuilder
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
     companion object {
@@ -52,10 +50,7 @@ open class GDriveTaskService(
 
     override fun getType() = SourceType.GDRIVE
 
-    override fun isAuthenticated(sourceName: String): Boolean =
-        sourceSecretsStorage.getConfigByName(sourceName, BVGDriveConfig::class.java)
-                ?.let { config -> tokenStorage.hasToken(config) }
-                ?: false
+    override fun isAuthenticated(sourceName: String): Boolean = client.isAuthenticated(sourceName)
 
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) = try {
         BVDocument(
