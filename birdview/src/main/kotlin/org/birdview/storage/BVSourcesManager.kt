@@ -24,4 +24,8 @@ class BVSourcesManager (
 
     fun getBySourceType(sourceType: SourceType): BVTaskSource =
             sourceManagersMap[sourceType] ?: throw NoSuchElementException("Unknown source type ${sourceType}")
+
+    fun isAuthenticated(sourceName: String) = getBySourceName(sourceName)
+        ?.isAuthenticated(sourceName)
+        ?: false
 }

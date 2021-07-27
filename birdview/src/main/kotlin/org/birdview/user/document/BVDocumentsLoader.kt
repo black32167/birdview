@@ -27,18 +27,25 @@ class BVDocumentsLoader (
 
     fun loadDocuments(bvUser: String, timeIntervalFilter: TimeIntervalFilter, documentConsumer: BVSessionDocumentConsumer):List<Future<*>> =
             listEnabledSourceConfigs(bvUser)
-                    .map { sourceConfig ->
-                        CompletableFuture.runAsync(Runnable {
-                            log.info("Loading data from ${sourceConfig.sourceType} for ${bvUser}...")
-                            BVTimeUtil.logTimeAndReturn("Loading data from ${sourceConfig.sourceType} for ${bvUser}") {
-                                val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
-                                try {
-                                    sourceManager.getTasks(bvUser, timeIntervalFilter, sourceConfig, documentConsumer)
-                                } catch (e: Throwable) {
-                                    log.error("Error loading documents for ${sourceConfig.sourceType}", e)
-                                }
+                .filter { sourceConfig -> sourcesManager.isAuthenticated(sourceConfig.sourceName) }
+                .map { sourceConfig ->
+                    val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
+                    CompletableFuture.runAsync(Runnable {
+                        log.info("Loading data from ${sourceConfig.sourceType} for ${bvUser}...")
+                        BVTimeUtil.logTimeAndReturn("Loading data from ${sourceConfig.sourceType} for ${bvUser}") {
+
+                            try {
+                                sourceManager.getTasks(
+                                    bvUser,
+                                    timeIntervalFilter,
+                                    sourceConfig,
+                                    documentConsumer
+                                )
+                            } catch (e: Throwable) {
+                                log.error("Error loading documents for ${sourceConfig.sourceType}", e)
                             }
-                        }, executor)
+                        }
+                    }, executor)
                     }
 
     fun loadDocsByIds(bvUser: String, missedDocsIds: Collection<String>, chunkConsumer: (List<BVDocument>) -> Unit):List<Future<*>> {
