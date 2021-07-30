@@ -31,6 +31,6 @@ class GDriveOAuthClient(
 
     fun saveOAuthTokens(sourceName: String, rawResponse: GAccessTokenResponse) {
         val tokensData = extractTokensData(rawResponse)
-        tokenStorage.saveOAuthTokens(sourceName, tokensData)
+        defaultTokenStorage.saveOAuthTokens(sourceName, tokensData)
     }
 }

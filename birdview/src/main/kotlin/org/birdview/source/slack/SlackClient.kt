@@ -1,7 +1,6 @@
 package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
-import org.birdview.source.gdrive.GDriveOAuthClient
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVSlackConfig
 import javax.inject.Named
@@ -9,7 +8,7 @@ import javax.inject.Named
 @Named
 class SlackClient  (
     private val httpClientFactory: BVHttpClientFactory,
-    private val oauthClient: GDriveOAuthClient
+    private val oauthClient: SlackOAuthClient
 ) {
 //    private val targetFactory =
 //            WebTargetFactory("https://slack.com/api") {

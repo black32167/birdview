@@ -18,6 +18,7 @@ import org.birdview.source.github.gql.model.GqlGithubUserActor
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
@@ -25,10 +26,11 @@ import javax.inject.Named
 
 @Named
 open class GithubTaskService(
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val gqlClient: GithubGqlClient,
-        private val githubQueryBuilder: GithubQueryBuilder,
-        private val secretsStorage: BVSourceSecretsStorage
+    private val sourceSecretsStorage: BVSourceSecretsStorage,
+    private val gqlClient: GithubGqlClient,
+    private val githubQueryBuilder: GithubQueryBuilder,
+    private val secretsStorage: BVSourceSecretsStorage,
+    private val userSourceStorage: BVUserSourceStorage,
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(GithubTaskService::class.java)
 
@@ -39,7 +41,8 @@ open class GithubTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val githubConfig = sourceConfig as BVGithubConfig
-        val githubQuery = githubQueryBuilder.getFilterQueries(bvUser, updatedPeriod, githubConfig)
+        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, sourceConfig.sourceName).sourceUserName
+        val githubQuery = githubQueryBuilder.getFilterQueries(sourceUserName, updatedPeriod)
         gqlClient.getPullRequests(githubConfig, githubQuery) { prs ->
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
             chunkConsumer.consume(docs)

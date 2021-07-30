@@ -7,19 +7,19 @@ import org.birdview.storage.model.BVOAuthTokens
 import org.slf4j.LoggerFactory
 
 abstract class AbstractOAuthClient<RT>(
-    protected val tokenStorage: OAuthTokenStorage,
+    protected val defaultTokenStorage: OAuthTokenStorage,
     private val httpClientFactory: BVHttpClientFactory
 ) {
     private val log = LoggerFactory.getLogger(AbstractOAuthClient::class.java)
 
     open fun getToken(config: BVOAuthSourceConfig): String? =
-        tokenStorage.loadOAuthTokens(config.sourceName)
+        defaultTokenStorage.loadOAuthTokens(config.sourceName)
             ?.let { tokens->
                 val validAccessToken:String? = tokens.accessToken
                     .takeUnless { tokens.isExpired() }
                     ?: tokens.refreshToken ?.let { refreshToken->
                         val renewedTokens = getRemoteAccessToken(config, refreshToken)
-                        tokenStorage.saveOAuthTokens(config.sourceName, renewedTokens)
+                        defaultTokenStorage.saveOAuthTokens(config.sourceName, renewedTokens)
                         renewedTokens.accessToken
                     }
                 validAccessToken
@@ -38,7 +38,7 @@ abstract class AbstractOAuthClient<RT>(
     protected abstract fun getAccessTokenResponseClass(): Class<RT>
 
     fun isAuthenticated(sourceName:String): Boolean {
-        val token = tokenStorage.loadOAuthTokens(sourceName)
+        val token = defaultTokenStorage.loadOAuthTokens(sourceName)
         if (token == null) {
             log.debug("OAuth token is not set for source {}", sourceName)
             return false

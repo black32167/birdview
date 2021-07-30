@@ -12,6 +12,7 @@ import org.birdview.source.jira.model.*
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -21,10 +22,12 @@ import javax.inject.Named
 
 @Named
 open class JiraTaskService(
-        private val jiraClient: JiraClient,
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val jqlBuilder: JqlBuilder
-): BVTaskSource {
+    private val jiraClient: JiraClient,
+    private val sourceSecretsStorage: BVSourceSecretsStorage,
+    private val jqlBuilder: JqlBuilder,
+    private val userSourceStorage: BVUserSourceStorage,
+
+    ): BVTaskSource {
     private val JIRA_REST_URL_REGEX = "https?://.*/rest/api/2/issue/.*".toRegex()
     private val JIRA_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("JiraTaskService"))
@@ -36,8 +39,9 @@ open class JiraTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val jiraConfig = sourceConfig as BVJiraConfig
+        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, jiraConfig.sourceName).sourceUserName
         jiraClient
-                .findIssues(jiraConfig, jqlBuilder.getJql(bvUser, updatedPeriod, jiraConfig)) { jiraIssues->
+                .findIssues(jiraConfig, jqlBuilder.getJql(sourceUserName, updatedPeriod)) { jiraIssues->
                     chunkConsumer.consume(
                             jiraIssues
                                     .map { executor.submit(Callable<BVDocument> { mapDocument( it, jiraConfig) }) }

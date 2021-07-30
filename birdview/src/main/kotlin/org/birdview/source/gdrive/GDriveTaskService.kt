@@ -12,6 +12,7 @@ import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGDriveConfig
+import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -22,7 +23,8 @@ import javax.inject.Named
 open class GDriveTaskService(
     private val client: GDriveClient,
     private val tokenStorage: OAuthTokenStorage,
-    private val gDriveQueryBuilder: GDriveQueryBuilder
+    private val gDriveQueryBuilder: GDriveQueryBuilder,
+    private val userSourceStorage: BVUserSourceStorage,
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
     companion object {
@@ -36,10 +38,11 @@ open class GDriveTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val config = sourceConfig as BVGDriveConfig
+        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, sourceConfig.sourceName).sourceUserName
         try {
             client.getFiles(
                 config,
-                gDriveQueryBuilder.getQuery(bvUser, updatedPeriod, config.sourceName)
+                gDriveQueryBuilder.getQuery(sourceUserName, updatedPeriod)
             ) { files ->
                 chunkConsumer.consume(files.map { file -> toBVDocument(file, config) })
             }

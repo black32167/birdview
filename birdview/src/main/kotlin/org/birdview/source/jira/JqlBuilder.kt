@@ -1,18 +1,14 @@
 package org.birdview.source.jira
 
 import org.birdview.model.TimeIntervalFilter
-import org.birdview.storage.BVJiraConfig
-import org.birdview.storage.BVUserSourceStorage
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
 @Named
-class JqlBuilder(
-        private val userSourceStorage: BVUserSourceStorage
-) {
-    fun getJql(user: String, updatedPeriod: TimeIntervalFilter, jiraConfig: BVJiraConfig): String? =
-            getUserJqlClause(user, jiraConfig)
+class JqlBuilder {
+    fun getJql(sourceUserName: String, updatedPeriod: TimeIntervalFilter): String =
+            getUserJqlClause(sourceUserName)
                     .let { userClause ->
                         listOfNotNull(
                                 userClause,
@@ -30,11 +26,8 @@ class JqlBuilder(
     private fun formatDate(date: OffsetDateTime) =
             date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
 
-    private fun getUserJqlClause(bvUser: String, jiraConfig: BVJiraConfig): String {
-        val user = "\"${getUser(bvUser, jiraConfig)}\""
+    private fun getUserJqlClause(sourceUserName: String): String {
+        val user = "\"${sourceUserName}\""
         return "(creator = $user OR assignee = $user OR watcher = $user)"
     }
-
-    private fun getUser(userAlias: String, jiraConfig: BVJiraConfig): String =
-            userSourceStorage.getSourceProfile(userAlias, jiraConfig.sourceName).sourceUserName
 }

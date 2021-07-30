@@ -14,6 +14,7 @@ import org.birdview.source.trello.model.TrelloCard
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVTrelloConfig
+import org.birdview.storage.BVUserSourceStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import javax.inject.Named
@@ -22,7 +23,8 @@ import javax.inject.Named
 open class TrelloTaskService(
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val trelloClient: TrelloClient,
-        private val trelloQueryBuilder: TrelloQueryBuilder
+        private val trelloQueryBuilder: TrelloQueryBuilder,
+        private val userSourceStorage: BVUserSourceStorage,
 ) : BVTaskSource {
     companion object {
         private const val TRELLO_CARD_SHORTLINK_TYPE = "trelloCardShortLink"
@@ -38,7 +40,8 @@ open class TrelloTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val trelloConfig = sourceConfig as BVTrelloConfig
-        val query = trelloQueryBuilder.getQueries(bvUser, updatedPeriod, trelloConfig)
+        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, trelloConfig.sourceName).sourceUserName
+        val query = trelloQueryBuilder.getQueries(sourceUserName, updatedPeriod)
 
         trelloClient.getCards(trelloConfig, query) { cards->
             val listsMap = trelloClient.loadLists(trelloConfig, cards.map { it.idList  })
