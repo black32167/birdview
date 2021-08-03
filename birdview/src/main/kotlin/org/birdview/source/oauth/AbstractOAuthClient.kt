@@ -36,16 +36,4 @@ abstract class AbstractOAuthClient<RT>(
     protected abstract fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceConfig): Map<String, String>
     protected abstract fun extractTokensData(response: RT): BVOAuthTokens
     protected abstract fun getAccessTokenResponseClass(): Class<RT>
-
-    fun isAuthenticated(sourceName:String): Boolean {
-        val token = defaultTokenStorage.loadOAuthTokens(sourceName)
-        if (token == null) {
-            log.debug("OAuth token is not set for source {}", sourceName)
-            return false
-        } else if (token.isExpired() && token.refreshToken == null) {
-            log.warn("OAuth token is expired but can't be renewed for source {}", sourceName)
-            return false
-        }
-        return true
-    }
 }

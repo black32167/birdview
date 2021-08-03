@@ -133,8 +133,4 @@ open class GithubTaskService(
                     }
 
     override fun getType() = SourceType.GITHUB
-
-    override fun isAuthenticated(sourceName: String): Boolean =
-            sourceSecretsStorage.getConfigByName(sourceName, BVGithubConfig::class.java) != null
-
 }

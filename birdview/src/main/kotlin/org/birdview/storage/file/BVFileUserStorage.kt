@@ -4,8 +4,8 @@ import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
+import org.birdview.storage.BVDocumentProvidersManager
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVSourcesManager
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSettings
@@ -22,11 +22,11 @@ import javax.inject.Named
 @Profile(BVProfiles.FILESTORE)
 @Named
 class BVFileUserStorage (
-        private val bvFoldersConfig: BVFoldersConfig,
-        private val jsonDeserializer: JsonDeserializer,
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
-        private val sourcesManager: BVSourcesManager,
-        private val userSourceStorage: BVUserSourceStorage
+    private val bvFoldersConfig: BVFoldersConfig,
+    private val jsonDeserializer: JsonDeserializer,
+    private val sourceSecretsStorage: BVSourceSecretsStorage,
+    private val sourcesManager: BVDocumentProvidersManager,
+    private val userSourceStorage: BVUserSourceStorage
 ) : BVUserStorage {
     private val log = LoggerFactory.getLogger(BVFileUserStorage::class.java)
 
@@ -59,7 +59,7 @@ class BVFileUserStorage (
                                 } ?: ""
 
                         userSourceStorage.create(
-                                bvUserName = userName,
+                                bvUser = userName,
                                 sourceName = sourceName,
                                 sourceUserName = sourceUserId
                         )

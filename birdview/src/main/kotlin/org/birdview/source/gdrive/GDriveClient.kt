@@ -64,6 +64,4 @@ class GDriveClient(
         httpClientFactory.getHttpClient("https://www.googleapis.com/drive/v3") {
             authCodeProvider(config)
         }
-
-    fun isAuthenticated(sourceName: String): Boolean = oauthClient.isAuthenticated(sourceName)
 }

@@ -13,7 +13,6 @@ import org.birdview.source.gdrive.model.GDriveUser
 import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.OAuthTokenStorage
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
@@ -22,7 +21,6 @@ import javax.inject.Named
 @Named
 open class GDriveTaskService(
     private val client: GDriveClient,
-    private val tokenStorage: OAuthTokenStorage,
     private val gDriveQueryBuilder: GDriveQueryBuilder,
     private val userSourceStorage: BVUserSourceStorage,
 ) : BVTaskSource {
@@ -52,8 +50,6 @@ open class GDriveTaskService(
     }
 
     override fun getType() = SourceType.GDRIVE
-
-    override fun isAuthenticated(sourceName: String): Boolean = client.isAuthenticated(sourceName)
 
     private fun toBVDocument(file: GDriveFile, config: BVGDriveConfig) = try {
         BVDocument(

@@ -144,9 +144,6 @@ class BVConfluenceDocumentService (
 
     override fun getType(): SourceType = SourceType.CONFLUENCE
 
-    override fun isAuthenticated(sourceName: String): Boolean =
-            sourceSecretsStorage.getConfigByName(sourceName, BVConfluenceConfig::class.java) != null
-
     private fun formatDate(date: OffsetDateTime) =
             date.atZoneSameInstant(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00"))
 

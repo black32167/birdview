@@ -3,6 +3,7 @@ package org.birdview.storage.file
 import org.birdview.BVCacheNames.USER_SOURCE_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
+import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
 import org.birdview.utils.JsonDeserializer
@@ -28,8 +29,8 @@ class BVFileUserSourceStorage(
             deserialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
 
     @Synchronized
-    override fun listUserSources(userName: String): List<String> =
-            Files.list(getUserSourcesFolder(userName))
+    override fun listUserSources(bvUser: String): List<String> =
+            Files.list(getUserSourcesFolder(bvUser))
                     .map { it.toFile() }
                     .filter { it.extension == "json" }
                     .map { it.name.substringBeforeLast(".") }
@@ -37,28 +38,35 @@ class BVFileUserSourceStorage(
 
     @Synchronized
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
-    override fun delete(bvUserName: String, sourceName: String) {
-        Files.delete(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
+    override fun delete(bvUser: String, sourceName: String) {
+        Files.delete(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
     }
 
     @Synchronized
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
-    override fun deleteAll(bvUserName: String) {
-        listUserSources(bvUserName).forEach { sourceName ->
-            Files.delete(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName))
+    override fun deleteAll(bvUser: String) {
+        listUserSources(bvUser).forEach { sourceName ->
+            Files.delete(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
         }
     }
 
-    @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
-    @Synchronized
-    override fun create(bvUserName: String, sourceName: String, sourceUserName:String) {
-        serialize(getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName), BVUserSourceConfig(sourceUserName, "" != sourceUserName))
+    @Cacheable(cacheNames = [USER_SOURCE_CACHE], key = "sc:#bvUser" )
+    override fun listUserSourceProfiles(bvUser: String): List<BVUserSourceConfig> {
+        return listUserSources(bvUser).map { getSourceProfile(bvUser, it) }
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     @Synchronized
-    override fun update(bvUserName: String, sourceName: String, userProfileSourceConfig: BVUserSourceConfig) {
-        val file = getSourceConfigFileName(bvUserName = bvUserName, sourceName = sourceName)
+    override fun create(bvUser: String, sourceName: String, sourceUserName:String, bvSourceAccessConfig: BVAbstractSourceConfig?) {
+        serialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName),
+            BVUserSourceConfig(
+                sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName, sourceConfig = bvSourceAccessConfig))
+    }
+
+    @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
+    @Synchronized
+    override fun update(bvUser: String, userProfileSourceConfig: BVUserSourceConfig) {
+        val file = getSourceConfigFileName(bvUserName = bvUser, sourceName = userProfileSourceConfig.sourceName)
         Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
         serialize(file, userProfileSourceConfig)
     }

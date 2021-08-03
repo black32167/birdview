@@ -11,5 +11,4 @@ interface BVTaskSource {
     fun loadByIds(sourceName: String, keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
     }
     fun resolveSourceUserId(sourceName:String, email: String):String = email
-    fun isAuthenticated(sourceName: String): Boolean
 }

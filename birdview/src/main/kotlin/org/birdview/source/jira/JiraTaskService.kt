@@ -183,8 +183,4 @@ open class JiraTaskService(
             }
 
     override fun getType() = SourceType.JIRA
-
-    override fun isAuthenticated(sourceName: String): Boolean =
-            sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java) != null
-
 }

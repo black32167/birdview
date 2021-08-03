@@ -4,8 +4,11 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import javax.inject.Named
 
+/**
+ * Document provider manager
+ */
 @Named
-class BVSourcesManager (
+class BVDocumentProvidersManager (
         private val sourceSecretsStorage: BVSourceSecretsStorage,
         sourceManagers: List<BVTaskSource>
 ) {
@@ -24,8 +27,4 @@ class BVSourcesManager (
 
     fun getBySourceType(sourceType: SourceType): BVTaskSource =
             sourceManagersMap[sourceType] ?: throw NoSuchElementException("Unknown source type ${sourceType}")
-
-    fun isAuthenticated(sourceName: String) = getBySourceName(sourceName)
-        ?.isAuthenticated(sourceName)
-        ?: false
 }

@@ -31,6 +31,4 @@ class SlackTaskService(
     }
 
     override fun getType(): SourceType = SourceType.SLACK
-
-    override fun isAuthenticated(sourceName: String): Boolean = slackClient.isAuthenticated(sourceName)
 }

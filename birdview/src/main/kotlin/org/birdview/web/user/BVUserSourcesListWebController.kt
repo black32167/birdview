@@ -1,8 +1,8 @@
 package org.birdview.web.user
 
 import org.birdview.security.UserContext
+import org.birdview.storage.BVDocumentProvidersManager
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVSourcesManager
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSourceConfig
@@ -23,7 +23,7 @@ class BVUserSourcesListWebController (
     private val sourceSecretsStorage: BVSourceSecretsStorage,
     private val userSourceStorage: BVUserSourceStorage,
     private val userStorage: BVUserStorage,
-    private val sourcesManager: BVSourcesManager
+    private val sourcesManager: BVDocumentProvidersManager
 ) {
     class ProfileFormData(
         val zoneId: String
@@ -76,7 +76,7 @@ class BVUserSourcesListWebController (
 
     @GetMapping("source/{sourceName}/delete")
     fun delete(model: Model, @PathVariable("sourceName") sourceName:String): String {
-        userSourceStorage.delete(bvUserName = currentUserName(), sourceName = sourceName)
+        userSourceStorage.delete(bvUser = currentUserName(), sourceName = sourceName)
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 
@@ -99,16 +99,17 @@ class BVUserSourcesListWebController (
         }
 
         userSourceStorage.update(
-                bvUserName = currentUserName(),
-                sourceName = sourceName,
-                userProfileSourceConfig = BVUserSourceConfig(formDataUpdate.sourceUserName, formDataUpdate.enabled != null))
+            bvUser = currentUserName(),
+            userProfileSourceConfig = BVUserSourceConfig(
+                sourceName = sourceName,  sourceUserName = formDataUpdate.sourceUserName, enabled = formDataUpdate.enabled != null)
+        )
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 
     @PostMapping("source")
     fun add(formDataCreate:CreateUserSourceFormData): String {
         userSourceStorage.create(
-                bvUserName = currentUserName(),
+                bvUser = currentUserName(),
                 sourceUserName = formDataCreate.sourceUserName,
                 sourceName = formDataCreate.sourceName)
         return "redirect:${BVWebPaths.USER_SETTINGS}"

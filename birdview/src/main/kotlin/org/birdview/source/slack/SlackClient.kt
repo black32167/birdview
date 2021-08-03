@@ -40,6 +40,4 @@ class SlackClient  (
 //                }
     }
 
-    fun isAuthenticated(sourceName:String) = oauthClient.isAuthenticated(sourceName)
-
 }
