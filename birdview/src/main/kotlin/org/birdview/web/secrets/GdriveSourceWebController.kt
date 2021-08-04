@@ -3,8 +3,8 @@ package org.birdview.web.secrets
 import org.birdview.source.gdrive.GAccessTokenResponse
 import org.birdview.source.gdrive.GDriveOAuthClient
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVGDriveConfig
 import org.birdview.web.BVWebPaths
 import org.birdview.web.secrets.GdriveSourceWebController.Companion.CONTROLLER_PATH
 import org.slf4j.LoggerFactory

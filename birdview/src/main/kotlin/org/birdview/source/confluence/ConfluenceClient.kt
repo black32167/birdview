@@ -5,7 +5,7 @@ import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.source.confluence.model.ConfluenceSearchPageResponseSearchResult
 import org.birdview.source.confluence.model.ContentArray
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVConfluenceConfig
+import org.birdview.storage.model.secrets.BVConfluenceConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory

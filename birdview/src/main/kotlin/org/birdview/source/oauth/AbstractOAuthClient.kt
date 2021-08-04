@@ -1,9 +1,9 @@
 package org.birdview.source.oauth
 
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.model.BVOAuthTokens
+import org.birdview.storage.model.secrets.BVOAuthSourceConfig
 import org.slf4j.LoggerFactory
 
 abstract class AbstractOAuthClient<RT>(

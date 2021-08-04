@@ -2,7 +2,7 @@ package org.birdview.source
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
-import org.birdview.storage.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
 
 interface BVTaskSource {
     fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: BVSessionDocumentConsumer)

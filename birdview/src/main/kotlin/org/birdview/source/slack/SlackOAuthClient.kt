@@ -2,9 +2,9 @@ package org.birdview.source.slack
 
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.oauth.AbstractOAuthClient
-import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.model.BVOAuthTokens
+import org.birdview.storage.model.secrets.BVOAuthSourceConfig
 import javax.inject.Named
 
 @Named

@@ -1,7 +1,7 @@
 package org.birdview.web.secrets
 
-import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
 import org.birdview.web.BVWebPaths
 import org.slf4j.LoggerFactory
 import org.springframework.ui.Model
@@ -56,7 +56,7 @@ abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
     }
 
     private fun  getConfig(sourceName: String): T? =
-            sourceSecretsStorage.getConfigByName(sourceName, getConfigClass())
+            sourceSecretsStorage.getSecret(sourceName, getConfigClass())
 
     protected abstract fun mapConfig(sourceFormData: F): T
     protected abstract fun mapForm(config: T): F

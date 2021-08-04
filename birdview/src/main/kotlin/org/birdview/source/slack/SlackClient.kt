@@ -2,7 +2,7 @@ package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVSlackConfig
+import org.birdview.storage.model.secrets.BVSlackConfig
 import javax.inject.Named
 
 @Named

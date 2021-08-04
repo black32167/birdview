@@ -3,8 +3,8 @@ package org.birdview.web.secrets
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.slack.SlackOAuthClient
 import org.birdview.source.slack.SlackTokenResponse
-import org.birdview.storage.BVSlackConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVSlackConfig
 import org.birdview.web.BVWebPaths
 import org.birdview.web.secrets.SlackSourceWebController.Companion.CONTROLLER_PATH
 import org.springframework.stereotype.Controller

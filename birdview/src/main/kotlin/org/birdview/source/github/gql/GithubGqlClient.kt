@@ -3,7 +3,7 @@ package org.birdview.source.github.gql
 import org.apache.tomcat.util.http.fileupload.util.Streams
 import org.birdview.source.github.gql.model.*
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVGithubConfig
+import org.birdview.storage.model.secrets.BVGithubConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory

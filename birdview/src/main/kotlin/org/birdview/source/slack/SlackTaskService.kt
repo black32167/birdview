@@ -4,9 +4,9 @@ import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVSlackConfig
 import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVSlackConfig
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 

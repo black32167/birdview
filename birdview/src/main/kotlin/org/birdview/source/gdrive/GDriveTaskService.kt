@@ -10,9 +10,9 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVGDriveConfig
 import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVGDriveConfig
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory

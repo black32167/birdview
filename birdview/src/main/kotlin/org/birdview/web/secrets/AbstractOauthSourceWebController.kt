@@ -1,8 +1,8 @@
 package org.birdview.web.secrets
 
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVOAuthSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVOAuthSourceConfig
 import org.birdview.web.BVWebPaths
 import org.birdview.web.WebUtils
 import org.slf4j.LoggerFactory
@@ -54,7 +54,7 @@ abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSou
     }
 
     private fun exchangeAuthorizationCode(sourceName: String, authCode:String) {
-        val config = sourceSecretsStorage.getConfigByName(sourceName) as BVOAuthSourceConfig
+        val config = sourceSecretsStorage.getSecret(sourceName) as BVOAuthSourceConfig
         val fields = mapOf(
             "client_id" to config.clientId,
             "client_secret" to config.clientSecret,

@@ -3,8 +3,8 @@ package org.birdview.storage.file
 import org.birdview.BVCacheNames.SOURCE_SECRET_CACHE_NAME
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
-import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
 import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
@@ -25,12 +25,15 @@ open class BVFileSourceSecretsStorage(
     private val log = LoggerFactory.getLogger(BVSourceSecretsStorage::class.java)
 
     @Cacheable(SOURCE_SECRET_CACHE_NAME)
-    override fun getConfigByName(sourceName: String): BVAbstractSourceConfig? =
+    override fun getSecret(sourceName: String): BVAbstractSourceConfig? =
             getSourceConfigs().find { it.sourceName == sourceName }
 
+    override fun getSecrets(): List<BVAbstractSourceConfig> = listSourceNames()
+        .mapNotNull { getSecret(it) }
+
     @Cacheable(SOURCE_SECRET_CACHE_NAME)
-    override fun <T: BVAbstractSourceConfig> getConfigByName(sourceName: String, configClass: Class<T>): T? =
-            getConfigByName(sourceName) as? T
+    override fun <T: BVAbstractSourceConfig> getSecret(sourceName: String, configClass: Class<T>): T? =
+            getSecret(sourceName) as? T
 
     override fun listSourceNames(): List<String> =
             getSourceConfigs().map { it.sourceName }

@@ -15,10 +15,10 @@ import org.birdview.source.github.gql.model.GqlGithubEvent
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
 import org.birdview.source.github.gql.model.GqlGithubUserActor
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVGithubConfig
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
@@ -50,7 +50,7 @@ open class GithubTaskService(
     }
 
     override fun resolveSourceUserId(sourceName:String, email: String):String {
-        val githubConfig = secretsStorage.getConfigByName(sourceName, BVGithubConfig::class.java)!!
+        val githubConfig = secretsStorage.getSecret(sourceName, BVGithubConfig::class.java)!!
         val userName = try {
             gqlClient.getUserByEmail(githubConfig, email)
         } catch (e: Throwable) {

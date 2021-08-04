@@ -59,9 +59,9 @@ class BVFileUserStorage (
                                 } ?: ""
 
                         userSourceStorage.create(
-                                bvUser = userName,
-                                sourceName = sourceName,
-                                sourceUserName = sourceUserId
+                            bvUser = userName,
+                            sourceName = sourceName,
+                            sourceUserName = sourceUserId
                         )
 
                     }

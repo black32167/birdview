@@ -2,7 +2,11 @@ package org.birdview.storage.firebase
 
 import org.birdview.BVProfiles
 import org.birdview.firebase.AbstractFirebaseStorageTest
-import org.birdview.storage.*
+import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVConfluenceConfig
+import org.birdview.storage.model.secrets.BVGDriveConfig
+import org.birdview.storage.model.secrets.BVGithubConfig
+import org.birdview.storage.model.secrets.BVJiraConfig
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,7 +65,7 @@ class BVFireSourceSecretsStorageTest : AbstractFirebaseStorageTest() {
         prepareTestConfigs()
 
         configs.forEach { expectedConfig->
-            val config = storage.getConfigByName(expectedConfig.sourceName)
+            val config = storage.getSecret(expectedConfig.sourceName)
             assertNotNull(config)
         }
     }
@@ -87,7 +91,7 @@ class BVFireSourceSecretsStorageTest : AbstractFirebaseStorageTest() {
             user = "user"
         ))
 
-        val updatedConfig = storage.getConfigByName(SOURCE_NAME_GDRIVE_2, BVGDriveConfig::class.java)!!
+        val updatedConfig = storage.getSecret(SOURCE_NAME_GDRIVE_2, BVGDriveConfig::class.java)!!
 
         assertEquals("clientId3", updatedConfig.clientId)
         assertEquals("secret3", updatedConfig.clientSecret)

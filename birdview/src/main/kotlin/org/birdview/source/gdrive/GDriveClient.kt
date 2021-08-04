@@ -3,7 +3,7 @@ package org.birdview.source.gdrive
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVGDriveConfig
+import org.birdview.storage.model.secrets.BVGDriveConfig
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
 import org.slf4j.LoggerFactory

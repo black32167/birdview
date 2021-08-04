@@ -101,7 +101,8 @@ class BVUserSourcesListWebController (
         userSourceStorage.update(
             bvUser = currentUserName(),
             userProfileSourceConfig = BVUserSourceConfig(
-                sourceName = sourceName,  sourceUserName = formDataUpdate.sourceUserName, enabled = formDataUpdate.enabled != null)
+                sourceName = sourceName,  sourceUserName = formDataUpdate.sourceUserName, enabled = formDataUpdate.enabled != null
+            )
         )
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
@@ -109,9 +110,10 @@ class BVUserSourcesListWebController (
     @PostMapping("source")
     fun add(formDataCreate:CreateUserSourceFormData): String {
         userSourceStorage.create(
-                bvUser = currentUserName(),
-                sourceUserName = formDataCreate.sourceUserName,
-                sourceName = formDataCreate.sourceName)
+            bvUser = currentUserName(),
+            sourceName = formDataCreate.sourceName,
+            sourceUserName = formDataCreate.sourceUserName
+        )
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 

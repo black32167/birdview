@@ -5,7 +5,7 @@ import org.birdview.source.trello.model.TrelloBoard
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.source.trello.model.TrelloCardsSearchResponse
 import org.birdview.source.trello.model.TrelloList
-import org.birdview.storage.BVTrelloConfig
+import org.birdview.storage.model.secrets.BVTrelloConfig
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 

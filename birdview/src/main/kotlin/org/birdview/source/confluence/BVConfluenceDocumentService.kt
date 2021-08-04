@@ -9,10 +9,10 @@ import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.confluence.model.ConfluenceSearchItemContent
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVConfluenceConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVConfluenceConfig
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import java.time.OffsetDateTime

@@ -5,8 +5,8 @@ import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.SourceType
 import org.birdview.source.authentication.BVSourceConfigProvider
-import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVDocumentProvidersManager
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory

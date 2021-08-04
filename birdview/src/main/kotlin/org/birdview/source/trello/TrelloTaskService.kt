@@ -11,10 +11,10 @@ import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
-import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVTrelloConfig
 import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVTrelloConfig
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import javax.inject.Named

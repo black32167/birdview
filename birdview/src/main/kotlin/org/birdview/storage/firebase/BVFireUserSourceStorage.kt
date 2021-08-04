@@ -2,7 +2,6 @@ package org.birdview.storage.firebase
 
 import org.birdview.BVCacheNames
 import org.birdview.BVProfiles
-import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -13,20 +12,24 @@ import org.springframework.stereotype.Repository
 @Profile(BVProfiles.FIRESTORE)
 @Repository
 class BVFireUserSourceStorage(clienProvider: BVFirebaseClientProvider): BVUserSourceStorage {
+    companion object {
+        private const val USER_SOURCES_COLLECTION = "sources"
+    }
+
     private val userCollectionRef = clienProvider.getClientForCollection("users")
 
     @Cacheable(BVCacheNames.USER_SOURCE_CACHE)
-    override fun getSourceProfile(bvUserName: String, sourceName: String): BVUserSourceConfig =
-        getUserSourcesCollectionRef(bvUserName)
+    override fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig =
+        getUserSourcesCollectionRef(bvUser)
             .document(sourceName).get().get()
             .toObject(BVUserSourceConfig::class.java)!!
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
-    override fun create(bvUser: String, sourceName: String, sourceUserName: String, bvSourceAccessConfig: BVAbstractSourceConfig?) {
+    override fun create(bvUser: String, sourceName: String, sourceUserName: String) {
         update(
             bvUser = bvUser,
             userProfileSourceConfig = BVUserSourceConfig(
-                sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName, sourceConfig = bvSourceAccessConfig)
+                sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName)
         )
     }
 
@@ -63,5 +66,6 @@ class BVFireUserSourceStorage(clienProvider: BVFirebaseClientProvider): BVUserSo
     }
 
     private fun getUserSourcesCollectionRef(bvUserName: String) =
-        userCollectionRef.document(bvUserName).collection("sources")
+        userCollectionRef.document(bvUserName).collection(USER_SOURCES_COLLECTION)
+
 }

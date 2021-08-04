@@ -3,7 +3,6 @@ package org.birdview.storage.file
 import org.birdview.BVCacheNames.USER_SOURCE_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
-import org.birdview.storage.BVAbstractSourceConfig
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.model.BVUserSourceConfig
 import org.birdview.utils.JsonDeserializer
@@ -57,10 +56,10 @@ class BVFileUserSourceStorage(
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     @Synchronized
-    override fun create(bvUser: String, sourceName: String, sourceUserName:String, bvSourceAccessConfig: BVAbstractSourceConfig?) {
+    override fun create(bvUser: String, sourceName: String, sourceUserName: String) {
         serialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName),
             BVUserSourceConfig(
-                sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName, sourceConfig = bvSourceAccessConfig))
+                sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName))
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)

@@ -9,10 +9,10 @@ import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.jira.model.*
-import org.birdview.storage.BVAbstractSourceConfig
-import org.birdview.storage.BVJiraConfig
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVJiraConfig
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -56,7 +56,7 @@ open class JiraTaskService(
     override fun loadByIds(sourceName: String, idList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
         val issueKeys = idList.filter { BVFilters.JIRA_KEY_REGEX.matches(it) }
         val issueUrls = idList.filter { JIRA_REST_URL_REGEX.matches(it) }
-        sourceSecretsStorage.getConfigByName(sourceName, BVJiraConfig::class.java)?.also { config ->
+        sourceSecretsStorage.getSecret(sourceName, BVJiraConfig::class.java)?.also { config ->
             val client = jiraClient
             client.loadByKeys(config, issueKeys.distinct()) { issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })

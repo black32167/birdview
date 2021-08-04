@@ -1,7 +1,7 @@
 package org.birdview.web.secrets
 
-import org.birdview.storage.BVGithubConfig
 import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.model.secrets.BVGithubConfig
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping

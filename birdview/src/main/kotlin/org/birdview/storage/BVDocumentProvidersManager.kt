@@ -18,7 +18,7 @@ class BVDocumentProvidersManager (
             getBySourceName(sourceName)?.getType()
 
     fun getBySourceName(sourceName: String): BVTaskSource? =
-            sourceSecretsStorage.getConfigByName(sourceName)
+            sourceSecretsStorage.getSecret(sourceName)
                     ?.sourceType
                     ?.let { sourceManagersMap[it] }
 

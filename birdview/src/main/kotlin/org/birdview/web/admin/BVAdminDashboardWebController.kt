@@ -57,7 +57,7 @@ class BVAdminDashboardWebController(
                         UserWebView(name = userName, enabled = userSetting.enabled) }
 
     private fun mapSourceSetting(sourceName: String): BVSourceSecretWebController.SourceSettingView? =
-            sourceSecretsStorage.getConfigByName(sourceName)
+            sourceSecretsStorage.getSecret(sourceName)
                     ?.let { sourceConfig ->
                         BVSourceSecretWebController.SourceSettingView(
                                 name = sourceConfig.sourceName,
