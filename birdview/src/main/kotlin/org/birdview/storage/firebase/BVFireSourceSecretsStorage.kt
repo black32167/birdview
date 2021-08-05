@@ -27,7 +27,7 @@ open class BVFireSourceSecretsStorage(
         getSecret(sourceName)
             .let { configClass.cast(it) }
 
-    @Cacheable(BVCacheNames.SOURCE_SECRET_CACHE_NAME, key = "all")
+    @Cacheable(BVCacheNames.SOURCE_SECRET_CACHE_NAME, key = "'all'")
     override fun getSecrets(): List<BVAbstractSourceConfig> =
         collectionAccessor.getStorageSecretsCollection().get().get()
             .mapNotNull { secretsMapper.extractSecrets(it) }

@@ -36,13 +36,13 @@ open class BVFireUserSourceStorage(
             .set(userProfileSourceConfig)
     }
 
-    @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "sn:#bvUser" )
+    @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sn-'.concat(#bvUser)" )
     override fun listUserSources(bvUser: String): List<String> =
         collectionAccessor.getUserSourcesCollection(bvUser)
             .listDocuments()
             .map { it.id }
 
-    @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "sc:#bvUser" )
+    @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
     override fun listUserSourceProfiles(bvUser: String): List<BVUserSourceConfig> {
         return collectionAccessor.getUserSourcesCollection(bvUser).get().get()
             .toObjects(BVUserSourceConfig::class.java)

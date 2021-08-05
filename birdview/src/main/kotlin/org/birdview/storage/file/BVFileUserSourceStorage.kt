@@ -49,7 +49,7 @@ class BVFileUserSourceStorage(
         }
     }
 
-    @Cacheable(cacheNames = [USER_SOURCE_CACHE], key = "sc:#bvUser" )
+    @Cacheable(cacheNames = [USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
     override fun listUserSourceProfiles(bvUser: String): List<BVUserSourceConfig> {
         return listUserSources(bvUser).map { getSourceProfile(bvUser, it) }
     }

@@ -22,7 +22,7 @@ open class BVFireUserSourceSecretsStorage(
             .document(sourceName).get().get()
             ?.let { secretsMapper.extractSecrets(it) }
 
-    @Cacheable(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, key = "all")
+    @Cacheable(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME)
     override fun getSecrets(bvUser:String): List<BVAbstractSourceConfig> =
         collectionAccessor.getUserSourceCredentialsCollection(bvUser).get().get()
             .mapNotNull { secretsMapper.extractSecrets(it) }
