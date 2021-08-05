@@ -21,7 +21,7 @@
                 <td class="sign">Source alias:</td>
                 <td>${source.sourceName}</td>
             </tr>
-            <#include "edit-secret-${source.type}.ftl">
+            <#include "include/edit/edit-secret-${source.type}.ftl">
             </table>
             <div class="buttons">
                 <input type="submit" value="Update">
