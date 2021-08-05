@@ -11,16 +11,12 @@ import org.springframework.stereotype.Repository
 
 @Profile(BVProfiles.FIRESTORE)
 @Repository
-class BVFireUserSourceStorage(clienProvider: BVFirebaseClientProvider): BVUserSourceStorage {
-    companion object {
-        private const val USER_SOURCES_COLLECTION = "sources"
-    }
-
-    private val userCollectionRef = clienProvider.getClientForCollection("users")
-
+open class BVFireUserSourceStorage(
+    open val collectionAccessor: BVFireCollectionAccessor
+): BVUserSourceStorage {
     @Cacheable(BVCacheNames.USER_SOURCE_CACHE)
     override fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig =
-        getUserSourcesCollectionRef(bvUser)
+        collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName).get().get()
             .toObject(BVUserSourceConfig::class.java)!!
 
@@ -35,37 +31,34 @@ class BVFireUserSourceStorage(clienProvider: BVFirebaseClientProvider): BVUserSo
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
     override fun update(bvUser: String, userProfileSourceConfig: BVUserSourceConfig) {
-        getUserSourcesCollectionRef(bvUser)
+        collectionAccessor.getUserSourcesCollection(bvUser)
             .document(userProfileSourceConfig.sourceName)
             .set(userProfileSourceConfig)
     }
 
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "sn:#bvUser" )
     override fun listUserSources(bvUser: String): List<String> =
-        getUserSourcesCollectionRef(bvUser)
+        collectionAccessor.getUserSourcesCollection(bvUser)
             .listDocuments()
             .map { it.id }
 
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "sc:#bvUser" )
     override fun listUserSourceProfiles(bvUser: String): List<BVUserSourceConfig> {
-        return getUserSourcesCollectionRef(bvUser).get().get().toObjects(BVUserSourceConfig::class.java)
+        return collectionAccessor.getUserSourcesCollection(bvUser).get().get()
+            .toObjects(BVUserSourceConfig::class.java)
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
     override fun delete(bvUser: String, sourceName: String) {
-        getUserSourcesCollectionRef(bvUser)
+        collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName)
             .delete()
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
     override fun deleteAll(bvUser: String) {
-        getUserSourcesCollectionRef(bvUser)
+        collectionAccessor.getUserSourcesCollection(bvUser)
             .listDocuments()
             .forEach { it.delete() }
     }
-
-    private fun getUserSourcesCollectionRef(bvUserName: String) =
-        userCollectionRef.document(bvUserName).collection(USER_SOURCES_COLLECTION)
-
 }

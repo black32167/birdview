@@ -12,25 +12,19 @@ import org.springframework.stereotype.Repository
 @Profile(BVProfiles.FIRESTORE)
 @Repository
 open class BVFireUserSourceSecretsStorage(
-    clientProvider: BVFirebaseClientProvider,
+    open val collectionAccessor: BVFireCollectionAccessor,
     open val secretsMapper: FireUserSecretsMapper
 ): BVUserSourceSecretsStorage {
-    companion object {
-        private const val USER_SOURCE_CREDENTIALS_COLLECTION = "sourceCredentials"
-    }
-
-    private val userCollectionRef = clientProvider.getClientForCollection("users")
 
     @Cacheable(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME)
     override fun getSecret(bvUser:String, sourceName: String): BVAbstractSourceConfig? =
-        getUserSourceCredentialsCollectionRef(bvUser)
+        collectionAccessor.getUserSourceCredentialsCollection(bvUser)
             .document(sourceName).get().get()
             ?.let { secretsMapper.extractSecrets(it) }
 
-
     @Cacheable(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, key = "all")
     override fun getSecrets(bvUser:String): List<BVAbstractSourceConfig> =
-        getUserSourceCredentialsCollectionRef(bvUser).get().get()
+        collectionAccessor.getUserSourceCredentialsCollection(bvUser).get().get()
             .mapNotNull { secretsMapper.extractSecrets(it) }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, allEntries = true)
@@ -41,16 +35,14 @@ open class BVFireUserSourceSecretsStorage(
     @CacheEvict(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, allEntries = true)
     override fun update(bvUser:String, config: BVAbstractSourceConfig) {
         val configContainer = secretsMapper.toContainer(config)
-        getUserSourceCredentialsCollectionRef(bvUser).document(config.sourceName).set(configContainer).get()
+        collectionAccessor.getUserSourceCredentialsCollection(bvUser)
+            .document(config.sourceName).set(configContainer).get()
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, allEntries = true)
     override fun delete(bvUser:String, sourceName: String) {
-        getUserSourceCredentialsCollectionRef(bvUser).document(sourceName)
+        collectionAccessor.getUserSourceCredentialsCollection(bvUser).document(sourceName)
             .delete()
             .get()
     }
-
-    private fun getUserSourceCredentialsCollectionRef(bvUserName: String) =
-        userCollectionRef.document(bvUserName).collection(USER_SOURCE_CREDENTIALS_COLLECTION)
 }

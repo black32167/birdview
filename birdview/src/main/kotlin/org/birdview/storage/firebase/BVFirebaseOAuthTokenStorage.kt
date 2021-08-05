@@ -12,17 +12,17 @@ import javax.inject.Named
 @Profile(BVProfiles.FIRESTORE)
 @Named
 open class BVFirebaseOAuthTokenStorage(
-    clientProvider: BVFirebaseClientProvider
+    open val collectionAccessor: BVFireCollectionAccessor
 ) : OAuthTokenStorage {
-    private val oauthTokensCollectionRef = clientProvider.getClientForCollection("oauthDefaultRefreshTokens")
-
     @Cacheable(BVCacheNames.SOURCE_OAUTH_TOKENS_CACHE_NAME)
     override fun loadOAuthTokens(sourceName: String): BVOAuthTokens? =
-        oauthTokensCollectionRef.document(sourceName).get().get()
+        collectionAccessor.getDefaultRefreshTokensCollection()
+            .document(sourceName).get().get()
             .toObject(BVOAuthTokens::class.java);
 
     @CacheEvict(BVCacheNames.SOURCE_OAUTH_TOKENS_CACHE_NAME, key = "#sourceName")
     override fun saveOAuthTokens(sourceName: String, tokens: BVOAuthTokens) {
-        oauthTokensCollectionRef.document(sourceName).set(tokens)
+        collectionAccessor.getDefaultRefreshTokensCollection()
+            .document(sourceName).set(tokens)
     }
 }

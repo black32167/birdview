@@ -12,15 +12,14 @@ import org.springframework.stereotype.Repository
 
 @Profile(BVProfiles.FIRESTORE)
 @Repository
-class BVFireUserStorage(
-    clientProvider: BVFirebaseClientProvider,
+open class BVFireUserStorage(
+    open val collectionAccessor: BVFireCollectionAccessor,
     private val userSourceStorage: BVUserSourceStorage
 ): BVUserStorage {
-    private val userCollectionRef = clientProvider.getClientForCollection("users")
-
     @Cacheable(BVCacheNames.USER_NAMES_CACHE)
     override fun listUserNames(): List<String> {
-        return userCollectionRef.listDocuments()
+        return collectionAccessor.getUserCollection()
+            .listDocuments()
             .map { doc -> doc.id }
     }
 
@@ -31,18 +30,19 @@ class BVFireUserStorage(
 
     @CacheEvict(BVCacheNames.USER_SETTINGS_CACHE, allEntries = true)
     override fun update(userName: String, userSettings: BVUserSettings) {
-        userCollectionRef.document(userName).set(userSettings)
+        collectionAccessor.getUserCollection()
+            .document(userName).set(userSettings)
     }
 
     @Cacheable(BVCacheNames.USER_SETTINGS_CACHE)
     override fun getUserSettings(userName: String): BVUserSettings =
-        userCollectionRef
+        collectionAccessor.getUserCollection()
             .document(userName).get().get()
             .toObject(BVUserSettings::class.java)!!
 
     @CacheEvict(BVCacheNames.USER_SETTINGS_CACHE, allEntries = true)
     override fun updateUserStatus(userName: String, enabled: Boolean) {
-        userCollectionRef
+        collectionAccessor.getUserCollection()
             .document(userName)
             .update(BVUserSettings::enabled.name, true)
     }
@@ -50,7 +50,7 @@ class BVFireUserStorage(
     @CacheEvict(cacheNames = [BVCacheNames.USER_SETTINGS_CACHE, BVCacheNames.USER_NAMES_CACHE], allEntries = true)
     override fun delete(userName: String) {
         userSourceStorage.deleteAll(userName)
-        userCollectionRef
+        collectionAccessor.getUserCollection()
             .document(userName)
             .delete()
     }
