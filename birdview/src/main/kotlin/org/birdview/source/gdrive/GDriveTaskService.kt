@@ -36,7 +36,7 @@ open class GDriveTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val config = sourceConfig as BVGDriveSecret
-        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, sourceConfig.sourceName).sourceUserName
+        val sourceUserName = userSourceStorage.getSource(bvUser, sourceConfig.sourceName).sourceUserName
         try {
             client.getFiles(
                 config,

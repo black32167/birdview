@@ -40,7 +40,7 @@ open class TrelloTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val trelloConfig = sourceConfig as BVTrelloSecret
-        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, trelloConfig.sourceName).sourceUserName
+        val sourceUserName = userSourceStorage.getSource(bvUser, trelloConfig.sourceName).sourceUserName
         val query = trelloQueryBuilder.getQueries(sourceUserName, updatedPeriod)
 
         trelloClient.getCards(trelloConfig, query) { cards->

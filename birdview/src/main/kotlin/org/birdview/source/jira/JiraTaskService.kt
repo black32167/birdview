@@ -39,7 +39,7 @@ open class JiraTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val jiraConfig = sourceConfig as BVJiraSecret
-        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, jiraConfig.sourceName).sourceUserName
+        val sourceUserName = userSourceStorage.getSource(bvUser, jiraConfig.sourceName).sourceUserName
         jiraClient
                 .findIssues(jiraConfig, jqlBuilder.getJql(sourceUserName, updatedPeriod)) { jiraIssues->
                     chunkConsumer.consume(

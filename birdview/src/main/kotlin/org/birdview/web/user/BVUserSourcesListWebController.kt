@@ -49,7 +49,7 @@ class BVUserSourcesListWebController (
         val settings = userStorage.getUserSettings(loggedUser)
 
         model
-            .addAttribute("sourceNames", userSourceStorage.listUserSources(currentUserName()))
+            .addAttribute("sourceNames", userSourceStorage.listSourceNames(currentUserName()))
             .addAttribute("availableTimeZoneIds", BVWebTimeZonesUtil.getAvailableTimezoneIds())
             .addAttribute("profileForm", settings)
 
@@ -67,7 +67,7 @@ class BVUserSourcesListWebController (
 
     @GetMapping("source/{sourceName}/edit")
     fun editForm(model: Model, @PathVariable("sourceName") sourceName:String): String {
-        val sourceProfile = userSourceStorage.getSourceProfile(bvUser = currentUserName(), sourceName = sourceName)
+        val sourceProfile = userSourceStorage.getSource(bvUser = currentUserName(), sourceName = sourceName)
         model
                 .addAttribute("sourceUserName", sourceProfile.sourceUserName)
                 .addAttribute("enabled", if (sourceProfile.enabled) YES else NO)
@@ -100,7 +100,7 @@ class BVUserSourcesListWebController (
 
         userSourceStorage.update(
             bvUser = currentUserName(),
-            userProfileSourceConfig = BVSourceConfig(
+            sourceConfig = BVSourceConfig(
                 sourceName = sourceName,  sourceUserName = formDataUpdate.sourceUserName, enabled = formDataUpdate.enabled != null
             )
         )

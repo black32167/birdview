@@ -20,13 +20,13 @@ class BVSourceConfigProvider(
     private val log = LoggerFactory.getLogger(BVSourceConfigProvider::class.java)
 
     fun <T:BVAbstractSourceSecret> getSourceConfig(sourceName:String, bvUser:String, configClass: Class<T>): T? {
-        val sourceConfig = userSourceConfigStorage.getSourceProfile(bvUser = bvUser, sourceName = sourceName)?.sourceSecret
+        val sourceConfig = userSourceConfigStorage.getSource(bvUser = bvUser, sourceName = sourceName)?.sourceSecret
             ?: defaultSourceSecretsStorage.getSecret(sourceName)
         return sourceConfig?.let(configClass::cast)
     }
 
     fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceSecret> {
-        val enabledUserSourceNames:MutableSet<String> = userSourceConfigStorage.listUserSourceProfiles(bvUser)
+        val enabledUserSourceNames:MutableSet<String> = userSourceConfigStorage.listSourceProfiles(bvUser)
             .filter (BVSourceConfig::enabled)
             .map { it.sourceName }
             .toMutableSet()

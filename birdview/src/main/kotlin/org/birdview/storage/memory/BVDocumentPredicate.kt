@@ -63,7 +63,7 @@ open class BVDocumentPredicate(
     }
 
     private fun resolveUserName(bvUser:String, sourceName: String) =
-            userSourceStorage.getSourceProfile(bvUser, sourceName).sourceUserName
+            userSourceStorage.getSource(bvUser, sourceName).sourceUserName
 
     private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter, operationType: BVDocumentOperationType): OffsetDateTime? {
         val date = getLastUserOperation(doc, userFilter.userAlias, operationType) ?.created

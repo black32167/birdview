@@ -15,7 +15,7 @@ open class BVFireUserSourceStorage(
     open val collectionAccessor: BVFireCollectionAccessor
 ): BVUserSourceStorage {
     @Cacheable(BVCacheNames.USER_SOURCE_CACHE)
-    override fun getSourceProfile(bvUser: String, sourceName: String): BVSourceConfig? =
+    override fun getSource(bvUser: String, sourceName: String): BVSourceConfig? =
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName).get().get()
             .toObject(BVSourceConfig::class.java)
@@ -24,26 +24,26 @@ open class BVFireUserSourceStorage(
     override fun create(bvUser: String, sourceName: String, sourceUserName: String) {
         update(
             bvUser = bvUser,
-            userProfileSourceConfig = BVSourceConfig(
+            sourceConfig = BVSourceConfig(
                 sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName)
         )
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
-    override fun update(bvUser: String, userProfileSourceConfig: BVSourceConfig) {
+    override fun update(bvUser: String, sourceConfig: BVSourceConfig) {
         collectionAccessor.getUserSourcesCollection(bvUser)
-            .document(userProfileSourceConfig.sourceName)
-            .set(userProfileSourceConfig)
+            .document(sourceConfig.sourceName)
+            .set(sourceConfig)
     }
 
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sn-'.concat(#bvUser)" )
-    override fun listUserSources(bvUser: String): List<String> =
+    override fun listSourceNames(bvUser: String): List<String> =
         collectionAccessor.getUserSourcesCollection(bvUser)
             .listDocuments()
             .map { it.id }
 
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
-    override fun listUserSourceProfiles(bvUser: String): List<BVSourceConfig> {
+    override fun listSourceProfiles(bvUser: String): List<BVSourceConfig> {
         return collectionAccessor.getUserSourcesCollection(bvUser).get().get()
             .toObjects(BVSourceConfig::class.java)
     }

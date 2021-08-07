@@ -41,7 +41,7 @@ open class GithubTaskService(
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val githubConfig = sourceConfig as BVGithubSecret
-        val sourceUserName = userSourceStorage.getSourceProfile(bvUser, sourceConfig.sourceName).sourceUserName
+        val sourceUserName = userSourceStorage.getSource(bvUser, sourceConfig.sourceName).sourceUserName
         val githubQuery = githubQueryBuilder.getFilterQueries(sourceUserName, updatedPeriod)
         gqlClient.getPullRequests(githubConfig, githubQuery) { prs ->
             val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }

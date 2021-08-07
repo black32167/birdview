@@ -29,7 +29,7 @@ class BVConfluenceDocumentService (
     private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
     override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceSecret, chunkConsumer: BVSessionDocumentConsumer) {
         val confluenceConfig = sourceConfig as BVConfluenceSecret
-        val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
+        val confluenceUser = userSourceStorage.getSource(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
         val cql =
             "type IN (page,comment) AND " +
                 "(contributor=\"${confluenceUser}\" OR creator=\"${confluenceUser}\")" +
@@ -61,7 +61,7 @@ class BVConfluenceDocumentService (
 
     private fun mapDocument(confluenceDocument: ConfluenceSearchItemContent, confluenceConfig:BVConfluenceSecret, bvUser: String): BVDocument {
         val sourceName = confluenceConfig.sourceName
-        val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceName).sourceUserName
+        val confluenceUser = userSourceStorage.getSource(bvUser, sourceName = sourceName).sourceUserName
         val lastModified = parseDate(confluenceDocument.version._when)
         val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument._links.webui.trimStart('/')}"
 

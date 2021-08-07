@@ -24,11 +24,11 @@ class BVFileUserSourceStorage(
 
     @Cacheable(USER_SOURCE_CACHE)
     @Synchronized
-    override fun getSourceProfile(bvUser: String, sourceName: String): BVSourceConfig =
+    override fun getSource(bvUser: String, sourceName: String): BVSourceConfig =
             deserialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
 
     @Synchronized
-    override fun listUserSources(bvUser: String): List<String> =
+    override fun listSourceNames(bvUser: String): List<String> =
             Files.list(getUserSourcesFolder(bvUser))
                     .map { it.toFile() }
                     .filter { it.extension == "json" }
@@ -44,14 +44,14 @@ class BVFileUserSourceStorage(
     @Synchronized
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     override fun deleteAll(bvUser: String) {
-        listUserSources(bvUser).forEach { sourceName ->
+        listSourceNames(bvUser).forEach { sourceName ->
             Files.delete(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
         }
     }
 
     @Cacheable(cacheNames = [USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
-    override fun listUserSourceProfiles(bvUser: String): List<BVSourceConfig> {
-        return listUserSources(bvUser).map { getSourceProfile(bvUser, it) }
+    override fun listSourceProfiles(bvUser: String): List<BVSourceConfig> {
+        return listSourceNames(bvUser).map { getSource(bvUser, it) }
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
@@ -64,10 +64,10 @@ class BVFileUserSourceStorage(
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     @Synchronized
-    override fun update(bvUser: String, userProfileSourceConfig: BVSourceConfig) {
-        val file = getSourceConfigFileName(bvUserName = bvUser, sourceName = userProfileSourceConfig.sourceName)
+    override fun update(bvUser: String, sourceConfig: BVSourceConfig) {
+        val file = getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceConfig.sourceName)
         Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
-        serialize(file, userProfileSourceConfig)
+        serialize(file, sourceConfig)
     }
 
     private fun serialize(file: Path, userProfileSourceConfig: BVSourceConfig) {
