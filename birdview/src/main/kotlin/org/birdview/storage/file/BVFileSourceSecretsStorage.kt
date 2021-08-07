@@ -4,7 +4,7 @@ import org.birdview.BVCacheNames.SOURCE_SECRET_CACHE_NAME
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
@@ -25,21 +25,21 @@ open class BVFileSourceSecretsStorage(
     private val log = LoggerFactory.getLogger(BVSourceSecretsStorage::class.java)
 
     @Cacheable(SOURCE_SECRET_CACHE_NAME)
-    override fun getSecret(sourceName: String): BVAbstractSourceConfig? =
+    override fun getSecret(sourceName: String): BVAbstractSourceSecret? =
             getSourceConfigs().find { it.sourceName == sourceName }
 
-    override fun getSecrets(): List<BVAbstractSourceConfig> = listSourceNames()
+    override fun getSecrets(): List<BVAbstractSourceSecret> = listSourceNames()
         .mapNotNull { getSecret(it) }
 
     @Cacheable(SOURCE_SECRET_CACHE_NAME)
-    override fun <T: BVAbstractSourceConfig> getSecret(sourceName: String, configClass: Class<T>): T? =
+    override fun <T: BVAbstractSourceSecret> getSecret(sourceName: String, configClass: Class<T>): T? =
             getSecret(sourceName) as? T
 
     override fun listSourceNames(): List<String> =
             getSourceConfigs().map { it.sourceName }
 
     @CacheEvict(SOURCE_SECRET_CACHE_NAME, allEntries = true)
-    override fun create(config: BVAbstractSourceConfig) {
+    override fun create(config: BVAbstractSourceSecret) {
         bvFoldersConfig.sourcesSharedSecretsConfigsFolder.also { folder->
             Files.createDirectories(folder)
             jsonDeserializer.serialize(folder.resolve(config.sourceName), config)
@@ -47,7 +47,7 @@ open class BVFileSourceSecretsStorage(
     }
 
     @CacheEvict(SOURCE_SECRET_CACHE_NAME, allEntries = true)
-    override fun update(config: BVAbstractSourceConfig) {
+    override fun update(config: BVAbstractSourceSecret) {
             bvFoldersConfig.sourcesSharedSecretsConfigsFolder.resolve(config.sourceName).also { file ->
             Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
             jsonDeserializer.serialize(file, config)
@@ -59,7 +59,7 @@ open class BVFileSourceSecretsStorage(
         Files.delete(bvFoldersConfig.sourcesSharedSecretsConfigsFolder.resolve(sourceName))
     }
 
-    private fun getSourceConfigs(): List<BVAbstractSourceConfig> = bvFoldersConfig.sourcesSharedSecretsConfigsFolder
+    private fun getSourceConfigs(): List<BVAbstractSourceSecret> = bvFoldersConfig.sourcesSharedSecretsConfigsFolder
             .takeIf { Files.isDirectory(it) }
             ?.let (Files::list)
             ?.filter { !it.toString().toLowerCase().endsWith(".bak") }
@@ -67,7 +67,7 @@ open class BVFileSourceSecretsStorage(
             ?.mapNotNull (this::deserialize)
             ?: emptyList()
 
-    private fun deserialize(path: Path): BVAbstractSourceConfig? {
+    private fun deserialize(path: Path): BVAbstractSourceSecret? {
         try {
             return jsonDeserializer.deserialize(path)
         } catch (e: Exception) {

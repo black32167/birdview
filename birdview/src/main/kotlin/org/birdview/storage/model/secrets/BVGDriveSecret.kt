@@ -2,12 +2,12 @@ package org.birdview.storage.model.secrets
 
 import org.birdview.source.SourceType
 
-class BVGDriveConfig (
+class BVGDriveSecret (
         sourceName: String = "gdrive",
         clientId: String,
         clientSecret: String,
         user: String
-): BVOAuthSourceConfig(
+): BVOAuthSourceSecret(
         sourceType = SourceType.GDRIVE,
         sourceName = sourceName,
         user = user,

@@ -3,7 +3,7 @@ package org.birdview.source.gdrive
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.model.secrets.BVGDriveConfig
+import org.birdview.storage.model.secrets.BVGDriveSecret
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BearerAuth
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ class GDriveClient(
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val filesPerPage = 500
 
-    fun getFiles(config: BVGDriveConfig, query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
+    fun getFiles(config: BVGDriveSecret, query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
         if (query == null) {
             return
         } else {
@@ -54,13 +54,13 @@ class GDriveClient(
         }
     }
 
-    private fun authCodeProvider(config: BVGDriveConfig) =
+    private fun authCodeProvider(config: BVGDriveSecret) =
         oauthClient.getToken(config)
             ?.let(::BearerAuth)
             ?: throw RuntimeException("Failed retrieving Google API access token")
 
 
-    private fun getHttpClient(config: BVGDriveConfig) =
+    private fun getHttpClient(config: BVGDriveSecret) =
         httpClientFactory.getHttpClient("https://www.googleapis.com/drive/v3") {
             authCodeProvider(config)
         }

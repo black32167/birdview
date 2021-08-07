@@ -1,7 +1,7 @@
 package org.birdview.web.secrets
 
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.birdview.web.BVWebPaths
 import org.slf4j.LoggerFactory
 import org.springframework.ui.Model
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
 
-abstract class AbstractSourceWebController<T : BVAbstractSourceConfig, F> (
+abstract class AbstractSourceWebController<T : BVAbstractSourceSecret, F> (
         protected val sourceSecretsStorage: BVSourceSecretsStorage
 ) {
     private val log = LoggerFactory.getLogger(AbstractSourceWebController::class.java)

@@ -3,7 +3,7 @@ package org.birdview.storage.firebase
 import org.birdview.BVCacheNames
 import org.birdview.BVProfiles
 import org.birdview.storage.BVUserSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.context.annotation.Profile
@@ -17,23 +17,23 @@ open class BVFireUserSourceSecretsStorage(
 ): BVUserSourceSecretsStorage {
 
     @Cacheable(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME)
-    override fun getSecret(bvUser:String, sourceName: String): BVAbstractSourceConfig? =
+    override fun getSecret(bvUser:String, sourceName: String): BVAbstractSourceSecret? =
         collectionAccessor.getUserSourceCredentialsCollection(bvUser)
             .document(sourceName).get().get()
             ?.let { secretsMapper.extractSecrets(it) }
 
     @Cacheable(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME)
-    override fun getSecrets(bvUser:String): List<BVAbstractSourceConfig> =
+    override fun getSecrets(bvUser:String): List<BVAbstractSourceSecret> =
         collectionAccessor.getUserSourceCredentialsCollection(bvUser).get().get()
             .mapNotNull { secretsMapper.extractSecrets(it) }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, allEntries = true)
-    override fun create(bvUser:String, config: BVAbstractSourceConfig) {
+    override fun create(bvUser:String, config: BVAbstractSourceSecret) {
         update(bvUser, config)
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_SECRET_CACHE_NAME, allEntries = true)
-    override fun update(bvUser:String, config: BVAbstractSourceConfig) {
+    override fun update(bvUser:String, config: BVAbstractSourceSecret) {
         val configContainer = secretsMapper.toContainer(config)
         collectionAccessor.getUserSourceCredentialsCollection(bvUser)
             .document(config.sourceName).set(configContainer).get()

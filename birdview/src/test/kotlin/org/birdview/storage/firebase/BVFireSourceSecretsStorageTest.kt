@@ -3,10 +3,10 @@ package org.birdview.storage.firebase
 import org.birdview.BVProfiles
 import org.birdview.firebase.AbstractFirebaseStorageTest
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVConfluenceConfig
-import org.birdview.storage.model.secrets.BVGDriveConfig
-import org.birdview.storage.model.secrets.BVGithubConfig
-import org.birdview.storage.model.secrets.BVJiraConfig
+import org.birdview.storage.model.secrets.BVConfluenceSecret
+import org.birdview.storage.model.secrets.BVGDriveSecret
+import org.birdview.storage.model.secrets.BVGithubSecret
+import org.birdview.storage.model.secrets.BVJiraSecret
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,31 +25,31 @@ class BVFireSourceSecretsStorageTest : AbstractFirebaseStorageTest() {
         private const val SOURCE_NAME_GDRIVE_2= "gdrive-source-name-2"
 
         private val configs = listOf(
-            BVGDriveConfig(
+            BVGDriveSecret(
                 sourceName = SOURCE_NAME_GDRIVE_1,
                 clientId = "clientId1",
                 clientSecret = "secret1",
                 user = "user"
             ),
-            BVGDriveConfig(
+            BVGDriveSecret(
                 sourceName = SOURCE_NAME_GDRIVE_2,
                 clientId = "clientId2",
                 clientSecret = "secret2",
                 user = "user"
             ),
-            BVConfluenceConfig(
+            BVConfluenceSecret(
                 sourceName = SOURCE_NAME_CONFLUENCE,
                 baseUrl = "confluence-url",
                 token = "token",
                 user = "user"
             ),
-            BVJiraConfig(
+            BVJiraSecret(
                 sourceName = SOURCE_NAME_JIRA,
                 baseUrl = "jira-url",
                 token = "token",
                 user = "user"
             ),
-            BVGithubConfig(
+            BVGithubSecret(
                 sourceName = SOURCE_NAME_GITHUB,
                 token = "token",
                 user = "user"
@@ -84,14 +84,14 @@ class BVFireSourceSecretsStorageTest : AbstractFirebaseStorageTest() {
     fun testUpdate() {
         prepareTestConfigs()
 
-        storage.update(BVGDriveConfig(
+        storage.update(BVGDriveSecret(
             sourceName = SOURCE_NAME_GDRIVE_2,
             clientId = "clientId3",
             clientSecret = "secret3",
             user = "user"
         ))
 
-        val updatedConfig = storage.getSecret(SOURCE_NAME_GDRIVE_2, BVGDriveConfig::class.java)!!
+        val updatedConfig = storage.getSecret(SOURCE_NAME_GDRIVE_2, BVGDriveSecret::class.java)!!
 
         assertEquals("clientId3", updatedConfig.clientId)
         assertEquals("secret3", updatedConfig.clientSecret)

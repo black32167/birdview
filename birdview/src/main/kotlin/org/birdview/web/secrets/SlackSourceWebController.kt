@@ -4,7 +4,7 @@ import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.slack.SlackOAuthClient
 import org.birdview.source.slack.SlackTokenResponse
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVSlackConfig
+import org.birdview.storage.model.secrets.BVSlackSecret
 import org.birdview.web.BVWebPaths
 import org.birdview.web.secrets.SlackSourceWebController.Companion.CONTROLLER_PATH
 import org.springframework.stereotype.Controller
@@ -16,7 +16,7 @@ class SlackSourceWebController(
     sourceSecretsStorage: BVSourceSecretsStorage,
     httpClientFactory: BVHttpClientFactory,
     private val oauthClient: SlackOAuthClient
-): AbstractOauthSourceWebController<SlackTokenResponse, BVSlackConfig, SlackSourceWebController.SlackSourceFormData>(
+): AbstractOauthSourceWebController<SlackTokenResponse, BVSlackSecret, SlackSourceWebController.SlackSourceFormData>(
     httpClientFactory,
     sourceSecretsStorage
 ) {
@@ -37,17 +37,17 @@ class SlackSourceWebController(
 
     override fun getControllerPath() = CONTROLLER_PATH
 
-    override fun getConfigClass() = BVSlackConfig::class.java
+    override fun getConfigClass() = BVSlackSecret::class.java
 
     override fun mapConfig(sourceFormData: SlackSourceFormData) =
-            BVSlackConfig (
+            BVSlackSecret (
                     sourceName = sourceFormData.sourceName,
                     clientId = sourceFormData.clientId!!,
                     clientSecret = sourceFormData.clientSecret!!,
                     user = sourceFormData.user
             )
 
-    override fun mapForm(config: BVSlackConfig) =
+    override fun mapForm(config: BVSlackSecret) =
             SlackSourceFormData (
                     sourceName = config.sourceName,
                     clientId = config.clientId,

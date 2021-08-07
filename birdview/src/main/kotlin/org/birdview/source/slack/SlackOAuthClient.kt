@@ -4,7 +4,7 @@ import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.oauth.AbstractOAuthClient
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.model.BVOAuthTokens
-import org.birdview.storage.model.secrets.BVOAuthSourceConfig
+import org.birdview.storage.model.secrets.BVOAuthSourceSecret
 import javax.inject.Named
 
 @Named
@@ -12,7 +12,7 @@ class SlackOAuthClient (
     httpClientFactory: BVHttpClientFactory,
     tokenStorage: OAuthTokenStorage
 ) : AbstractOAuthClient<SlackTokenResponse>(tokenStorage, httpClientFactory) {
-    override fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceConfig): Map<String, String> =
+    override fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceSecret): Map<String, String> =
         mapOf(
             "client_id" to config.clientId,
             "client_secret" to config.clientSecret,

@@ -5,7 +5,7 @@ import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
 import org.birdview.source.jira.model.JiraIssuesFilterResponse
 import org.birdview.source.jira.model.JiraRemoteLink
-import org.birdview.storage.model.secrets.BVJiraConfig
+import org.birdview.storage.model.secrets.BVJiraSecret
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
@@ -25,7 +25,7 @@ class JiraClient(
     private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun findIssues(jiraConfig: BVJiraConfig, jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
+    fun findIssues(jiraConfig: BVJiraSecret, jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
         if (jql == null) {
             return
         }
@@ -65,7 +65,7 @@ class JiraClient(
         } while (!response.isLast && !response.issues.isEmpty())
     }
 
-    fun loadByKeys(jiraConfig: BVJiraConfig, issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
+    fun loadByKeys(jiraConfig: BVJiraSecret, issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
         val issueFutures = ConcurrentHashMap<String, Future<JiraIssue>>()
         issueKeys.forEach { issueKey ->
             issueFutures.computeIfAbsent(issueKey) {
@@ -85,7 +85,7 @@ class JiraClient(
         chunkConsumer(issues)
     }
 
-    fun loadByUrl(jiraConfig: BVJiraConfig, url:String): JiraIssue {
+    fun loadByUrl(jiraConfig: BVJiraSecret, url:String): JiraIssue {
         if (!url.startsWith(getApiRootUrl(jiraConfig))) {
             throw IllegalArgumentException("Can't load ${url} from ${jiraConfig.baseUrl}")
         }
@@ -96,17 +96,17 @@ class JiraClient(
         )
     }
 
-    fun getIssueLinks(jiraConfig: BVJiraConfig, issueKey: String): Array<JiraRemoteLink> =
+    fun getIssueLinks(jiraConfig: BVJiraSecret, issueKey: String): Array<JiraRemoteLink> =
         getHttpClient(jiraConfig).get(
             resultClass = Array<JiraRemoteLink>::class.java,
             subPath = "issue/${issueKey}/remotelink",
             parameters = mapOf("expand" to "changelog")
         )
 
-    private fun getHttpClient(jiraConfig: BVJiraConfig) =
+    private fun getHttpClient(jiraConfig: BVJiraSecret) =
         httpClientFactory.getHttpClient(getApiRootUrl(jiraConfig)) {
             BasicAuth(jiraConfig.user, jiraConfig.token)
         }
 
-    private fun getApiRootUrl(jiraConfig: BVJiraConfig) = "${jiraConfig.baseUrl}${API_SUFFIX}"
+    private fun getApiRootUrl(jiraConfig: BVJiraSecret) = "${jiraConfig.baseUrl}${API_SUFFIX}"
 }

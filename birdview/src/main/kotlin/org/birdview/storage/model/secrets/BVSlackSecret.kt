@@ -2,12 +2,12 @@ package org.birdview.storage.model.secrets
 
 import org.birdview.source.SourceType
 
-class BVSlackConfig (
+class BVSlackSecret (
         sourceName: String = "slack",
         user: String,
         clientId: String,
         clientSecret: String
-): BVOAuthSourceConfig(
+): BVOAuthSourceSecret(
         sourceType = SourceType.SLACK,
         sourceName = sourceName,
         user = user,

@@ -4,7 +4,7 @@ import org.birdview.source.gdrive.GAccessTokenResponse
 import org.birdview.source.gdrive.GDriveOAuthClient
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVGDriveConfig
+import org.birdview.storage.model.secrets.BVGDriveSecret
 import org.birdview.web.BVWebPaths
 import org.birdview.web.secrets.GdriveSourceWebController.Companion.CONTROLLER_PATH
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ class GdriveSourceWebController(
     sourceSecretsStorage: BVSourceSecretsStorage,
     httpClientFactory: BVHttpClientFactory,
     private val oauthClient: GDriveOAuthClient,
-): AbstractOauthSourceWebController<GAccessTokenResponse, BVGDriveConfig, GdriveSourceWebController.GdriveSourceFormData>(
+): AbstractOauthSourceWebController<GAccessTokenResponse, BVGDriveSecret, GdriveSourceWebController.GdriveSourceFormData>(
     httpClientFactory,
     sourceSecretsStorage
 ) {
@@ -38,17 +38,17 @@ class GdriveSourceWebController(
 
     override fun getControllerPath() = CONTROLLER_PATH
 
-    override fun getConfigClass() = BVGDriveConfig::class.java
+    override fun getConfigClass() = BVGDriveSecret::class.java
 
     override fun mapConfig(sourceFormData: GdriveSourceFormData) =
-            BVGDriveConfig (
+            BVGDriveSecret (
                     sourceName = sourceFormData.sourceName,
                     clientId = sourceFormData.key!!,
                     clientSecret = sourceFormData.secret!!,
                     user = sourceFormData.user
             )
 
-    override fun mapForm(config: BVGDriveConfig) =
+    override fun mapForm(config: BVGDriveSecret) =
             GdriveSourceFormData (
                     sourceName = config.sourceName,
                     key = config.clientId,

@@ -2,9 +2,9 @@ package org.birdview.storage.model.secrets
 
 import org.birdview.source.SourceType
 
-class BVJiraConfig (
+class BVJiraSecret (
         sourceName: String = "jira",
         val baseUrl: String,
         user: String,
         val token: String
-): BVAbstractSourceConfig(SourceType.JIRA, sourceName, user)
+): BVAbstractSourceSecret(SourceType.JIRA, sourceName, user)

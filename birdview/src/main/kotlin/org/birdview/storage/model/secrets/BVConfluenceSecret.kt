@@ -2,9 +2,9 @@ package org.birdview.storage.model.secrets
 
 import org.birdview.source.SourceType
 
-class BVConfluenceConfig (
+class BVConfluenceSecret (
         sourceName: String = "confluence",
         val baseUrl: String,
         user: String,
         val token: String
-): BVAbstractSourceConfig(SourceType.CONFLUENCE, sourceName, user)
+): BVAbstractSourceSecret(SourceType.CONFLUENCE, sourceName, user)

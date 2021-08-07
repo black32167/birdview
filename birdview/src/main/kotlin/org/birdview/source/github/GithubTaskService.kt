@@ -17,8 +17,8 @@ import org.birdview.source.github.gql.model.GqlGithubReviewUser
 import org.birdview.source.github.gql.model.GqlGithubUserActor
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
-import org.birdview.storage.model.secrets.BVGithubConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
+import org.birdview.storage.model.secrets.BVGithubSecret
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
@@ -37,10 +37,10 @@ open class GithubTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceConfig,
+        sourceConfig: BVAbstractSourceSecret,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val githubConfig = sourceConfig as BVGithubConfig
+        val githubConfig = sourceConfig as BVGithubSecret
         val sourceUserName = userSourceStorage.getSourceProfile(bvUser, sourceConfig.sourceName).sourceUserName
         val githubQuery = githubQueryBuilder.getFilterQueries(sourceUserName, updatedPeriod)
         gqlClient.getPullRequests(githubConfig, githubQuery) { prs ->
@@ -50,7 +50,7 @@ open class GithubTaskService(
     }
 
     override fun resolveSourceUserId(sourceName:String, email: String):String {
-        val githubConfig = secretsStorage.getSecret(sourceName, BVGithubConfig::class.java)!!
+        val githubConfig = secretsStorage.getSecret(sourceName, BVGithubSecret::class.java)!!
         val userName = try {
             gqlClient.getUserByEmail(githubConfig, email)
         } catch (e: Throwable) {
@@ -60,7 +60,7 @@ open class GithubTaskService(
         return userName ?: email
     }
 
-    private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVGithubConfig): BVDocument {
+    private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVGithubSecret): BVDocument {
         val description = pr.bodyText ?: ""
         val title = BVFilters.removeIdsFromText(pr.title)
         val operations = extractOperations(pr, sourceName = githubConfig.sourceName)
@@ -93,7 +93,7 @@ open class GithubTaskService(
                 null
             }
 
-    private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
+    private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubSecret, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
             ((pr.author as? GqlGithubUserActor)?.login ?.let {
                 listOfNotNull(mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR)) } ?: emptyList()) +
             pr.assignees.nodes.mapNotNull { mapDocumentUser(it.login, config.sourceName, UserRole.WATCHER) } +

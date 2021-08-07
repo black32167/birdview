@@ -6,7 +6,7 @@ import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.SourceType
 import org.birdview.source.authentication.BVSourceConfigProvider
 import org.birdview.storage.BVDocumentProvidersManager
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
@@ -57,7 +57,7 @@ class BVDocumentsLoader (
         val subtaskFutures = mutableListOf<Future<*>>()
         val sourceType2SourceNames: Map<SourceType, List<String>> =
             sourceConfigProvider.listEnabledSourceConfigs(bvUser)
-                .groupBy(BVAbstractSourceConfig::sourceType, BVAbstractSourceConfig::sourceName)
+                .groupBy(BVAbstractSourceSecret::sourceType, BVAbstractSourceSecret::sourceName)
         val type2Ids: Map<SourceType, List<String>> = missedDocsIds
             .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
                 sourcesManager.guessSourceTypesByDocumentId(id)

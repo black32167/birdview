@@ -2,7 +2,7 @@ package org.birdview.web.secrets
 
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVOAuthSourceConfig
+import org.birdview.storage.model.secrets.BVOAuthSourceSecret
 import org.birdview.web.BVWebPaths
 import org.birdview.web.WebUtils
 import org.slf4j.LoggerFactory
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.view.RedirectView
 
-abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSourceConfig, F>(
+abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSourceSecret, F>(
     private val httpClientFactory: BVHttpClientFactory,
     sourceSecretsStorage: BVSourceSecretsStorage,
 ): AbstractSourceWebController<T, F>(sourceSecretsStorage) {
@@ -43,7 +43,7 @@ abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSou
     override fun getRedirectAfterSaveView(config: T): Any =
             RedirectView(getProviderAuthCodeUrl(config))
 
-    private fun getProviderAuthCodeUrl(oAuthConfig: BVOAuthSourceConfig): String {
+    private fun getProviderAuthCodeUrl(oAuthConfig: BVOAuthSourceSecret): String {
         val req = oAuthConfig.authCodeUrl +
                 "client_id=${oAuthConfig.clientId}" +
                 "&response_type=code" +
@@ -54,7 +54,7 @@ abstract class AbstractOauthSourceWebController<AuthCodeResponse, T : BVOAuthSou
     }
 
     private fun exchangeAuthorizationCode(sourceName: String, authCode:String) {
-        val config = sourceSecretsStorage.getSecret(sourceName) as BVOAuthSourceConfig
+        val config = sourceSecretsStorage.getSecret(sourceName) as BVOAuthSourceSecret
         val fields = mapOf(
             "client_id" to config.clientId,
             "client_secret" to config.clientSecret,

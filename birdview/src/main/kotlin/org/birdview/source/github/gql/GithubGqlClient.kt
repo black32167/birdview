@@ -3,7 +3,7 @@ package org.birdview.source.github.gql
 import org.apache.tomcat.util.http.fileupload.util.Streams
 import org.birdview.source.github.gql.model.*
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.model.secrets.BVGithubConfig
+import org.birdview.storage.model.secrets.BVGithubSecret
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ class GithubGqlClient (
     private class GQL(
             val query: String
     )
-    fun getPullRequests(githubConfig: BVGithubConfig, githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
+    fun getPullRequests(githubConfig: BVGithubSecret, githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
         log.info("Running Github query:{}", githubQuery)
         return BVTimeUtil.logTimeAndReturn("getPullRequests-GQL") {
 
@@ -58,7 +58,7 @@ class GithubGqlClient (
         }
     }
 
-    fun getUserByEmail(githubConfig: BVGithubConfig, email: String): String? {
+    fun getUserByEmail(githubConfig: BVGithubSecret, email: String): String? {
         val gqlQuery = javaClass
                 .getResourceAsStream("/github/gql/search-user.gql")
                 .let(Streams::asString)
@@ -80,7 +80,7 @@ class GithubGqlClient (
         return query
     }
 
-    private fun getHttpClient(githubConfig: BVGithubConfig) =
+    private fun getHttpClient(githubConfig: BVGithubSecret) =
         httpClientFactory.getHttpClient(
             url = githubConfig.baseGqlUrl
         ) { BasicAuth(githubConfig.user, githubConfig.token) }

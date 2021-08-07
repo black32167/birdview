@@ -13,8 +13,8 @@ import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
-import org.birdview.storage.model.secrets.BVTrelloConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
+import org.birdview.storage.model.secrets.BVTrelloSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import javax.inject.Named
@@ -36,10 +36,10 @@ open class TrelloTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceConfig,
+        sourceConfig: BVAbstractSourceSecret,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val trelloConfig = sourceConfig as BVTrelloConfig
+        val trelloConfig = sourceConfig as BVTrelloSecret
         val sourceUserName = userSourceStorage.getSourceProfile(bvUser, trelloConfig.sourceName).sourceUserName
         val query = trelloQueryBuilder.getQueries(sourceUserName, updatedPeriod)
 

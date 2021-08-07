@@ -1,7 +1,7 @@
 package org.birdview.web.secrets
 
 import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.model.secrets.BVJiraConfig
+import org.birdview.storage.model.secrets.BVJiraSecret
 import org.birdview.web.BVWebPaths
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("${BVWebPaths.SECRETS}/jira")
 class JiraSourceWebController(
         sourceSecretsStorage: BVSourceSecretsStorage
-): AbstractSourceWebController<BVJiraConfig, JiraSourceWebController.JiraSourceFormData>(sourceSecretsStorage) {
+): AbstractSourceWebController<BVJiraSecret, JiraSourceWebController.JiraSourceFormData>(sourceSecretsStorage) {
     class JiraSourceFormData(
             sourceName:String,
             user: String,
@@ -18,16 +18,16 @@ class JiraSourceWebController(
             val baseUrl: String?
     ): AbstractSourceFormData (sourceName = sourceName, user = user, type = "jira")
 
-    override fun getConfigClass() = BVJiraConfig::class.java
+    override fun getConfigClass() = BVJiraSecret::class.java
 
     override fun mapConfig(sourceFormData: JiraSourceFormData) =
-            BVJiraConfig (
+            BVJiraSecret (
                     sourceName = sourceFormData.sourceName,
                     user = sourceFormData.user,
                     token = sourceFormData.secret!!,
                     baseUrl = sourceFormData.baseUrl!!)
 
-    override fun mapForm(config: BVJiraConfig) =
+    override fun mapForm(config: BVJiraSecret) =
             JiraSourceFormData(
                 sourceName = config.sourceName,
                 baseUrl = config.baseUrl,

@@ -5,8 +5,8 @@ import org.birdview.storage.BVUserSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.model.BVUserSourceConfig
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
-import org.birdview.storage.model.secrets.BVOAuthSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
+import org.birdview.storage.model.secrets.BVOAuthSourceSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
@@ -19,19 +19,19 @@ class BVSourceConfigProvider(
 ) {
     private val log = LoggerFactory.getLogger(BVSourceConfigProvider::class.java)
 
-    fun <T:BVAbstractSourceConfig> getSourceConfig(sourceName:String, bvUser:String, configClass: Class<T>): T? {
+    fun <T:BVAbstractSourceSecret> getSourceConfig(sourceName:String, bvUser:String, configClass: Class<T>): T? {
         val sourceConfig = userSourceSecretsStorage.getSecret(bvUser = bvUser, sourceName = sourceName)
             ?: defaultSourceSecretsStorage.getSecret(sourceName)
         return sourceConfig?.let(configClass::cast)
     }
 
-    fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceConfig> {
+    fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceSecret> {
         val enabledUserSourceNames:MutableSet<String> = userSourceConfigStorage.listUserSourceProfiles(bvUser)
             .filter (BVUserSourceConfig::enabled)
             .map { it.sourceName }
             .toMutableSet()
 
-        val configuredUserSourceConfigs:List<BVAbstractSourceConfig> =
+        val configuredUserSourceConfigs:List<BVAbstractSourceSecret> =
             userSourceSecretsStorage.getSecrets(bvUser)
                 .filter { enabledUserSourceNames.contains(it.sourceName) }
 
@@ -39,8 +39,8 @@ class BVSourceConfigProvider(
         return configuredUserSourceConfigs.filter { isAuthenticated(it) }
     }
 
-    private fun isAuthenticated(config: BVAbstractSourceConfig): Boolean {
-        if (config is BVOAuthSourceConfig) {
+    private fun isAuthenticated(config: BVAbstractSourceSecret): Boolean {
+        if (config is BVOAuthSourceSecret) {
             val sourceName = config.sourceName
             val token = oAuthTokenStorage.loadOAuthTokens(sourceName)
             if (token == null) {

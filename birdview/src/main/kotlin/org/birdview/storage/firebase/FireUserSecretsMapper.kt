@@ -2,7 +2,7 @@ package org.birdview.storage.firebase
 
 import com.google.cloud.firestore.DocumentSnapshot
 import org.birdview.storage.model.BVSourceSecretContainer
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.birdview.utils.JsonDeserializer
 import org.slf4j.LoggerFactory
 import javax.inject.Named
@@ -11,11 +11,11 @@ import javax.inject.Named
 class FireUserSecretsMapper(val jsonDeserializer: JsonDeserializer) {
     private val log = LoggerFactory.getLogger(FireUserSecretsMapper::class.java)
 
-    fun extractSecrets(doc: DocumentSnapshot): BVAbstractSourceConfig? =
+    fun extractSecrets(doc: DocumentSnapshot): BVAbstractSourceSecret? =
         doc.getString(BVSourceSecretContainer::secretToken.name)
             ?.let { deserialize(it) }
 
-    fun toContainer(secret: BVAbstractSourceConfig) =
+    fun toContainer(secret: BVAbstractSourceSecret) =
         BVSourceSecretContainer(
             sourceType = secret.sourceType,
             sourceName = secret.sourceName,
@@ -23,9 +23,9 @@ class FireUserSecretsMapper(val jsonDeserializer: JsonDeserializer) {
             secretToken = jsonDeserializer.serializeToString(secret)
         )
 
-    private fun deserialize(secretToken: String): BVAbstractSourceConfig? {
+    private fun deserialize(secretToken: String): BVAbstractSourceSecret? {
         try {
-            return jsonDeserializer.deserializeString(secretToken, BVAbstractSourceConfig::class.java)
+            return jsonDeserializer.deserializeString(secretToken, BVAbstractSourceSecret::class.java)
         } catch (e: Exception) {
             log.error("", e)
             return null

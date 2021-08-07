@@ -5,7 +5,7 @@ import org.birdview.source.trello.model.TrelloBoard
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.source.trello.model.TrelloCardsSearchResponse
 import org.birdview.source.trello.model.TrelloList
-import org.birdview.storage.model.secrets.BVTrelloConfig
+import org.birdview.storage.model.secrets.BVTrelloSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
@@ -14,7 +14,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
     private val log = LoggerFactory.getLogger(TrelloClient::class.java)
     private val cardsPerPage = 50
 
-    fun getCards(trelloConfig: BVTrelloConfig, query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
+    fun getCards(trelloConfig: BVTrelloSecret, query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
         log.info("Running Trello query '{}'", query)
         var page = 0
         while (searchTrelloCards(trelloConfig, query, page, chunkConsumer)) {
@@ -22,7 +22,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
         }
     }
 
-    private fun searchTrelloCards(trelloConfig: BVTrelloConfig, query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
+    private fun searchTrelloCards(trelloConfig: BVTrelloSecret, query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
         log.info("Loading trello issues page {} for query {}", page, query)
         val cards = searchTrelloCards(trelloConfig, query, page).cards.toList()
         return if(cards.isEmpty()) {
@@ -33,7 +33,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
         }
     }
 
-    fun getBoards(trelloConfig: BVTrelloConfig, boardIds: List<String>): List<TrelloBoard> =
+    fun getBoards(trelloConfig: BVTrelloSecret, boardIds: List<String>): List<TrelloBoard> =
         boardIds.map { boardId ->
             getTrello(
                 trelloConfig = trelloConfig,
@@ -41,7 +41,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
                 subPath = "boards/${boardId}")
         }
 
-    fun loadLists(trelloConfig: BVTrelloConfig, listsIds: List<String>): List<TrelloList> = listsIds.map { listId ->
+    fun loadLists(trelloConfig: BVTrelloSecret, listsIds: List<String>): List<TrelloList> = listsIds.map { listId ->
         getTrello(
             trelloConfig = trelloConfig,
             subPath = "lists/${listId}",
@@ -49,7 +49,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
         )
     }
 
-    private fun searchTrelloCards(trelloConfig: BVTrelloConfig, query: String, cardsPage: Int) =
+    private fun searchTrelloCards(trelloConfig: BVTrelloSecret, query: String, cardsPage: Int) =
         getTrello(
             trelloConfig = trelloConfig,
             resultClass = TrelloCardsSearchResponse::class.java,
@@ -63,7 +63,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
             )
         )
 
-    private fun <T> getTrello(trelloConfig: BVTrelloConfig, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()) =
+    private fun <T> getTrello(trelloConfig: BVTrelloSecret, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()) =
         httpClientFactory.getHttpClient("${trelloConfig.baseUrl}/1").get(
             resultClass = resultClass,
             subPath = subPath,

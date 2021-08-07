@@ -1,19 +1,19 @@
 package org.birdview.storage
 
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 
 interface BVSourceSecretsStorage {
-    fun getSecret(sourceName: String): BVAbstractSourceConfig?
+    fun getSecret(sourceName: String): BVAbstractSourceSecret?
 
-    fun <T: BVAbstractSourceConfig> getSecret(sourceName: String, configClass: Class<T>) : T?
+    fun <T: BVAbstractSourceSecret> getSecret(sourceName: String, configClass: Class<T>) : T?
 
-    fun getSecrets(): List<BVAbstractSourceConfig>
+    fun getSecrets(): List<BVAbstractSourceSecret>
 
     fun listSourceNames(): List<String>
 
-    fun create(config: BVAbstractSourceConfig)
+    fun create(config: BVAbstractSourceSecret)
 
-    fun update(config: BVAbstractSourceConfig)
+    fun update(config: BVAbstractSourceSecret)
 
     fun delete(sourceName: String)
 }

@@ -5,7 +5,7 @@ import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.source.confluence.model.ConfluenceSearchPageResponseSearchResult
 import org.birdview.source.confluence.model.ContentArray
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.model.secrets.BVConfluenceConfig
+import org.birdview.storage.model.secrets.BVConfluenceSecret
 import org.birdview.utils.BVTimeUtil
 import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory
@@ -23,7 +23,7 @@ class ConfluenceClient(
     )
 
     fun findDocuments(
-        config: BVConfluenceConfig,
+        config: BVConfluenceSecret,
         cql: String?,
         chunkConsumer: (List<ConfluenceSearchItem>) -> Unit
     ) {
@@ -57,13 +57,13 @@ class ConfluenceClient(
         }
     }
 
-    fun loadPage(config: BVConfluenceConfig, pageUrl: String): ConfluenceSearchItemContent =
+    fun loadPage(config: BVConfluenceSecret, pageUrl: String): ConfluenceSearchItemContent =
         getHttpClient(config, pageUrl).get(
             resultClass = ConfluenceSearchItemContent::class.java,
             parameters = mapOf("expand" to pageExpands.joinToString(","))
         )
 
-    fun loadComments(config: BVConfluenceConfig, pageId: String): List<ConfluenceSearchItemContent> =
+    fun loadComments(config: BVConfluenceSecret, pageId: String): List<ConfluenceSearchItemContent> =
         getHttpClient(config).get(
             resultClass = ContentArray::class.java,
             subPath = "content/${pageId}/child/comment",
@@ -72,10 +72,10 @@ class ConfluenceClient(
                 "expand" to pageExpands.joinToString(","))
         ).results
 
-    private fun getHttpClient(config: BVConfluenceConfig) =
+    private fun getHttpClient(config: BVConfluenceSecret) =
         getHttpClient(config, "${config.baseUrl}/rest/api")
 
-    private fun getHttpClient(config: BVConfluenceConfig, url: String) =
+    private fun getHttpClient(config: BVConfluenceSecret, url: String) =
         httpClientFactory.getHttpClient(url) {
             BasicAuth(config.user, config.token)
         }

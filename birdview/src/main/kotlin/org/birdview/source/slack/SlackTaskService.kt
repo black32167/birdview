@@ -5,8 +5,8 @@ import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
-import org.birdview.storage.model.secrets.BVSlackConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
+import org.birdview.storage.model.secrets.BVSlackSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
@@ -19,10 +19,10 @@ class SlackTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceConfig,
+        sourceConfig: BVAbstractSourceSecret,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val slackConfig = sourceConfig as BVSlackConfig
+        val slackConfig = sourceConfig as BVSlackSecret
         try {
             slackClient.findMessages(slackConfig, chunkConsumer::consume)
         } catch (e: Exception) {

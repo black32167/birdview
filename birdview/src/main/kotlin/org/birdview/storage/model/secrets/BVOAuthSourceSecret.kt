@@ -2,7 +2,7 @@ package org.birdview.storage.model.secrets
 
 import org.birdview.source.SourceType
 
-abstract class BVOAuthSourceConfig (
+abstract class BVOAuthSourceSecret (
     sourceType: SourceType,
     sourceName: String,
     user: String,
@@ -11,4 +11,4 @@ abstract class BVOAuthSourceConfig (
     val authCodeUrl: String,
     val tokenExchangeUrl: String,
     val scope: String)
-    : BVAbstractSourceConfig(sourceType, sourceName, user)
+    : BVAbstractSourceSecret(sourceType, sourceName, user)

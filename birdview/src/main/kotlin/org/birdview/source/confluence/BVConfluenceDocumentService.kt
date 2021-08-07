@@ -11,8 +11,8 @@ import org.birdview.source.SourceType
 import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceConfig
-import org.birdview.storage.model.secrets.BVConfluenceConfig
+import org.birdview.storage.model.secrets.BVAbstractSourceSecret
+import org.birdview.storage.model.secrets.BVConfluenceSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import java.time.OffsetDateTime
@@ -27,8 +27,8 @@ class BVConfluenceDocumentService (
     private val userSourceStorage: BVUserSourceStorage
 ): BVTaskSource {
     private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
-    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceConfig, chunkConsumer: BVSessionDocumentConsumer) {
-        val confluenceConfig = sourceConfig as BVConfluenceConfig
+    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceSecret, chunkConsumer: BVSessionDocumentConsumer) {
+        val confluenceConfig = sourceConfig as BVConfluenceSecret
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
         val cql =
             "type IN (page,comment) AND " +
@@ -59,7 +59,7 @@ class BVConfluenceDocumentService (
         }
     }
 
-    private fun mapDocument(confluenceDocument: ConfluenceSearchItemContent, confluenceConfig:BVConfluenceConfig, bvUser: String): BVDocument {
+    private fun mapDocument(confluenceDocument: ConfluenceSearchItemContent, confluenceConfig:BVConfluenceSecret, bvUser: String): BVDocument {
         val sourceName = confluenceConfig.sourceName
         val confluenceUser = userSourceStorage.getSourceProfile(bvUser, sourceName = sourceName).sourceUserName
         val lastModified = parseDate(confluenceDocument.version._when)
