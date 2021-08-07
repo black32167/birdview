@@ -1,13 +1,13 @@
 package org.birdview.storage
 
-import org.birdview.storage.model.BVUserSourceConfig
+import org.birdview.storage.model.BVSourceConfig
 
 interface BVUserSourceStorage {
-    fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig
+    fun getSourceProfile(bvUser: String, sourceName: String): BVSourceConfig?
 
     fun create(bvUser: String, sourceName: String, sourceUserName: String)
 
-    fun update(bvUser: String, userProfileSourceConfig: BVUserSourceConfig)
+    fun update(bvUser: String, userProfileSourceConfig: BVSourceConfig)
 
     fun listUserSources(bvUser: String): List<String>
 
@@ -15,6 +15,6 @@ interface BVUserSourceStorage {
 
     fun deleteAll(bvUser: String)
 
-    fun listUserSourceProfiles(bvUser: String): List<BVUserSourceConfig>
+    fun listUserSourceProfiles(bvUser: String): List<BVSourceConfig>
 }
 

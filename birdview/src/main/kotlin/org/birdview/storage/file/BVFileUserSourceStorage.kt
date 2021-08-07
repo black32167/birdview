@@ -4,7 +4,7 @@ import org.birdview.BVCacheNames.USER_SOURCE_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.BVUserSourceConfig
+import org.birdview.storage.model.BVSourceConfig
 import org.birdview.utils.JsonDeserializer
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -24,7 +24,7 @@ class BVFileUserSourceStorage(
 
     @Cacheable(USER_SOURCE_CACHE)
     @Synchronized
-    override fun getSourceProfile(bvUser: String, sourceName: String): BVUserSourceConfig =
+    override fun getSourceProfile(bvUser: String, sourceName: String): BVSourceConfig =
             deserialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName))
 
     @Synchronized
@@ -50,7 +50,7 @@ class BVFileUserSourceStorage(
     }
 
     @Cacheable(cacheNames = [USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
-    override fun listUserSourceProfiles(bvUser: String): List<BVUserSourceConfig> {
+    override fun listUserSourceProfiles(bvUser: String): List<BVSourceConfig> {
         return listUserSources(bvUser).map { getSourceProfile(bvUser, it) }
     }
 
@@ -58,24 +58,24 @@ class BVFileUserSourceStorage(
     @Synchronized
     override fun create(bvUser: String, sourceName: String, sourceUserName: String) {
         serialize(getSourceConfigFileName(bvUserName = bvUser, sourceName = sourceName),
-            BVUserSourceConfig(
+            BVSourceConfig(
                 sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName))
     }
 
     @CacheEvict(USER_SOURCE_CACHE, allEntries = true)
     @Synchronized
-    override fun update(bvUser: String, userProfileSourceConfig: BVUserSourceConfig) {
+    override fun update(bvUser: String, userProfileSourceConfig: BVSourceConfig) {
         val file = getSourceConfigFileName(bvUserName = bvUser, sourceName = userProfileSourceConfig.sourceName)
         Files.move(file, file.resolveSibling("${file}.bak"), StandardCopyOption.REPLACE_EXISTING)
         serialize(file, userProfileSourceConfig)
     }
 
-    private fun serialize(file: Path, userProfileSourceConfig: BVUserSourceConfig) {
+    private fun serialize(file: Path, userProfileSourceConfig: BVSourceConfig) {
         jsonDeserializer.serialize(file, userProfileSourceConfig)
     }
 
     private fun deserialize(file: Path) =
-        jsonDeserializer.deserialize<BVUserSourceConfig>(file)
+        jsonDeserializer.deserialize<BVSourceConfig>(file)
 
     private fun getSourceConfigFileName(bvUserName: String, sourceName: String) =
             getUserSourcesFolder(bvUserName).resolve("${sourceName}.json")

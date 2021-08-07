@@ -5,7 +5,7 @@ import org.birdview.storage.BVDocumentProvidersManager
 import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.BVUserStorage
-import org.birdview.storage.model.BVUserSourceConfig
+import org.birdview.storage.model.BVSourceConfig
 import org.birdview.web.BVWebPaths
 import org.birdview.web.BVWebTimeZonesUtil
 import org.birdview.web.user.BVUserSourcesListWebController.UpdateUserSourceFormData.Companion.NO
@@ -100,7 +100,7 @@ class BVUserSourcesListWebController (
 
         userSourceStorage.update(
             bvUser = currentUserName(),
-            userProfileSourceConfig = BVUserSourceConfig(
+            userProfileSourceConfig = BVSourceConfig(
                 sourceName = sourceName,  sourceUserName = formDataUpdate.sourceUserName, enabled = formDataUpdate.enabled != null
             )
         )

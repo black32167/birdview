@@ -4,7 +4,7 @@ import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.OAuthTokenStorage
-import org.birdview.storage.model.BVUserSourceConfig
+import org.birdview.storage.model.BVSourceConfig
 import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.birdview.storage.model.secrets.BVOAuthSourceSecret
 import org.slf4j.LoggerFactory
@@ -20,14 +20,14 @@ class BVSourceConfigProvider(
     private val log = LoggerFactory.getLogger(BVSourceConfigProvider::class.java)
 
     fun <T:BVAbstractSourceSecret> getSourceConfig(sourceName:String, bvUser:String, configClass: Class<T>): T? {
-        val sourceConfig = userSourceSecretsStorage.getSecret(bvUser = bvUser, sourceName = sourceName)
+        val sourceConfig = userSourceConfigStorage.getSourceProfile(bvUser = bvUser, sourceName = sourceName)?.sourceSecret
             ?: defaultSourceSecretsStorage.getSecret(sourceName)
         return sourceConfig?.let(configClass::cast)
     }
 
     fun listEnabledSourceConfigs(bvUser:String):List<BVAbstractSourceSecret> {
         val enabledUserSourceNames:MutableSet<String> = userSourceConfigStorage.listUserSourceProfiles(bvUser)
-            .filter (BVUserSourceConfig::enabled)
+            .filter (BVSourceConfig::enabled)
             .map { it.sourceName }
             .toMutableSet()
 
