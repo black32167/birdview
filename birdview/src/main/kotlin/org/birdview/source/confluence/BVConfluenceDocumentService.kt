@@ -6,13 +6,10 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVSessionDocumentConsumer
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.confluence.model.ConfluenceSearchItemContent
-import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
-import org.birdview.storage.model.secrets.BVConfluenceSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import java.time.OffsetDateTime
@@ -23,20 +20,17 @@ import javax.inject.Named
 @Named
 class BVConfluenceDocumentService (
     private val client: ConfluenceClient,
-    private val sourceSecretsStorage: BVSourceSecretsStorage,
-    private val userSourceStorage: BVUserSourceStorage
 ): BVTaskSource {
     private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
-    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVAbstractSourceSecret, chunkConsumer: BVSessionDocumentConsumer) {
-        val confluenceConfig = sourceConfig as BVConfluenceSecret
-        val confluenceUser = userSourceStorage.getSource(bvUser, sourceName = sourceConfig.sourceName).sourceUserName
+    override fun getTasks(bvUser: String, updatedPeriod: TimeIntervalFilter, sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig, chunkConsumer: BVSessionDocumentConsumer) {
+        val confluenceUser = sourceConfig.sourceUserName
         val cql =
             "type IN (page,comment) AND " +
                 "(contributor=\"${confluenceUser}\" OR creator=\"${confluenceUser}\")" +
                 (updatedPeriod.after?.let { after -> " AND lastmodified>\"${formatDate(after)}\" " } ?: "") +
                 (updatedPeriod.before?.let { before -> " AND lastmodified<=\"${formatDate(before)}\" " } ?: "") +
                 " ORDER BY lastmodified DESC"
-        client.findDocuments(confluenceConfig, cql) { confluenceDocuments ->
+        client.findDocuments(sourceConfig, cql) { confluenceDocuments ->
             // Feed loaded pages
             confluenceDocuments
                 .filter { it.content?.type == "page" }
@@ -47,21 +41,21 @@ class BVConfluenceDocumentService (
             confluenceDocuments
                 .filter { it.content?.type == "comment" }
                 .map {
-                    confluenceConfig.baseUrl + it.content!!._expandable.container
+                    sourceConfig.baseUrl + it.content!!._expandable.container
                 }
                 .distinct()
                 .filter { pageUrl->!chunkConsumer.isConsumed(pageUrl) }
                 .map { pageUrl ->
-                    client.loadPage(confluenceConfig, pageUrl)
+                    client.loadPage(sourceConfig, pageUrl)
                 }
                 .map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) }
                 .also (chunkConsumer::consume)
         }
     }
 
-    private fun mapDocument(confluenceDocument: ConfluenceSearchItemContent, confluenceConfig:BVConfluenceSecret, bvUser: String): BVDocument {
+    private fun mapDocument(confluenceDocument: ConfluenceSearchItemContent, confluenceConfig: BVSourceConfigProvider.SyntheticSourceConfig, bvUser: String): BVDocument {
         val sourceName = confluenceConfig.sourceName
-        val confluenceUser = userSourceStorage.getSource(bvUser, sourceName = sourceName).sourceUserName
+        val confluenceUser = confluenceConfig.sourceUserName
         val lastModified = parseDate(confluenceDocument.version._when)
         val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument._links.webui.trimStart('/')}"
 

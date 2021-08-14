@@ -6,13 +6,13 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVSessionDocumentConsumer
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
-import org.birdview.storage.model.secrets.BVGDriveSecret
+import org.birdview.storage.model.source.secrets.BVGDriveSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ open class GDriveTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceSecret,
+        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val config = sourceConfig as BVGDriveSecret

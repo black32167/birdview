@@ -5,20 +5,13 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
-import org.birdview.source.BVDocumentNodesRelation
-import org.birdview.source.BVSessionDocumentConsumer
-import org.birdview.source.BVTaskSource
-import org.birdview.source.SourceType
+import org.birdview.source.*
 import org.birdview.source.github.GithubUtils.parseDate
 import org.birdview.source.github.gql.GithubGqlClient
 import org.birdview.source.github.gql.model.GqlGithubEvent
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
 import org.birdview.source.github.gql.model.GqlGithubUserActor
-import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
-import org.birdview.storage.model.secrets.BVGithubSecret
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
@@ -26,31 +19,30 @@ import javax.inject.Named
 
 @Named
 open class GithubTaskService(
-    private val sourceSecretsStorage: BVSourceSecretsStorage,
     private val gqlClient: GithubGqlClient,
     private val githubQueryBuilder: GithubQueryBuilder,
-    private val secretsStorage: BVSourceSecretsStorage,
-    private val userSourceStorage: BVUserSourceStorage,
+    private val sourceConfigProvider: BVSourceConfigProvider,
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(GithubTaskService::class.java)
 
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceSecret,
+        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val githubConfig = sourceConfig as BVGithubSecret
-        val sourceUserName = userSourceStorage.getSource(bvUser, sourceConfig.sourceName).sourceUserName
+        val sourceUserName = sourceConfig.sourceUserName
         val githubQuery = githubQueryBuilder.getFilterQueries(sourceUserName, updatedPeriod)
-        gqlClient.getPullRequests(githubConfig, githubQuery) { prs ->
-            val docs = prs.map { pr -> toBVDocument(pr, githubConfig) }
+        gqlClient.getPullRequests(sourceConfig, githubQuery) { prs ->
+            val docs = prs.map { pr -> toBVDocument(pr, sourceConfig) }
             chunkConsumer.consume(docs)
         }
     }
 
-    override fun resolveSourceUserId(sourceName:String, email: String):String {
-        val githubConfig = secretsStorage.getSecret(sourceName, BVGithubSecret::class.java)!!
+    override fun resolveSourceUserId(bvUser: String, sourceName: String, email: String):String {
+        val githubConfig = sourceConfigProvider.getSourceConfig(
+            sourceName = sourceName,
+            bvUser = bvUser)!!
         val userName = try {
             gqlClient.getUserByEmail(githubConfig, email)
         } catch (e: Throwable) {
@@ -60,7 +52,7 @@ open class GithubTaskService(
         return userName ?: email
     }
 
-    private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVGithubSecret): BVDocument {
+    private fun toBVDocument(pr: GqlGithubPullRequest, githubConfig: BVSourceConfigProvider.SyntheticSourceConfig): BVDocument {
         val description = pr.bodyText ?: ""
         val title = BVFilters.removeIdsFromText(pr.title)
         val operations = extractOperations(pr, sourceName = githubConfig.sourceName)
@@ -93,7 +85,7 @@ open class GithubTaskService(
                 null
             }
 
-    private fun extractUsers(pr: GqlGithubPullRequest, config: BVGithubSecret, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
+    private fun extractUsers(pr: GqlGithubPullRequest, config: BVSourceConfigProvider.SyntheticSourceConfig, operations: List<BVDocumentOperation>): List<BVDocumentUser> =
             ((pr.author as? GqlGithubUserActor)?.login ?.let {
                 listOfNotNull(mapDocumentUser(it, config.sourceName, UserRole.IMPLEMENTOR)) } ?: emptyList()) +
             pr.assignees.nodes.mapNotNull { mapDocumentUser(it.login, config.sourceName, UserRole.WATCHER) } +

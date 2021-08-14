@@ -1,19 +1,18 @@
 package org.birdview.source.confluence
 
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.confluence.model.ConfluenceSearchItem
 import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.source.confluence.model.ConfluenceSearchPageResponseSearchResult
 import org.birdview.source.confluence.model.ContentArray
-import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.model.secrets.BVConfluenceSecret
+import org.birdview.source.http.BVHttpSourceClientFactory
 import org.birdview.utils.BVTimeUtil
-import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
 class ConfluenceClient(
-    private val httpClientFactory: BVHttpClientFactory
+    private val httpClientFactory: BVHttpSourceClientFactory
 ) {
     private val log = LoggerFactory.getLogger(ConfluenceClient::class.java)
     private val documentsPerPage = 50
@@ -23,7 +22,7 @@ class ConfluenceClient(
     )
 
     fun findDocuments(
-        config: BVConfluenceSecret,
+        config: BVSourceConfigProvider.SyntheticSourceConfig,
         cql: String?,
         chunkConsumer: (List<ConfluenceSearchItem>) -> Unit
     ) {
@@ -57,13 +56,13 @@ class ConfluenceClient(
         }
     }
 
-    fun loadPage(config: BVConfluenceSecret, pageUrl: String): ConfluenceSearchItemContent =
+    fun loadPage(config: BVSourceConfigProvider.SyntheticSourceConfig, pageUrl: String): ConfluenceSearchItemContent =
         getHttpClient(config, pageUrl).get(
             resultClass = ConfluenceSearchItemContent::class.java,
             parameters = mapOf("expand" to pageExpands.joinToString(","))
         )
 
-    fun loadComments(config: BVConfluenceSecret, pageId: String): List<ConfluenceSearchItemContent> =
+    fun loadComments(config: BVSourceConfigProvider.SyntheticSourceConfig, pageId: String): List<ConfluenceSearchItemContent> =
         getHttpClient(config).get(
             resultClass = ContentArray::class.java,
             subPath = "content/${pageId}/child/comment",
@@ -72,12 +71,10 @@ class ConfluenceClient(
                 "expand" to pageExpands.joinToString(","))
         ).results
 
-    private fun getHttpClient(config: BVConfluenceSecret) =
+    private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig) =
         getHttpClient(config, "${config.baseUrl}/rest/api")
 
-    private fun getHttpClient(config: BVConfluenceSecret, url: String) =
-        httpClientFactory.getHttpClient(url) {
-            BasicAuth(config.user, config.token)
-        }
+    private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig, url: String) =
+        httpClientFactory.createClient(config)
 
 }

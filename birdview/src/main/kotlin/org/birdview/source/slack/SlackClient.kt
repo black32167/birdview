@@ -1,13 +1,13 @@
 package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
-import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.model.secrets.BVSlackSecret
+import org.birdview.source.http.BVHttpSourceClientFactory
+import org.birdview.storage.model.source.secrets.BVSlackSecret
 import javax.inject.Named
 
 @Named
 class SlackClient  (
-    private val httpClientFactory: BVHttpClientFactory,
+    private val httpClientFactory: BVHttpSourceClientFactory,
     private val oauthClient: SlackOAuthClient
 ) {
 //    private val targetFactory =

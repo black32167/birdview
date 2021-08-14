@@ -1,23 +1,21 @@
 package org.birdview.source.gdrive
 
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveFileListResponse
-import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.model.secrets.BVGDriveSecret
+import org.birdview.source.http.BVHttpSourceClientFactory
 import org.birdview.utils.BVTimeUtil
-import org.birdview.utils.remote.BearerAuth
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
 class GDriveClient(
-    private val httpClientFactory: BVHttpClientFactory,
-    private val oauthClient: GDriveOAuthClient
+    private val httpClientFactory: BVHttpSourceClientFactory
 ) {
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val filesPerPage = 500
 
-    fun getFiles(config: BVGDriveSecret, query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
+    fun getFiles(config: BVSourceConfigProvider.SyntheticSourceConfig, query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
         if (query == null) {
             return
         } else {
@@ -54,14 +52,6 @@ class GDriveClient(
         }
     }
 
-    private fun authCodeProvider(config: BVGDriveSecret) =
-        oauthClient.getToken(config)
-            ?.let(::BearerAuth)
-            ?: throw RuntimeException("Failed retrieving Google API access token")
-
-
-    private fun getHttpClient(config: BVGDriveSecret) =
-        httpClientFactory.getHttpClient("https://www.googleapis.com/drive/v3") {
-            authCodeProvider(config)
-        }
+    private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig) =
+        httpClientFactory.createClient(config) //"https://www.googleapis.com/drive/v3"
 }

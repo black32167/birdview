@@ -8,23 +8,18 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVSessionDocumentConsumer
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
-import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
-import org.birdview.storage.model.secrets.BVTrelloSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import javax.inject.Named
 
 @Named
 open class TrelloTaskService(
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
         private val trelloClient: TrelloClient,
         private val trelloQueryBuilder: TrelloQueryBuilder,
-        private val userSourceStorage: BVUserSourceStorage,
 ) : BVTaskSource {
     companion object {
         private const val TRELLO_CARD_SHORTLINK_TYPE = "trelloCardShortLink"
@@ -36,15 +31,14 @@ open class TrelloTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceSecret,
+        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val trelloConfig = sourceConfig as BVTrelloSecret
-        val sourceUserName = userSourceStorage.getSource(bvUser, trelloConfig.sourceName).sourceUserName
+        val sourceUserName = sourceConfig.sourceUserName
         val query = trelloQueryBuilder.getQueries(sourceUserName, updatedPeriod)
 
-        trelloClient.getCards(trelloConfig, query) { cards->
-            val listsMap = trelloClient.loadLists(trelloConfig, cards.map { it.idList  })
+        trelloClient.getCards(sourceConfig, query) { cards->
+            val listsMap = trelloClient.loadLists(sourceConfig, cards.map { it.idList  })
                     .associateBy { it.id }
 
             val tasks = cards.map { card ->
@@ -56,13 +50,13 @@ open class TrelloTaskService(
                         updated = parseDate(card.dateLastActivity),
                         created = parseDate(card.dateLastActivity),
                         httpUrl = card.url,
-                        users = extractUsers(card, trelloConfig.sourceName),
+                        users = extractUsers(card, sourceConfig.sourceName),
                         refs = BVFilters.filterRefsFromText("${card.desc} ${card.name}")
                                 .map { BVDocumentRef(it) },
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
                         // TODO: load user by id to infer user name!
                         sourceType = getType(),
-                        sourceName = trelloConfig.sourceName
+                        sourceName = sourceConfig.sourceName
                 )
             }
 

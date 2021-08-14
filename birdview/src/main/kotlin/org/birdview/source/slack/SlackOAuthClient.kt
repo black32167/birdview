@@ -4,7 +4,7 @@ import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.source.oauth.AbstractOAuthClient
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.model.BVOAuthTokens
-import org.birdview.storage.model.secrets.BVOAuthSourceSecret
+import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
 import javax.inject.Named
 
 @Named

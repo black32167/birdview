@@ -3,7 +3,7 @@ package org.birdview.source.oauth
 import org.birdview.source.http.BVHttpClientFactory
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.model.BVOAuthTokens
-import org.birdview.storage.model.secrets.BVOAuthSourceSecret
+import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
 import org.slf4j.LoggerFactory
 
 abstract class AbstractOAuthClient<RT>(
@@ -12,14 +12,14 @@ abstract class AbstractOAuthClient<RT>(
 ) {
     private val log = LoggerFactory.getLogger(AbstractOAuthClient::class.java)
 
-    open fun getToken(config: BVOAuthSourceSecret): String? =
-        defaultTokenStorage.loadOAuthTokens(config.sourceName)
+    open fun getToken(sourceName:String, config: BVOAuthSourceSecret): String? =
+        defaultTokenStorage.loadOAuthTokens(sourceName)
             ?.let { tokens->
                 val validAccessToken:String? = tokens.accessToken
                     .takeUnless { tokens.isExpired() }
                     ?: tokens.refreshToken ?.let { refreshToken->
                         val renewedTokens = getRemoteAccessToken(config, refreshToken)
-                        defaultTokenStorage.saveOAuthTokens(config.sourceName, renewedTokens)
+                        defaultTokenStorage.saveOAuthTokens(sourceName, renewedTokens)
                         renewedTokens.accessToken
                     }
                 validAccessToken

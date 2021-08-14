@@ -2,11 +2,11 @@ package org.birdview.source.slack
 
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVSessionDocumentConsumer
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
-import org.birdview.storage.model.secrets.BVSlackSecret
+import org.birdview.storage.model.source.secrets.BVSlackSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
@@ -19,7 +19,7 @@ class SlackTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceSecret,
+        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
         val slackConfig = sourceConfig as BVSlackSecret

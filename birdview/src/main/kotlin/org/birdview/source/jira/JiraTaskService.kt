@@ -6,13 +6,10 @@ import org.birdview.model.RelativeHierarchyType
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.BVSessionDocumentConsumer
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.jira.model.*
-import org.birdview.storage.BVSourceSecretsStorage
-import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
-import org.birdview.storage.model.secrets.BVJiraSecret
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -23,9 +20,9 @@ import javax.inject.Named
 @Named
 open class JiraTaskService(
     private val jiraClient: JiraClient,
-    private val sourceSecretsStorage: BVSourceSecretsStorage,
+    //private val sourceSecretsStorage: BVSourceSecretsStorage,
     private val jqlBuilder: JqlBuilder,
-    private val userSourceStorage: BVUserSourceStorage,
+    private val userSourceConfigProvider: BVSourceConfigProvider,
 
     ): BVTaskSource {
     private val JIRA_REST_URL_REGEX = "https?://.*/rest/api/2/issue/.*".toRegex()
@@ -35,16 +32,15 @@ open class JiraTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVAbstractSourceSecret,
+        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val jiraConfig = sourceConfig as BVJiraSecret
-        val sourceUserName = userSourceStorage.getSource(bvUser, jiraConfig.sourceName).sourceUserName
+        val sourceUserName = sourceConfig.sourceUserName
         jiraClient
-                .findIssues(jiraConfig, jqlBuilder.getJql(sourceUserName, updatedPeriod)) { jiraIssues->
+                .findIssues(sourceConfig, jqlBuilder.getJql(sourceUserName, updatedPeriod)) { jiraIssues->
                     chunkConsumer.consume(
                             jiraIssues
-                                    .map { executor.submit(Callable<BVDocument> { mapDocument( it, jiraConfig) }) }
+                                    .map { executor.submit(Callable<BVDocument> { mapDocument( it, sourceConfig) }) }
                                     .map { it.get() }
                     )
                 }
@@ -53,10 +49,11 @@ open class JiraTaskService(
     override fun canHandleId(id: String): Boolean =
             BVFilters.JIRA_KEY_REGEX.matches(id) || JIRA_REST_URL_REGEX.matches(id)
 
-    override fun loadByIds(sourceName: String, idList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
-        val issueKeys = idList.filter { BVFilters.JIRA_KEY_REGEX.matches(it) }
-        val issueUrls = idList.filter { JIRA_REST_URL_REGEX.matches(it) }
-        sourceSecretsStorage.getSecret(sourceName, BVJiraSecret::class.java)?.also { config ->
+    override fun loadByIds(bvUser: String, sourceName: String, keyList: List<String>, chunkConsumer: (List<BVDocument>) -> Unit) {
+        val issueKeys = keyList.filter { BVFilters.JIRA_KEY_REGEX.matches(it) }
+        val issueUrls = keyList.filter { JIRA_REST_URL_REGEX.matches(it) }
+        userSourceConfigProvider.getSourceConfig(
+            sourceName = sourceName, bvUser = bvUser)?.also { config ->
             val client = jiraClient
             client.loadByKeys(config, issueKeys.distinct()) { issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, config) })
@@ -70,7 +67,7 @@ open class JiraTaskService(
         }
     }
 
-    private fun mapDocument(issue: JiraIssue, config: BVJiraSecret): BVDocument {
+    private fun mapDocument(issue: JiraIssue, config: BVSourceConfigProvider.SyntheticSourceConfig): BVDocument {
         val description = issue.fields.description ?: ""
         val issueLinks = jiraClient.getIssueLinks(config, issue.key)
 
@@ -152,7 +149,7 @@ open class JiraTaskService(
     private fun parseDate(dateTimeString:String?) =
             BVDateTimeUtils.parse(dateTimeString, JIRA_DATETIME_PATTERN)
 
-    private fun extractUsers(issue: JiraIssue, config: BVJiraSecret): List<BVDocumentUser> =
+    private fun extractUsers(issue: JiraIssue, config: BVSourceConfigProvider.SyntheticSourceConfig): List<BVDocumentUser> =
         listOfNotNull(
                 mapDocumentUser(issue.fields.assignee, config.sourceName, UserRole.IMPLEMENTOR)
         )
@@ -161,7 +158,7 @@ open class JiraTaskService(
             jiraUser?.emailAddress
                     ?.let { emailAddress -> BVDocumentUser(emailAddress, userRole, sourceName) }
 
-    private fun extractOperations(issue: JiraIssue, config: BVJiraSecret): List<BVDocumentOperation> =
+    private fun extractOperations(issue: JiraIssue, config: BVSourceConfigProvider.SyntheticSourceConfig): List<BVDocumentOperation> =
         issue.changelog
                 ?.histories
                 ?.flatMap { toOperation(issue, it, config.sourceName) }

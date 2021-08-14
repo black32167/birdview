@@ -1,20 +1,20 @@
 package org.birdview.source.trello
 
-import org.birdview.source.http.BVHttpClientFactory
+import org.birdview.source.BVSourceConfigProvider
+import org.birdview.source.http.BVHttpSourceClientFactory
 import org.birdview.source.trello.model.TrelloBoard
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.source.trello.model.TrelloCardsSearchResponse
 import org.birdview.source.trello.model.TrelloList
-import org.birdview.storage.model.secrets.BVTrelloSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
-class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
+class TrelloClient(private val httpClientFactory: BVHttpSourceClientFactory) {
     private val log = LoggerFactory.getLogger(TrelloClient::class.java)
     private val cardsPerPage = 50
 
-    fun getCards(trelloConfig: BVTrelloSecret, query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
+    fun getCards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
         log.info("Running Trello query '{}'", query)
         var page = 0
         while (searchTrelloCards(trelloConfig, query, page, chunkConsumer)) {
@@ -22,7 +22,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
         }
     }
 
-    private fun searchTrelloCards(trelloConfig: BVTrelloSecret, query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
+    private fun searchTrelloCards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
         log.info("Loading trello issues page {} for query {}", page, query)
         val cards = searchTrelloCards(trelloConfig, query, page).cards.toList()
         return if(cards.isEmpty()) {
@@ -33,7 +33,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
         }
     }
 
-    fun getBoards(trelloConfig: BVTrelloSecret, boardIds: List<String>): List<TrelloBoard> =
+    fun getBoards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, boardIds: List<String>): List<TrelloBoard> =
         boardIds.map { boardId ->
             getTrello(
                 trelloConfig = trelloConfig,
@@ -41,7 +41,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
                 subPath = "boards/${boardId}")
         }
 
-    fun loadLists(trelloConfig: BVTrelloSecret, listsIds: List<String>): List<TrelloList> = listsIds.map { listId ->
+    fun loadLists(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, listsIds: List<String>): List<TrelloList> = listsIds.map { listId ->
         getTrello(
             trelloConfig = trelloConfig,
             subPath = "lists/${listId}",
@@ -49,7 +49,7 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
         )
     }
 
-    private fun searchTrelloCards(trelloConfig: BVTrelloSecret, query: String, cardsPage: Int) =
+    private fun searchTrelloCards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, query: String, cardsPage: Int) =
         getTrello(
             trelloConfig = trelloConfig,
             resultClass = TrelloCardsSearchResponse::class.java,
@@ -63,13 +63,10 @@ class TrelloClient(private val httpClientFactory: BVHttpClientFactory) {
             )
         )
 
-    private fun <T> getTrello(trelloConfig: BVTrelloSecret, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()) =
-        httpClientFactory.getHttpClient("${trelloConfig.baseUrl}/1").get(
+    private fun <T> getTrello(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()) =
+        httpClientFactory.createClient(trelloConfig)
+            .get(
             resultClass = resultClass,
-            subPath = subPath,
-            parameters = parameters + mapOf(
-                "key" to  trelloConfig.key,
-                "token" to trelloConfig.token
-            )
-        )
+            subPath = "/1/${subPath}",
+            parameters = parameters)
 }
