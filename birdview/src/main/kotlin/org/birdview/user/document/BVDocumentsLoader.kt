@@ -3,10 +3,9 @@ package org.birdview.user.document
 import org.birdview.analysis.BVDocument
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVSessionDocumentConsumer
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.SourceType
-import org.birdview.source.authentication.BVSourceConfigProvider
 import org.birdview.storage.BVDocumentProvidersManager
-import org.birdview.storage.model.secrets.BVAbstractSourceSecret
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
@@ -34,7 +33,6 @@ class BVDocumentsLoader (
                 CompletableFuture.runAsync(Runnable {
                     log.info("Loading data from ${sourceConfig.sourceType} for ${bvUser}...")
                     BVTimeUtil.logTimeAndReturn("Loading data from ${sourceConfig.sourceType} for ${bvUser}") {
-
                         try {
                             sourceManager.getTasks(
                                 bvUser,
@@ -57,7 +55,7 @@ class BVDocumentsLoader (
         val subtaskFutures = mutableListOf<Future<*>>()
         val sourceType2SourceNames: Map<SourceType, List<String>> =
             sourceConfigProvider.listEnabledSourceConfigs(bvUser)
-                .groupBy(BVAbstractSourceSecret::sourceType, BVAbstractSourceSecret::sourceName)
+                .groupBy(BVSourceConfigProvider.SyntheticSourceConfig::sourceType, BVSourceConfigProvider.SyntheticSourceConfig::sourceName)
         val type2Ids: Map<SourceType, List<String>> = missedDocsIds
             .fold(mutableMapOf<SourceType, MutableList<String>>()) { acc, id ->
                 sourcesManager.guessSourceTypesByDocumentId(id)
@@ -65,13 +63,17 @@ class BVDocumentsLoader (
                 acc
             }
 
-        type2Ids.entries.forEach { (sourceType, sourceIds) ->
+        type2Ids.entries.forEach { (sourceType, itemIds) ->
             val sourceNames = sourceType2SourceNames[sourceType]
             val sourceManager = sourcesManager.getBySourceType(sourceType)
             sourceNames?.forEach { sourceName ->
                 subtaskFutures.add(executor.submit {
                     try {
-                        sourceManager.loadByIds(sourceName, sourceIds, chunkConsumer)
+                        sourceManager.loadByIds(
+                            bvUser = bvUser,
+                            sourceName = sourceName,
+                            keyList = itemIds,
+                            chunkConsumer = chunkConsumer)
                     } catch (e: Exception) {
                         log.error("", e)
                     }
