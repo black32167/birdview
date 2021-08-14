@@ -3,7 +3,7 @@ package org.birdview.storage.firebase
 import org.birdview.BVCacheNames
 import org.birdview.BVProfiles
 import org.birdview.storage.BVUserSourceStorage
-import org.birdview.storage.model.BVSourceConfig
+import org.birdview.storage.model.source.config.BVUserSourceConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.context.annotation.Profile
@@ -14,23 +14,23 @@ import org.springframework.stereotype.Repository
 open class BVFireUserSourceStorage(
     open val collectionAccessor: BVFireCollectionAccessor
 ): BVUserSourceStorage {
+
     @Cacheable(BVCacheNames.USER_SOURCE_CACHE)
-    override fun getSource(bvUser: String, sourceName: String): BVSourceConfig? =
+    override fun getSource(bvUser: String, sourceName: String): BVUserSourceConfig? =
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName).get().get()
-            .toObject(BVSourceConfig::class.java)
+            ?.toObject(BVUserSourceConfig::class.java)
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
-    override fun create(bvUser: String, sourceName: String, sourceUserName: String) {
+    override fun create(bvUser: String, sourceConfig: BVUserSourceConfig) {
         update(
             bvUser = bvUser,
-            sourceConfig = BVSourceConfig(
-                sourceName = sourceName, sourceUserName = sourceUserName, enabled = "" != sourceUserName)
+            sourceConfig = sourceConfig
         )
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
-    override fun update(bvUser: String, sourceConfig: BVSourceConfig) {
+    override fun update(bvUser: String, sourceConfig: BVUserSourceConfig) {
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceConfig.sourceName)
             .set(sourceConfig)
@@ -43,9 +43,9 @@ open class BVFireUserSourceStorage(
             .map { it.id }
 
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
-    override fun listSourceProfiles(bvUser: String): List<BVSourceConfig> {
+    override fun listSources(bvUser: String): List<BVUserSourceConfig> {
         return collectionAccessor.getUserSourcesCollection(bvUser).get().get()
-            .toObjects(BVSourceConfig::class.java)
+            .toObjects(BVUserSourceConfig::class.java)
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)

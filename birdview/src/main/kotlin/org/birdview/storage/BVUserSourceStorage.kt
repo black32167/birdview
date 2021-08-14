@@ -1,17 +1,17 @@
 package org.birdview.storage
 
-import org.birdview.storage.model.BVSourceConfig
+import org.birdview.storage.model.source.config.BVUserSourceConfig
 
 interface BVUserSourceStorage {
-    fun getSource(bvUser: String, sourceName: String): BVSourceConfig?
+    fun getSource(bvUser: String, sourceName: String): BVUserSourceConfig?
 
-    fun create(bvUser: String, sourceName: String, sourceUserName: String)
+    fun create(bvUser: String, sourceConfig: BVUserSourceConfig)
 
-    fun update(bvUser: String, sourceConfig: BVSourceConfig)
+    fun update(bvUser: String, sourceConfig: BVUserSourceConfig)
 
     fun listSourceNames(bvUser: String): List<String>
 
-    fun listSourceProfiles(bvUser: String): List<BVSourceConfig>
+    fun listSources(bvUser: String): List<BVUserSourceConfig>
 
     fun delete(bvUser: String, sourceName: String)
 

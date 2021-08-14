@@ -4,8 +4,6 @@ import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
-import org.birdview.storage.BVDocumentProvidersManager
-import org.birdview.storage.BVSourceSecretsStorage
 import org.birdview.storage.BVUserSourceStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSettings
@@ -24,8 +22,6 @@ import javax.inject.Named
 class BVFileUserStorage (
     private val bvFoldersConfig: BVFoldersConfig,
     private val jsonDeserializer: JsonDeserializer,
-    private val sourceSecretsStorage: BVSourceSecretsStorage,
-    private val sourcesManager: BVDocumentProvidersManager,
     private val userSourceStorage: BVUserSourceStorage
 ) : BVUserStorage {
     private val log = LoggerFactory.getLogger(BVFileUserStorage::class.java)
@@ -45,29 +41,29 @@ class BVFileUserStorage (
         Files.createDirectories(userSettingsFile.parent)
 
         serialize(userSettingsFile, userSettings)
-
-        // Try to create user data sources
-        try {
-            sourceSecretsStorage.listSourceNames()
-                    .forEach { sourceName ->
-                        val sourceUserId = sourcesManager.getBySourceName(sourceName)
-                                ?.let { sourceManager ->
-                                    userSettings.email
-                                            ?.let { email ->
-                                                sourceManager.resolveSourceUserId(sourceName = sourceName, email = email)
-                                            }
-                                } ?: ""
-
-                        userSourceStorage.create(
-                            bvUser = userName,
-                            sourceName = sourceName,
-                            sourceUserName = sourceUserId
-                        )
-
-                    }
-        } catch (e: Exception) {
-            log.error("Error creating source links", e)
-        }
+//
+//        // Try to create user data sources
+//        try {
+//            sourceSecretsStorage.listSourceNames()
+//                    .forEach { sourceName ->
+//                        val sourceUserId = sourcesManager.getBySourceName(sourceName)
+//                                ?.let { sourceManager ->
+//                                    userSettings.email
+//                                            ?.let { email ->
+//                                                sourceManager.resolveSourceUserId(sourceName = sourceName, email = email)
+//                                            }
+//                                } ?: ""
+//
+//                        userSourceStorage.create(
+//                            bvUser = userName,
+//                            sourceName = sourceName,
+//                            sourceUserName = sourceUserId
+//                        )
+//
+//                    }
+//        } catch (e: Exception) {
+//            log.error("Error creating source links", e)
+//        }
     }
 
     @CacheEvict(USER_SETTINGS_CACHE, allEntries = true)
