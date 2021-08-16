@@ -4,7 +4,7 @@ import org.birdview.model.ReportType
 import org.birdview.model.RepresentationType
 import org.birdview.model.UserRole
 import org.birdview.security.UserContext
-import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.storage.BVSourcesProvider
 import org.birdview.storage.BVUserStorage
 import org.birdview.web.BVWebPaths
 import org.birdview.web.WebUtils
@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam
 @RequestMapping(BVWebPaths.EXPLORE)
 class BVExploreWebController(
         private val userStorage: BVUserStorage,
-        private val sourceSecretsStorage: BVSourceSecretsStorage
+        private val sourceProvider: BVSourcesProvider
 ) {
-    class ReportLink(val reportUrl:String, val reportName:String)
-
     @GetMapping
     fun index(model: Model,
               @RequestParam(value = "user", required = false) user: String?,
@@ -35,7 +33,7 @@ class BVExploreWebController(
                 "reportTypes" to ReportType.values(),
                 "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
-                "sources" to sourceSecretsStorage.listSourceNames(),
+                "sources" to sourceProvider.listAvailableSourceNames(),
                 "users" to listUsers()
         ))
         return "/report"

@@ -3,7 +3,7 @@ package org.birdview.storage.file
 import org.birdview.BVCacheNames.USER_SOURCE_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.model.source.config.BVUserSourceConfig
 import org.birdview.utils.JsonDeserializer
 import org.springframework.cache.annotation.CacheEvict
@@ -17,10 +17,10 @@ import javax.inject.Named
 
 @Profile(BVProfiles.FILESTORE)
 @Named
-class BVFileUserSourceStorage(
+class BVFileUserSourceConfigStorage(
         private val bvFoldersConfig: BVFoldersConfig,
         private val jsonDeserializer: JsonDeserializer
-): BVUserSourceStorage {
+): BVUserSourceConfigStorage {
 
     @Cacheable(USER_SOURCE_CACHE)
     @Synchronized

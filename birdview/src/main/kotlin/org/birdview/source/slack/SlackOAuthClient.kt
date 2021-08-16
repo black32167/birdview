@@ -27,7 +27,8 @@ class SlackOAuthClient (
         )
 
     override fun getAccessTokenResponseClass(): Class<SlackTokenResponse> = SlackTokenResponse::class.java
-    fun saveOAuthTokens(sourceName: String, rawResponse: SlackTokenResponse) {
+
+    override fun saveOAuthTokens(sourceName: String, rawResponse: SlackTokenResponse) {
         val tokensData = extractTokensData(rawResponse)
         defaultTokenStorage.saveOAuthTokens(sourceName, tokensData)
     }

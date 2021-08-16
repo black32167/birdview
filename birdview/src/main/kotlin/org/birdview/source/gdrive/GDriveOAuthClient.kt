@@ -30,7 +30,7 @@ class GDriveOAuthClient(
 
     override fun getAccessTokenResponseClass(): Class<GAccessTokenResponse> = GAccessTokenResponse::class.java
 
-    fun saveOAuthTokens(sourceName: String, rawResponse: GAccessTokenResponse) {
+    override fun saveOAuthTokens(sourceName: String, rawResponse: GAccessTokenResponse) {
         val tokensData = extractTokensData(rawResponse)
         defaultTokenStorage.saveOAuthTokens(sourceName, tokensData)
     }

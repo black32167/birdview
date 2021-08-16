@@ -8,17 +8,17 @@ import javax.inject.Named
  * Document provider manager
  */
 @Named
-class BVDocumentProvidersManager (
-        private val sourceSecretsStorage: BVSourceSecretsStorage,
-        sourceManagers: List<BVTaskSource>
+class BVSourcesProvider (
+    private val sourceConfigStorage: BVUserSourceConfigStorage,
+    private val sourceManagers: List<BVTaskSource>
 ) {
     private val sourceManagersMap = sourceManagers.associateBy { it.getType() }
 
-    fun getSourceType(sourceName: String): SourceType? =
-            getBySourceName(sourceName)?.getType()
+    fun listAvailableSourceNames(): List<String> =
+        sourceManagers.map { it.getType().name.toLowerCase() }
 
-    fun getBySourceName(sourceName: String): BVTaskSource? =
-            sourceSecretsStorage.getSecret(sourceName)
+    fun getBySourceName(bvUser: String, sourceName: String): BVTaskSource? =
+            sourceConfigStorage.getSource(bvUser, sourceName)
                     ?.sourceType
                     ?.let { sourceManagersMap[it] }
 

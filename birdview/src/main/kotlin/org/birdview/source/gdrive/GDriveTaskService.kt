@@ -11,7 +11,7 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.model.source.secrets.BVGDriveSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -22,7 +22,7 @@ import javax.inject.Named
 open class GDriveTaskService(
     private val client: GDriveClient,
     private val gDriveQueryBuilder: GDriveQueryBuilder,
-    private val userSourceStorage: BVUserSourceStorage,
+    private val userSourceStorage: BVUserSourceConfigStorage,
 ) : BVTaskSource {
     private val log = LoggerFactory.getLogger(GDriveTaskService::class.java)
     companion object {

@@ -2,7 +2,7 @@ package org.birdview.storage.firebase
 
 import org.birdview.BVCacheNames
 import org.birdview.BVProfiles
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSettings
 import org.springframework.cache.annotation.CacheEvict
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository
 @Repository
 open class BVFireUserStorage(
     open val collectionAccessor: BVFireCollectionAccessor,
-    private val userSourceStorage: BVUserSourceStorage
+    private val userSourceStorage: BVUserSourceConfigStorage
 ): BVUserStorage {
     @Cacheable(BVCacheNames.USER_NAMES_CACHE)
     override fun listUserNames(): List<String> {

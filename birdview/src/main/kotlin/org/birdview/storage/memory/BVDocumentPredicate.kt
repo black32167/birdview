@@ -6,14 +6,14 @@ import org.birdview.analysis.BVDocumentOperationType
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.UserFilter
 import org.birdview.model.UserRole
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 import javax.inject.Named
 
 @Named
 open class BVDocumentPredicate(
-        private val userSourceStorage: BVUserSourceStorage
+        private val userSourceStorage: BVUserSourceConfigStorage
 ) {
     private val log = LoggerFactory.getLogger(BVDocumentFilter::class.java)
 
@@ -63,7 +63,7 @@ open class BVDocumentPredicate(
     }
 
     private fun resolveUserName(bvUser:String, sourceName: String) =
-            userSourceStorage.getSource(bvUser, sourceName).sourceUserName
+            userSourceStorage.getSource(bvUser, sourceName)?.sourceUserName
 
     private fun getLastUserUpdateDate(doc: BVDocument, userFilter: UserFilter, operationType: BVDocumentOperationType): OffsetDateTime? {
         val date = getLastUserOperation(doc, userFilter.userAlias, operationType) ?.created

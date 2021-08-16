@@ -5,7 +5,7 @@ import org.birdview.model.TimeIntervalFilter
 import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.SourceType
-import org.birdview.storage.BVDocumentProvidersManager
+import org.birdview.storage.BVSourcesProvider
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
@@ -16,7 +16,7 @@ import javax.inject.Named
 
 @Named
 class BVDocumentsLoader (
-    private val sourcesManager: BVDocumentProvidersManager,
+    private val sourcesManager: BVSourcesProvider,
     private val sourceConfigProvider: BVSourceConfigProvider
 ) {
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)

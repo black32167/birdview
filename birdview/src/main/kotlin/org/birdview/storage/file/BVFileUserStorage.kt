@@ -4,7 +4,7 @@ import org.birdview.BVCacheNames.USER_NAMES_CACHE
 import org.birdview.BVCacheNames.USER_SETTINGS_CACHE
 import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSettings
 import org.birdview.utils.JsonDeserializer
@@ -22,7 +22,7 @@ import javax.inject.Named
 class BVFileUserStorage (
     private val bvFoldersConfig: BVFoldersConfig,
     private val jsonDeserializer: JsonDeserializer,
-    private val userSourceStorage: BVUserSourceStorage
+    private val userSourceStorage: BVUserSourceConfigStorage
 ) : BVUserStorage {
     private val log = LoggerFactory.getLogger(BVFileUserStorage::class.java)
 

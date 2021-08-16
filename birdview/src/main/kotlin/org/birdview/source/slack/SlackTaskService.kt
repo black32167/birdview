@@ -5,7 +5,7 @@ import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.model.source.secrets.BVSlackSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
@@ -13,7 +13,7 @@ import javax.inject.Named
 @Named
 class SlackTaskService(
     private val slackClient: SlackClient,
-    private val userSourceStorage: BVUserSourceStorage,
+    private val userSourceStorage: BVUserSourceConfigStorage,
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(SlackTaskService::class.java)
     override fun getTasks(

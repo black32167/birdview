@@ -1,6 +1,6 @@
 package org.birdview.source
 
-import org.birdview.storage.BVUserSourceStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.OAuthTokenStorage
 import org.birdview.storage.SourceSecretsMapper
 import org.birdview.storage.model.source.config.BVUserSourceConfig
@@ -14,7 +14,7 @@ import javax.inject.Named
  */
 @Named
 class BVSourceConfigProvider(
-    val userSourceConfigStorage: BVUserSourceStorage,
+    val userSourceConfigStorage: BVUserSourceConfigStorage,
     val oAuthTokenStorage: OAuthTokenStorage,
     val sourceSecretsMapper: SourceSecretsMapper
 ) {
