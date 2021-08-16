@@ -1,8 +1,8 @@
 package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.http.BVHttpSourceClientFactory
-import org.birdview.storage.model.source.secrets.BVSlackSecret
 import javax.inject.Named
 
 @Named
@@ -17,7 +17,7 @@ class SlackClient  (
 //                        ?: throw RuntimeException("Failed retrieving Slack API access token")
 //            }
 
-    fun findMessages(sourceConfig: BVSlackSecret, chunkConsumer: (List<BVDocument>) -> Unit) {
+    fun findMessages(sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
 //        var r = targetFactory.getTarget("search.messages")
 //                .queryParam("query", "from:@...")
 //                .request()

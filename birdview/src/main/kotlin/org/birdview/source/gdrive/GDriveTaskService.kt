@@ -12,7 +12,6 @@ import org.birdview.source.SourceType
 import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
 import org.birdview.storage.BVUserSourceConfigStorage
-import org.birdview.storage.model.source.secrets.BVGDriveSecret
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
@@ -32,17 +31,16 @@ open class GDriveTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
+        config: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val config = sourceConfig as BVGDriveSecret
-        val sourceUserName = userSourceStorage.getSource(bvUser, sourceConfig.sourceName).sourceUserName
+        val sourceUserName = config.sourceUserName
         try {
             client.getFiles(
                 config,
                 gDriveQueryBuilder.getQuery(sourceUserName, updatedPeriod)
             ) { files ->
-                chunkConsumer.consume(files.map { file -> toBVDocument(file, config) })
+                chunkConsumer.consume(files.map { file -> toBVDocument(bvUser, file, config) })
             }
         } catch (e: Exception) {
             log.error("", e)
@@ -51,7 +49,7 @@ open class GDriveTaskService(
 
     override fun getType() = SourceType.GDRIVE
 
-    private fun toBVDocument(file: GDriveFile, config: BVGDriveSecret) = try {
+    private fun toBVDocument(bvUser: String, file: GDriveFile, config: BVSourceConfigProvider.SyntheticSourceConfig) = try {
         BVDocument(
                 ids = setOf(
                         BVDocumentId(id = file.id),
@@ -61,7 +59,7 @@ open class GDriveTaskService(
                 key = "open",
                 updated = parseDate(file.modifiedTime),
                 httpUrl = file.webViewLink,
-                users = extractUsers(file, config),
+                users = extractUsers(bvUser, file, config),
                 refs = BVFilters.filterRefsFromText(file.name).map { BVDocumentRef(it) },
                 status = BVDocumentStatus.PROGRESS,
                 sourceType = getType(),
@@ -87,14 +85,14 @@ open class GDriveTaskService(
         return listOfNotNull(lastModification)
     }
 
-    private fun extractUsers(file: GDriveFile, config: BVGDriveSecret): List<BVDocumentUser> {
+    private fun extractUsers(bvUser: String, file: GDriveFile, config: BVSourceConfigProvider.SyntheticSourceConfig): List<BVDocumentUser> {
         val users = mutableListOf<BVDocumentUser>()
         users += file.owners
                 .mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.IMPLEMENTOR) }.toMutableList()
         users += file.owners.mapNotNull { user -> mapDocumentUser(user, config.sourceName, UserRole.IMPLEMENTOR) }.toMutableList()
         mapDocumentUser(file.sharingUser, config.sourceName, UserRole.IMPLEMENTOR) ?.also { users.add(it) }
         if(file.modifiedByMe) {
-            mapDocumentUser(config.user, config.sourceName, UserRole.IMPLEMENTOR) ?.also { users.add(it) }
+            mapDocumentUser(bvUser, config.sourceName, UserRole.IMPLEMENTOR) ?.also { users.add(it) }
         }
         return users
     }

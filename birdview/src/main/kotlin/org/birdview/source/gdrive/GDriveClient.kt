@@ -53,5 +53,5 @@ class GDriveClient(
     }
 
     private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig) =
-        httpClientFactory.createClient(config) //"https://www.googleapis.com/drive/v3"
+        httpClientFactory.createClient(config)
 }

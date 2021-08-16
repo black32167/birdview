@@ -6,7 +6,6 @@ import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.storage.BVUserSourceConfigStorage
-import org.birdview.storage.model.source.secrets.BVSlackSecret
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
@@ -22,9 +21,8 @@ class SlackTaskService(
         sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val slackConfig = sourceConfig as BVSlackSecret
         try {
-            slackClient.findMessages(slackConfig, chunkConsumer::consume)
+            slackClient.findMessages(sourceConfig, chunkConsumer::consume)
         } catch (e: Exception) {
             log.error("Error reading Slack data (source {})", sourceConfig.sourceName, e)
         }
