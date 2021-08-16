@@ -4,8 +4,8 @@
 <#macro add_secret_link>
     <a href="/admin/secrets/add-secret">Add secret</a>
 </#macro>
-<#macro add_secret_post_link sourceType>/admin/secrets/${sourceType}/add-secret</#macro>
-<#macro update_secret_post_link sourceType>/admin/secrets/${sourceType}/update-secret</#macro>
+<#macro add_source_post_link sourceType>/admin/secrets/${sourceType}/add-secret</#macro>
+<#macro update_source_post_link sourceType>/admin/secrets/${sourceType}/update-secret</#macro>
 
 <#macro edit_secret_link source>
    <a href="/admin/secrets/${source.type?lower_case}/edit-secret?sourceName=${source.name}">${source.name}</a>

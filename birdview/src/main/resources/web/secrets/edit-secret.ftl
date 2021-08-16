@@ -13,7 +13,7 @@
 
     <div>
     <div class="center">
-        <form action="<@update_secret_post_link source.type />" method="POST">
+        <form action="<@update_source_post_link source.type />" method="POST">
             <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="sourceName" value="${source.sourceName}">
             <table>

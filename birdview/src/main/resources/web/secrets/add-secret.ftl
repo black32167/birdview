@@ -1,5 +1,5 @@
 <#macro addForm sourceType>
-<form id="${sourceType}-form" source="${sourceType}" action="<@add_secret_post_link sourceType />" method="POST">
+<form id="${sourceType}-form" source="${sourceType}" action="<@add_source_post_link sourceType />" method="POST">
     <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
     <table>
     <#include "include/create/create-secret-${sourceType}.ftl">
@@ -33,7 +33,6 @@ function showForm(sourceType) {
 }
 $(function(){
     hideAll()
-
     $('form').each( (i, form) => {
         console.log($(form).attr('id'))
         var source = $(form).attr('source')
@@ -50,7 +49,6 @@ $(function(){
             image.hide()
         })
     })
-
 })
 </script>
 </head>
