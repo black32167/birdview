@@ -28,7 +28,6 @@
         </table>
         <div class="buttons">
             <input type="submit" value="Update">
-            <a href="/user/settings/source/${sourceName}/add-user-source-secret">Add Secret</a>
         </div>
     </form>
 </body>
