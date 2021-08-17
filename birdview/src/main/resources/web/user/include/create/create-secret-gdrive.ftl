@@ -4,10 +4,6 @@
 <input type="hidden" name="baseUrl" value="https://www.googleapis.com/drive/v3"/>
 
 <tr>
-    <td class="sign">Source alias:</td>
-    <td><input type="text" name="sourceName" value="gdrive"></td>
-</tr>
-<tr>
     <td class="sign">Email:</td>
     <td><input type="text" name="user"></td>
 </tr>

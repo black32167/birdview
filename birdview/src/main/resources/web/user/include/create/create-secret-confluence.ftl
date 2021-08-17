@@ -1,7 +1,4 @@
-<tr>
-    <td class="sign">Source alias:</td>
-    <td><input type="text" name="sourceName" value="confluence"></td>
-</tr>
+
 <tr>
     <td class="sign">Base URL:</td>
     <td><input type="text" name="baseUrl"></td>

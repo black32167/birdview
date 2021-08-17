@@ -1,10 +1,6 @@
 <input type="hidden" name="baseUrl" value="https://api.trello.com"/>
 
 <tr>
-    <td class="sign">Source alias:</td>
-    <td><input type="text" name="sourceName" value="trello"></td>
-</tr>
-<tr>
     <td class="sign">User:</td>
     <td><input type="text" name="user"></td>
 </tr>

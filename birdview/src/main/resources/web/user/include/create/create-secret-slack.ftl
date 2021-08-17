@@ -4,10 +4,6 @@
 <input type="hidden" name="baseUrl" value="https://slack.com/api"/>
 
 <tr>
-    <td class="sign">Source alias:</td>
-    <td><input type="text" name="sourceName" value="slack"></td>
-</tr>
-<tr>
     <td class="sign">UserId:</td>
     <td><input type="text" name="user"></td>
 </tr>

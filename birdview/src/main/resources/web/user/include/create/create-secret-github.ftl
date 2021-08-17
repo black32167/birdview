@@ -2,9 +2,6 @@
 <input type="hidden" name="baseUrl" value="https://api.github.com"/>
 
 <tr>
-    <td class="sign">Source alias:</td>
-    <td><input type="text" name="sourceName" value="github"></td>
-</tr><tr>
     <td class="sign">User:</td>
     <td><input type="text" name="user"></td>
 </tr><tr>
