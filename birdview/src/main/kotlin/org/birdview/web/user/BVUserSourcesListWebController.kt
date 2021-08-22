@@ -8,13 +8,14 @@ import org.birdview.storage.SourceSecretsMapper
 import org.birdview.storage.model.source.config.BVUserSourceConfig
 import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
 import org.birdview.storage.model.source.secrets.BVSourceSecret
+import org.birdview.storage.model.source.secrets.BVTokenSourceSecret
 import org.birdview.web.BVWebPaths
 import org.birdview.web.BVWebTimeZonesUtil
 import org.birdview.web.form.CreateUserSourceFormData
 import org.birdview.web.form.UpdateUserSourceFormData
 import org.birdview.web.form.UpdateUserSourceFormData.Companion.NO
 import org.birdview.web.form.UpdateUserSourceFormData.Companion.YES
-import org.birdview.web.form.secret.SourceSecretFormData
+import org.birdview.web.form.secret.*
 import org.birdview.web.secrets.OAuthSourceWebController
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -64,8 +65,12 @@ class BVUserSourcesListWebController (
         val sourceConfig = userSourceStorage.getSource(bvUser = currentUserName(), sourceName = sourceName)
             ?: throw NotFoundException("Unknown source: '${sourceName}'")
         model
-                .addAttribute("sourceUserName", sourceConfig.sourceUserName)
-                .addAttribute("enabled", if (sourceConfig.enabled) YES else NO)
+            .addAttribute("sourceName", sourceName)
+            .addAttribute("baseUrl", sourceConfig.baseUrl)
+            .addAttribute("sourceType", sourceConfig.sourceType.alias)
+            .addAttribute("sourceUserName", sourceConfig.sourceUserName)
+            .addAttribute("enabled", if (sourceConfig.enabled) YES else NO)
+            .addAttribute("secret", sourceSecretsMapper.deserialize(sourceConfig.serializedSourceSecret))
         return "/user/edit-source"
     }
 
@@ -78,10 +83,7 @@ class BVUserSourcesListWebController (
     @GetMapping("source/add")
     fun addForm(model: Model): String {
         model
-            .addAttribute(
-                "availableSourceNames",
-                sourcesProvider.listAvailableSourceNames()
-            )
+            .addAttribute("sourceTypes", sourcesProvider.listAvailableSourceTypes().map { it.name.toLowerCase() })
         return "/user/add-source"
     }
 
@@ -113,9 +115,42 @@ class BVUserSourcesListWebController (
         return getRedirectAfterSaveView(sourceName, persistentSecret)
     }
 
-    private fun toPersistent(sourceSecretFormData: SourceSecretFormData): BVSourceSecret {
-        TODO("Not yet implemented")
-    }
+    private fun toPersistent(formData: SourceSecretFormData): BVSourceSecret =
+        when (formData) {
+            is JiraSourceSecretFormData -> BVTokenSourceSecret(
+                user = formData.user,
+                token = formData.secret
+            )
+            is ConfluenceSourceSecretFormData -> BVTokenSourceSecret(
+                user = formData.user,
+                token = formData.secret
+            )
+            is GithubSourceSecretFormData -> BVTokenSourceSecret(
+                user = formData.user,
+                token = formData.secret
+            )
+            is TrelloSourceSecretFormData -> BVTokenSourceSecret(
+                user = formData.key,
+                token = formData.secret
+            )
+            is GdriveSourceSecretFormData -> BVOAuthSourceSecret(
+                flavor = BVOAuthSourceSecret.OAuthFlavour.GDRIVE,
+                clientId = formData.clientId,
+                clientSecret = formData.clientSecret,
+                authCodeUrl = "https://accounts.google.com/o/oauth2/v2/auth?",
+                tokenExchangeUrl = "https://oauth2.googleapis.com/token",
+                scope = "https://www.googleapis.com/auth/drive"
+            )
+            is SlackSourceSecretFormData -> BVOAuthSourceSecret(
+                flavor = BVOAuthSourceSecret.OAuthFlavour.SLACK,
+                clientId = formData.clientId,
+                clientSecret = formData.clientSecret,
+                authCodeUrl = "https://slack.com/oauth/v2/authorize?user_scope=identity.basic&",
+                tokenExchangeUrl = "https://slack.com/api/oauth.v2.access",
+                scope = "channels:history,channels:read"
+            )
+            else -> throw UnsupportedOperationException("Unsupported secret form class: ${formData.javaClass}")
+        }
 
     @PostMapping("source")
     fun add(formDataCreate: CreateUserSourceFormData): Any {

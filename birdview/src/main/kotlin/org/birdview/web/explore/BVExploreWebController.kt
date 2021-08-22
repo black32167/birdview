@@ -4,7 +4,7 @@ import org.birdview.model.ReportType
 import org.birdview.model.RepresentationType
 import org.birdview.model.UserRole
 import org.birdview.security.UserContext
-import org.birdview.storage.BVSourcesProvider
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.storage.BVUserStorage
 import org.birdview.web.BVWebPaths
 import org.birdview.web.WebUtils
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam
 @Controller
 @RequestMapping(BVWebPaths.EXPLORE)
 class BVExploreWebController(
-        private val userStorage: BVUserStorage,
-        private val sourceProvider: BVSourcesProvider
+    private val userStorage: BVUserStorage,
+    private val sourceConfigProvider: BVSourceConfigProvider
 ) {
     @GetMapping
     fun index(model: Model,
@@ -27,13 +27,14 @@ class BVExploreWebController(
     ): String? {
         val baseUrl = WebUtils.getBaseUrl()
 
+        val inferredUser = (user ?: UserContext.getUserName())
         model.asMap().putAll(mapOf(
-                "user" to (user ?: UserContext.getUserName()),
+                "user" to inferredUser,
                 "baseURL" to baseUrl,
                 "reportTypes" to ReportType.values(),
                 "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
-                "sources" to sourceProvider.listAvailableSourceNames(),
+                "sources" to sourceConfigProvider.listEnabledSourceConfigs(inferredUser).map { it.sourceName },
                 "users" to listUsers()
         ))
         return "/report"

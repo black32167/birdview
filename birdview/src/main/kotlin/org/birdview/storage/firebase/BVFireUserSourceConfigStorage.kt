@@ -19,7 +19,7 @@ open class BVFireUserSourceConfigStorage(
     override fun getSource(bvUser: String, sourceName: String): BVUserSourceConfig? =
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName).get().get()
-            ?.toObject(BVUserSourceConfig::class.java)
+            ?.let { doc -> DocumentObjectMapper.toObjectCatching(doc, BVUserSourceConfig::class)  }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
     override fun create(bvUser: String, sourceConfig: BVUserSourceConfig) {
@@ -45,7 +45,7 @@ open class BVFireUserSourceConfigStorage(
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sc-'.concat(#bvUser)" )
     override fun listSources(bvUser: String): List<BVUserSourceConfig> {
         return collectionAccessor.getUserSourcesCollection(bvUser).get().get()
-            .toObjects(BVUserSourceConfig::class.java)
+            .mapNotNull { doc -> DocumentObjectMapper.toObjectCatching(doc, BVUserSourceConfig::class)  }
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)

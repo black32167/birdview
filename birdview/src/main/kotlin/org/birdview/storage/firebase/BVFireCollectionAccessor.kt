@@ -20,5 +20,5 @@ class BVFireCollectionAccessor(
         clientProvider.getClientForCollection("storageSecrets")
 
     fun getUserSourcesCollection(bvUser: String) =
-        getUserCollection().document(bvUser).collection("sources")
+        getUserCollection().document(bvUser).collection("userSources")
 }

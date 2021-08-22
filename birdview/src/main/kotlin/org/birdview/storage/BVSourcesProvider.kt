@@ -14,8 +14,8 @@ class BVSourcesProvider (
 ) {
     private val sourceManagersMap = sourceManagers.associateBy { it.getType() }
 
-    fun listAvailableSourceNames(): List<String> =
-        sourceManagers.map { it.getType().name.toLowerCase() }
+    fun listAvailableSourceTypes(): List<SourceType> =
+        sourceManagers.map { it.getType() }
 
     fun getBySourceName(bvUser: String, sourceName: String): BVTaskSource? =
             sourceConfigStorage.getSource(bvUser, sourceName)

@@ -4,13 +4,7 @@
     <table>
         <tr>
             <td class="sign">Source name:</td>
-            <td>
-                <select name="sourceName">
-                    <#list availableSourceNames as sourceName>
-                    <option value="${sourceName}">${sourceName}</option>
-                    </#list>
-                </select>
-            </td>
+            <td><input type="text"  name="sourceName"></td>
         </tr>
         <tr>
             <td class="sign">User Id:</td>
