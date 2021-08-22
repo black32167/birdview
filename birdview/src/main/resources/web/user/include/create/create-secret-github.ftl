@@ -1,3 +1,4 @@
+<input type="hidden" name="sourceType" value="GITHUB"/>
 <input type="hidden" name="baseGqlUrl" value="https://api.github.com/graphql"/>
 <input type="hidden" name="baseUrl" value="https://api.github.com"/>
 

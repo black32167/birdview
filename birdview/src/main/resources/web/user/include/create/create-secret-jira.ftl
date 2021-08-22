@@ -1,4 +1,4 @@
-
+<input type="hidden" name="sourceType" value="JIRA"/>
 <tr>
     <td class="sign">Base URL:</td>
     <td><input type="text" name="baseUrl"></td>

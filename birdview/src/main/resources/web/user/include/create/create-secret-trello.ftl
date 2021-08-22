@@ -1,3 +1,4 @@
+<input type="hidden" name="sourceType" value="TRELLO"/>
 <input type="hidden" name="baseUrl" value="https://api.trello.com"/>
 
 <tr>
