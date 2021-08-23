@@ -8,7 +8,7 @@ import org.birdview.source.SourceTypeNames
     use = JsonTypeInfo.Id.NAME,
     property = "sourceType")
 @JsonSubTypes(
-    JsonSubTypes.Type(value = ConfluenceSourceSecretFormData::class, name = SourceTypeNames.SLACK),
+    JsonSubTypes.Type(value = ConfluenceSourceSecretFormData::class, name = SourceTypeNames.CONFLUENCE),
     JsonSubTypes.Type(value = SlackSourceSecretFormData::class, name = SourceTypeNames.SLACK),
     JsonSubTypes.Type(value = GdriveSourceSecretFormData::class, name = SourceTypeNames.GDRIVE),
     JsonSubTypes.Type(value = GithubSourceSecretFormData::class, name = SourceTypeNames.GITHUB),

@@ -24,7 +24,7 @@ class SourceFormArgumentsResolver: HandlerMethodArgumentResolver {
         webDataBinderFactory: WebDataBinderFactory?
     ): Any {
         val request = nativeWebRequest.nativeRequest as HttpServletRequest
-        val data = FormBindingUtil.create(request, CreateUserSourceFormData::class)
+        val data = FormBindingUtil.create(request, methodParameter.parameterType.kotlin)
         return data
     }
 }

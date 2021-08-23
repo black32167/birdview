@@ -5,5 +5,5 @@
 </tr>
 <tr>
     <td class="sign">Token:</td>
-    <td><input type="text" name="secret" value="${secret.secret}" ></td>
+    <td><input type="text" name="secret" value="${secret.token}" ></td>
 </tr>

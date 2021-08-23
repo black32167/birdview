@@ -5,10 +5,6 @@
     <td><input type="text" name="baseUrl"></td>
 </tr>
 <tr>
-    <td class="sign">Base URL:</td>
-    <td><input type="text" name="baseUrl"></td>
-</tr>
-<tr>
     <td class="sign">Email:</td>
     <td><input type="text" name="user"></td>
 </tr>
