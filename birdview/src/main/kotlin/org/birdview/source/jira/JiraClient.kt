@@ -19,7 +19,9 @@ import javax.inject.Named
 class JiraClient(
     private val httpClientFactory: BVHttpSourceClientFactory
 ) {
-    private val API_SUFFIX  = "/rest/api/2"
+    companion object {
+        private const val API_SUFFIX = "/rest/api/2"
+    }
     private val log = LoggerFactory.getLogger(JiraClient::class.java)
     private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
@@ -103,7 +105,7 @@ class JiraClient(
         )
 
     private fun getHttpClient(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig) =
-        httpClientFactory.createClient(jiraConfig)
+        httpClientFactory.createClient(jiraConfig.sourceName, jiraConfig.sourceSecret, getApiRootUrl(jiraConfig))
 
     private fun getApiRootUrl(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig) = "${jiraConfig.baseUrl}${API_SUFFIX}"
 }

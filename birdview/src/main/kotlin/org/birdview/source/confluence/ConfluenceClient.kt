@@ -14,6 +14,9 @@ import javax.inject.Named
 class ConfluenceClient(
     private val httpClientFactory: BVHttpSourceClientFactory
 ) {
+    companion object {
+        private const val API_SUFFIX = "/rest/api"
+    }
     private val log = LoggerFactory.getLogger(ConfluenceClient::class.java)
     private val documentsPerPage = 50
     private val pageExpands = listOf(
@@ -72,9 +75,8 @@ class ConfluenceClient(
         ).results
 
     private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig) =
-        getHttpClient(config, "${config.baseUrl}/rest/api")
+        getHttpClient(config, "${config.baseUrl}${API_SUFFIX}")
 
     private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig, url: String) =
-        httpClientFactory.createClient(config)
-
+        httpClientFactory.createClient(config.sourceName, config.sourceSecret, url)
 }

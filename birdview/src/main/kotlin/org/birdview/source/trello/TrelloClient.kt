@@ -64,7 +64,7 @@ class TrelloClient(private val httpClientFactory: BVHttpSourceClientFactory) {
         )
 
     private fun <T> getTrello(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()) =
-        httpClientFactory.createClient(trelloConfig)
+        httpClientFactory.createClient(trelloConfig.sourceName, trelloConfig.sourceSecret, trelloConfig.baseUrl)
             .get(
             resultClass = resultClass,
             subPath = "/1/${subPath}",

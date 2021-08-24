@@ -1,6 +1,5 @@
 package org.birdview.source.http
 
-import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.gdrive.GDriveOAuthClient
 import org.birdview.source.slack.SlackOAuthClient
 import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
@@ -17,12 +16,12 @@ class BVHttpSourceClientFactory(
     val gdriveOAuthClient: GDriveOAuthClient,
     val slackOAuthClient: SlackOAuthClient,
 ) {
-    fun createClient(sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig): BVHttpClient =
-        httpClientFactory.getHttpClient(sourceConfig.baseUrl) {
-            getAuth(sourceConfig.sourceName, sourceConfig.sourceSecret)
+    fun createClient(sourceName:String, sourceSecret: BVSourceSecret, baseApiUrl: String): BVHttpClient =
+        httpClientFactory.getHttpClient(baseApiUrl) {
+            getAuth(sourceName, sourceSecret)
         }
 
-    fun getAuth(sourceName:String, sourceSecret: BVSourceSecret): ApiAuth =
+    private fun getAuth(sourceName:String, sourceSecret: BVSourceSecret): ApiAuth =
         when (sourceSecret) {
             is BVTokenSourceSecret -> BasicAuth(sourceSecret.user, sourceSecret.token)
             is BVOAuthSourceSecret -> when (sourceSecret.flavor) {

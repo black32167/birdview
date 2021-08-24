@@ -53,5 +53,5 @@ class GDriveClient(
     }
 
     private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig) =
-        httpClientFactory.createClient(config)
+        httpClientFactory.createClient(config.sourceName, config.sourceSecret, config.baseUrl)
 }

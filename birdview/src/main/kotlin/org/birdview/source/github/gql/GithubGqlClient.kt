@@ -80,5 +80,5 @@ class GithubGqlClient (
     }
 
     private fun getHttpClient(githubConfig: BVSourceConfigProvider.SyntheticSourceConfig) =
-        httpClientFactory.createClient(githubConfig)
+        httpClientFactory.createClient(githubConfig.sourceName, githubConfig.sourceSecret, githubConfig.baseUrl)
 }
