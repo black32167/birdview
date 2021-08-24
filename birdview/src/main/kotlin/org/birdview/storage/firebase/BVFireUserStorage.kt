@@ -31,7 +31,7 @@ open class BVFireUserStorage(
     @CacheEvict(BVCacheNames.USER_SETTINGS_CACHE, allEntries = true)
     override fun update(userName: String, userSettings: BVUserSettings) {
         collectionAccessor.getUserCollection()
-            .document(userName).set(userSettings)
+            .document(userName).set(userSettings).get()
     }
 
     @Cacheable(BVCacheNames.USER_SETTINGS_CACHE)
@@ -45,6 +45,7 @@ open class BVFireUserStorage(
         collectionAccessor.getUserCollection()
             .document(userName)
             .update(BVUserSettings::enabled.name, true)
+            .get()
     }
 
     @CacheEvict(cacheNames = [BVCacheNames.USER_SETTINGS_CACHE, BVCacheNames.USER_NAMES_CACHE], allEntries = true)
@@ -53,5 +54,6 @@ open class BVFireUserStorage(
         collectionAccessor.getUserCollection()
             .document(userName)
             .delete()
+            .get()
     }
 }

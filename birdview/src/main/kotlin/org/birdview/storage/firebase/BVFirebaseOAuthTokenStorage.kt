@@ -23,6 +23,6 @@ open class BVFirebaseOAuthTokenStorage(
     @CacheEvict(BVCacheNames.SOURCE_OAUTH_TOKENS_CACHE_NAME, key = "#sourceName")
     override fun saveOAuthTokens(sourceName: String, tokens: BVOAuthTokens) {
         collectionAccessor.getDefaultRefreshTokensCollection()
-            .document(sourceName).set(tokens)
+            .document(sourceName).set(tokens).get()
     }
 }

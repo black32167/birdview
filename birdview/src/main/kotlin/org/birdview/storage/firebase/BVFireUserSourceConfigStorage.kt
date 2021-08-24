@@ -34,6 +34,7 @@ open class BVFireUserSourceConfigStorage(
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceConfig.sourceName)
             .set(sourceConfig)
+            .get()
     }
 
     @Cacheable(cacheNames = [BVCacheNames.USER_SOURCE_CACHE], key = "'sn-'.concat(#bvUser)" )
@@ -53,12 +54,14 @@ open class BVFireUserSourceConfigStorage(
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName)
             .delete()
+            .get()
     }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)
     override fun deleteAll(bvUser: String) {
         collectionAccessor.getUserSourcesCollection(bvUser)
             .listDocuments()
-            .forEach { it.delete() }
+            .map { it.delete() }
+            .forEach { it.get() }
     }
 }
