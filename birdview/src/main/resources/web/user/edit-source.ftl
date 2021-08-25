@@ -18,10 +18,6 @@
                 <td>${sourceType}</td>
             </tr>
             <tr>
-                <td class="sign">User Id:</td>
-                <td><input type="text" name="sourceUserName" value="${sourceUserName}"></td>
-            </tr>
-            <tr>
                 <td class="sign">Enabled:</td>
                 <#if enabled == "yes">
                     <#assign checkedHint="checked">

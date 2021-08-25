@@ -5,7 +5,8 @@
 <tr>
     <td class="sign">User:</td>
     <td><input type="text" name="user"></td>
-</tr><tr>
+</tr>
+<tr>
     <td class="sign">Token:</td>
     <td>
         <input type="text" name="secret"><br>

@@ -4,7 +4,6 @@ import org.birdview.source.SourceType
 import org.birdview.web.form.secret.SourceSecretFormData
 
 class UpdateUserSourceFormData(
-    val sourceUserName: String,
     val enabled: String?,
     val baseUrl: String,
     val sourceType: SourceType,

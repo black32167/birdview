@@ -4,8 +4,12 @@
     <td><input type="text" name="baseUrl" value="${baseUrl}" ></td>
 </tr>
 <tr>
+    <td class="sign">User Id:</td>
+    <td><input type="text" name="user" value="${sourceUserName}" ></td>
+</tr>
+<tr>
     <td class="sign">Email:</td>
-    <td><input type="text" name="user" value="${secret.user}" ></td>
+    <td><input type="text" name="email" value="${secret.user}" ></td>
 </tr>
 <tr>
     <td class="sign">Token:</td>

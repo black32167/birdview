@@ -6,10 +6,6 @@
             <td class="sign">Source name:</td>
             <td><input type="text"  name="sourceName"></td>
         </tr>
-        <tr>
-            <td class="sign">User Id:</td>
-            <td><input type="text" name="sourceUserName"></td>
-        </tr>
         <#include "include/create/create-secret-${sourceType}.ftl">
     </table>
     <div class="buttons">

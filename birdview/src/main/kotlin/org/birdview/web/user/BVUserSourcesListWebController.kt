@@ -92,20 +92,20 @@ class BVUserSourcesListWebController (
                formDataUpdate: UpdateUserSourceFormData
     ): Any {
         val bvUser = currentUserName()
-        val sourceManager = sourcesProvider.getBySourceName(
-            bvUser = bvUser, sourceName = sourceName)
-
-        if(sourceManager != null) {
-            val resolved = sourceManager.resolveSourceUserId(bvUser, sourceName, formDataUpdate.sourceUserName)
-            println(resolved)
-        }
+//        val sourceManager = sourcesProvider.getBySourceName(
+//            bvUser = bvUser, sourceName = sourceName)
+//
+//        if(sourceManager != null) {
+//            val resolved = sourceManager.resolveSourceUserId(bvUser, sourceName, formDataUpdate.sourceUserName)
+//            println(resolved)
+//        }
 
         val persistentSecret = toPersistent(formDataUpdate.sourceSecretFormData)
         userSourceStorage.update(
             bvUser = bvUser,
             sourceConfig = BVUserSourceConfig(
                 sourceName = sourceName,
-                sourceUserName = formDataUpdate.sourceUserName,
+                sourceUserName = resolveSourceUseName(formDataUpdate.sourceSecretFormData),
                 enabled = formDataUpdate.enabled != null,
                 baseUrl = formDataUpdate.baseUrl,
                 sourceType = formDataUpdate.sourceType,
@@ -115,6 +115,23 @@ class BVUserSourcesListWebController (
         return getRedirectAfterSaveView(sourceName, persistentSecret)
     }
 
+    @PostMapping("source")
+    fun add(formDataCreate: CreateUserSourceFormData): Any {
+        val persistentSecret = toPersistent(formDataCreate.sourceSecretFormData)
+        userSourceStorage.create(
+            bvUser = currentUserName(),
+            sourceConfig = BVUserSourceConfig(
+                sourceName = formDataCreate.sourceName,
+                sourceUserName = resolveSourceUseName(formDataCreate.sourceSecretFormData),
+                enabled = false,
+                baseUrl = formDataCreate.baseUrl,
+                sourceType = formDataCreate.sourceType,
+                serializedSourceSecret = sourceSecretsMapper.serialize(persistentSecret)
+            )
+        )
+        return getRedirectAfterSaveView(formDataCreate.sourceName, persistentSecret)
+    }
+
     private fun toPersistent(formData: SourceSecretFormData): BVSourceSecret =
         when (formData) {
             is JiraSourceSecretFormData -> BVTokenSourceSecret(
@@ -122,7 +139,7 @@ class BVUserSourcesListWebController (
                 token = formData.secret
             )
             is ConfluenceSourceSecretFormData -> BVTokenSourceSecret(
-                user = formData.user,
+                user = formData.email,
                 token = formData.secret
             )
             is GithubSourceSecretFormData -> BVTokenSourceSecret(
@@ -152,22 +169,16 @@ class BVUserSourcesListWebController (
             else -> throw UnsupportedOperationException("Unsupported secret form class: ${formData.javaClass}")
         }
 
-    @PostMapping("source")
-    fun add(formDataCreate: CreateUserSourceFormData): Any {
-        val persistentSecret = toPersistent(formDataCreate.sourceSecretFormData)
-        userSourceStorage.create(
-            bvUser = currentUserName(),
-            sourceConfig = BVUserSourceConfig(
-                sourceName = formDataCreate.sourceName,
-                sourceUserName = formDataCreate.sourceUserName,
-                enabled = false,
-                baseUrl = formDataCreate.baseUrl,
-                sourceType = formDataCreate.sourceType,
-                serializedSourceSecret = sourceSecretsMapper.serialize(persistentSecret)
-            )
-        )
-        return getRedirectAfterSaveView(formDataCreate.sourceName, persistentSecret)
-    }
+    private fun resolveSourceUseName(formData: SourceSecretFormData) =
+        when (formData) {
+            is JiraSourceSecretFormData -> formData.user
+            is ConfluenceSourceSecretFormData -> formData.user
+            is GithubSourceSecretFormData -> formData.user
+            is TrelloSourceSecretFormData -> formData.email
+            is GdriveSourceSecretFormData -> formData.email
+            is SlackSourceSecretFormData -> formData.email
+            else -> throw UnsupportedOperationException("Unsupported secret form class: ${formData.javaClass}")
+        }
 
     private fun currentUserName() = UserContext.getUserName()
 

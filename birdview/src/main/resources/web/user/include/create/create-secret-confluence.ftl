@@ -5,8 +5,12 @@
     <td><input type="text" name="baseUrl"></td>
 </tr>
 <tr>
-    <td class="sign">Email:</td>
+    <td class="sign">User Id:</td>
     <td><input type="text" name="user"></td>
+</tr>
+<tr>
+    <td class="sign">Email:</td>
+    <td><input type="text" name="email"></td>
 </tr>
 <tr>
     <td class="sign">Token:</td>

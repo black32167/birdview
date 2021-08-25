@@ -3,7 +3,7 @@
 
 <tr>
     <td class="sign">Email:</td>
-    <td><input type="text" name="user"></td>
+    <td><input type="text" name="email"></td>
 </tr>
 <tr>
     <td class="sign">Client Id:</td>

@@ -2,6 +2,10 @@
 <input type="hidden" name="baseUrl" value="https://api.trello.com"/>
 
 <tr>
+    <td class="sign">Email:</td>
+    <td><input type="text" name="email"></td>
+</tr>
+<tr>
     <td class="sign">Key:</td>
     <td><input type="text" name="key"></td>
 </tr>
