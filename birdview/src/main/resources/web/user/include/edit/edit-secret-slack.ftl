@@ -10,5 +10,8 @@
 </tr>
 <tr>
     <td class="sign">Client Secret:</td>
-    <td><input type="text" name="clientSecret" value="${secret.clientSecret}" ></td>
+    <td>
+        <input type="text" name="clientSecret" value="${secret.clientSecret}">
+        <a class="helpline" href="${authorizationUrl}">Authorize...</a>
+    </td>
 </tr>

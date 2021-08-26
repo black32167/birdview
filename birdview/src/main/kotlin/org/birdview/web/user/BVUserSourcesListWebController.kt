@@ -64,13 +64,17 @@ class BVUserSourcesListWebController (
     fun editForm(model: Model, @PathVariable("sourceName") sourceName:String): String {
         val sourceConfig = userSourceStorage.getSource(bvUser = currentUserName(), sourceName = sourceName)
             ?: throw NotFoundException("Unknown source: '${sourceName}'")
+        val secret = sourceSecretsMapper.deserialize(sourceConfig.serializedSourceSecret)
         model
             .addAttribute("sourceName", sourceName)
             .addAttribute("baseUrl", sourceConfig.baseUrl)
             .addAttribute("sourceType", sourceConfig.sourceType.alias)
             .addAttribute("sourceUserName", sourceConfig.sourceUserName)
             .addAttribute("enabled", if (sourceConfig.enabled) YES else NO)
-            .addAttribute("secret", sourceSecretsMapper.deserialize(sourceConfig.serializedSourceSecret))
+            .addAttribute("secret", secret)
+        if(secret is BVOAuthSourceSecret) {
+            model.addAttribute("authorizationUrl", getProviderAuthCodeUrl(sourceName, secret))
+        }
         return "/user/edit-source"
     }
 
@@ -100,7 +104,6 @@ class BVUserSourcesListWebController (
 //            println(resolved)
 //        }
 
-        val persistentSecret = toPersistent(formDataUpdate.sourceSecretFormData)
         userSourceStorage.update(
             bvUser = bvUser,
             sourceConfig = BVUserSourceConfig(
@@ -112,7 +115,7 @@ class BVUserSourcesListWebController (
                 serializedSourceSecret = sourceSecretsMapper.serialize(toPersistent(formDataUpdate.sourceSecretFormData))
             )
         )
-        return getRedirectAfterSaveView(sourceName, persistentSecret)
+        return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 
     @PostMapping("source")
