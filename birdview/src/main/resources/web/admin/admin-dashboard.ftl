@@ -24,28 +24,6 @@ var csrf_token = "${_csrf.token}"
 
     <div>
     <div class="center">
-    <@panel "Secrets">
-    <table>
-    <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th></th>
-    </tr>
-    <#list sources as source>
-        <tr>
-        <td>
-            <@edit_secret_link source />
-        </td>
-        <td>
-            ${source.type}
-        </td>
-        <td>
-            <@delete_secret_link source />
-        </td>
-        </tr>
-    </#list>
-    </table>
-    </@panel>
     <div style="float:right">
     <@panel "Users">
         <table>
