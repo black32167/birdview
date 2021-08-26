@@ -44,7 +44,7 @@ class OAuthSourceWebController (
                 sourceName = source, authCode = code)
             else -> log.error("OAuth authentication error for source ${source}:no code provided!")
         }
-        return ModelAndView("redirect:${BVWebPaths.ADMIN_ROOT}")
+        return ModelAndView("redirect:${BVWebPaths.USER_SETTINGS}")
     }
 
     private fun exchangeAuthorizationCodeForAccessToken(
