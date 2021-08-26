@@ -1,19 +1,15 @@
 package org.birdview.source.slack
 
 import org.birdview.analysis.BVDocument
-import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.source.oauth.AbstractOAuthClient
-import org.birdview.source.oauth.OAuthRefreshTokenStorage
-import org.birdview.source.slack.model.SlackMessage
-import org.birdview.storage.BVOAuthSourceConfig
-import org.birdview.storage.BVSlackConfig
+import org.birdview.source.BVSourceConfigProvider
+import org.birdview.source.http.BVHttpSourceClientFactory
 import javax.inject.Named
 
 @Named
 class SlackClient  (
-    private val httpClientFactory: BVHttpClientFactory,
-    tokenStorage: OAuthRefreshTokenStorage
-): AbstractOAuthClient<SlackTokenResponse>(tokenStorage, httpClientFactory) {
+    private val httpClientFactory: BVHttpSourceClientFactory,
+    private val oauthClient: SlackOAuthClient
+) {
 //    private val targetFactory =
 //            WebTargetFactory("https://slack.com/api") {
 //                getToken(config)
@@ -21,7 +17,7 @@ class SlackClient  (
 //                        ?: throw RuntimeException("Failed retrieving Slack API access token")
 //            }
 
-    fun findMessages(sourceConfig: BVSlackConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
+    fun findMessages(sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig, chunkConsumer: (List<BVDocument>) -> Unit) {
 //        var r = targetFactory.getTarget("search.messages")
 //                .queryParam("query", "from:@...")
 //                .request()
@@ -44,20 +40,4 @@ class SlackClient  (
 //                }
     }
 
-    private fun toBVDocument(slackMessage: SlackMessage): BVDocument? {
-        return null
-    }
-
-    override fun getToken(config: BVOAuthSourceConfig): String? =
-            tokenStorage.getAccessToken(config)
-
-    override fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceConfig): Map<String, String> =
-            mapOf(
-                    "client_id" to config.clientId,
-                    "client_secret" to config.clientSecret,
-                 //   "grant_type" to "refresh_token",
-                    "code" to refreshToken)
-
-    override fun readAccessTokenResponse(response: SlackTokenResponse): String = response.access_token!!
-    override fun getAccessTokenResponseClass(): Class<SlackTokenResponse> = SlackTokenResponse::class.java
 }

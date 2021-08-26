@@ -18,7 +18,6 @@ import org.springframework.beans.factory.SmartInitializingSingleton
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.*
-import javax.annotation.PostConstruct
 import javax.inject.Named
 
 @Named
@@ -28,7 +27,7 @@ class BVInMemoryUserDataUpdater (
         private val documentStorage: BVDocumentStorage,
         private val userLog: BVUserLog,
         private val timeService: BVTimeService
-): BVUserDataUpdater, BVUserStorage.UserChangedListener, SmartInitializingSingleton {
+): BVUserDataUpdater, SmartInitializingSingleton {
     companion object {
         private const val DELAY_BETWEEN_UPDATES_SECONDS: Long = 30 * 60
         private const val MAX_DAYS_BACK = 30L
@@ -41,17 +40,6 @@ class BVInMemoryUserDataUpdater (
     private val userFutures = ConcurrentHashMap<String, Future<*>>()
 
     private val userSemaphores = ConcurrentHashMap<String, Semaphore>()
-
-    override fun onUserDeleted(bvUser: String) {
-    }
-
-    override fun onUserCreated(bvUser: String) {
-    }
-
-    @PostConstruct
-    private fun init() {
-        userStorage.addUserCreatedListener(this)
-    }
 
     override fun afterSingletonsInstantiated() {
         updateScheduleExecutor.scheduleWithFixedDelay(this::refreshUsers, 1, DELAY_BETWEEN_UPDATES_SECONDS, TimeUnit.SECONDS)

@@ -1,28 +1,65 @@
 package org.birdview.source.oauth
 
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVOAuthSourceConfig
+import org.birdview.storage.OAuthTokenStorage
+import org.birdview.storage.model.BVOAuthTokens
+import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
+import org.slf4j.LoggerFactory
 
-abstract class AbstractOAuthClient<RT>(
-        protected val tokenStorage: OAuthRefreshTokenStorage,
-        private val httpClientFactory: BVHttpClientFactory
+abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
+    protected val defaultTokenStorage: OAuthTokenStorage,
+    private val httpClientFactory: BVHttpClientFactory
 ) {
-    protected open fun getToken(config: BVOAuthSourceConfig): String? =
-            tokenStorage.loadLocalRefreshToken(config.sourceName)?.let { refreshToken-> getRemoteAccessToken(refreshToken, config) }
+    private val log = LoggerFactory.getLogger(AbstractOAuthClient::class.java)
 
-    private fun getRemoteAccessToken(refreshToken: String, config: BVOAuthSourceConfig): String {
-        val accessToken = tokenStorage.getAccessToken(config)
-        if (accessToken != null) {
-            return accessToken
-        }
+    open fun getToken(sourceName: String, config: BVOAuthSourceSecret): String? =
+        defaultTokenStorage.loadOAuthTokens(sourceName)
+            ?.let { tokens ->
+                val validAccessToken: String? = tokens.accessToken
+                    .takeUnless { tokens.isExpired() }
+                    ?: tokens.refreshToken?.let { refreshToken ->
+                        val renewedTokens = getRemoteAccessToken(config, refreshToken)
+                        defaultTokenStorage.saveOAuthTokens(sourceName, renewedTokens)
+                        renewedTokens.accessToken
+                    }
+                validAccessToken
+            }
+
+    private fun getRemoteAccessToken(config: BVOAuthSourceSecret, refreshToken: String): BVOAuthTokens {
         return httpClientFactory.getHttpClient(config.tokenExchangeUrl)
             .postForm(
                 resultClass = getAccessTokenResponseClass(),
-                formFields = getTokenRefreshFormContent(refreshToken, config))
-            .let { readAccessTokenResponse(it) }
+                formFields = getTokenRefreshFormContent(refreshToken, config)
+            )
+            .let { extractTokensData(it) } //todo: save (same as in web controller)
     }
 
-    protected abstract fun getTokenRefreshFormContent(refreshToken:String, config: BVOAuthSourceConfig): Map<String, String>
-    protected abstract fun readAccessTokenResponse(response: RT): String
-    protected abstract fun getAccessTokenResponseClass(): Class<RT>
+    protected abstract fun getTokenRefreshFormContent(
+        refreshToken: String,
+        config: BVOAuthSourceSecret
+    ): Map<String, String>
+
+    protected abstract fun extractTokensData(response: RT): BVOAuthTokens
+    abstract fun getAccessTokenResponseClass(): Class<RT>
+
+    protected abstract fun saveOAuthTokens(sourceName: String, rawResponse: RT)
+
+    fun updateAccessToken(sourceName: String,
+                          authCode: String,
+                          redirectUrl: String,
+                          oauthSecret: BVOAuthSourceSecret) {
+        val fields = mapOf(
+            "client_id" to oauthSecret.clientId,
+            "client_secret" to oauthSecret.clientSecret,
+            "access_type" to "offline",
+            "code" to authCode,
+            "grant_type" to "authorization_code",
+            "redirect_uri" to redirectUrl
+        )
+        val accessTokenExchangeResponse =
+            httpClientFactory.getHttpClient(oauthSecret.tokenExchangeUrl).postForm(
+                resultClass = getAccessTokenResponseClass(),
+                formFields = fields)
+        saveOAuthTokens(sourceName, accessTokenExchangeResponse);
+    }
 }

@@ -22,7 +22,11 @@ object BVTimeUtil {
     private val log = LoggerFactory.getLogger(BVTimeUtil::class.java)
     private val stats = ConcurrentHashMap<String, Stat>()
 
-    fun <T>logTime (tag: String, invocation: () -> T): T {
+    fun <T>logTimeAndReturn (tag: String, invocation: () -> T): T {
+        return logTimeAndMaybeReturn(tag, invocation)!!
+    }
+
+    fun <T>logTimeAndMaybeReturn (tag: String, invocation: () -> T): T? {
         val start = System.currentTimeMillis()
         val stat = stats.computeIfAbsent(tag) { Stat(tag) }
         try {

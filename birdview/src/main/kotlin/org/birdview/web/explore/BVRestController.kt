@@ -8,6 +8,7 @@ import org.birdview.storage.BVDocumentStorage
 import org.birdview.time.BVTimeService
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.user.BVUserLog
+import org.birdview.utils.BVTimeUtil
 import org.birdview.web.explore.model.BVDocumentView
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.birdview.web.explore.model.BVUserLogEntry
@@ -70,6 +71,7 @@ class BVRestController(
                 topNodes += roleNode
             }
         }
+        BVTimeUtil.printStats()
         return topNodes
     }
 

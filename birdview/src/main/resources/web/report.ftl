@@ -13,7 +13,7 @@
     baseURL = "${baseURL}"
     $(function() {
         console.log( "document loaded!" )
-        setInterval(updateStatus, 1000)
+        setInterval(updateStatus, 5000)
         refresh()
     })
 </script>

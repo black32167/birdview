@@ -1,8 +1,8 @@
 <#macro addForm sourceType>
-<form id="${sourceType}-form" source="${sourceType}" action="<@add_secret_post_link sourceType />" method="POST">
+<form id="${sourceType}-form" source="${sourceType}" action="<@add_source_post_link sourceType />" method="POST">
     <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
     <table>
-    <#nested>
+    <#include "include/create/create-secret-${sourceType}.ftl">
     </table>
     <div class="buttons">
         <input type="submit" value="Create">
@@ -33,7 +33,6 @@ function showForm(sourceType) {
 }
 $(function(){
     hideAll()
-
     $('form').each( (i, form) => {
         console.log($(form).attr('id'))
         var source = $(form).attr('source')
@@ -50,7 +49,6 @@ $(function(){
             image.hide()
         })
     })
-
 })
 </script>
 </head>
@@ -72,132 +70,21 @@ $(function(){
         </div>
 
         <@addForm "jira">
-                <tr>
-                    <td class="sign">Source alias:</td>
-                    <td><input type="text" name="sourceName" value="jira"></td>
-                </tr>
-                <tr>
-                    <td class="sign">Base URL:</td>
-                    <td><input type="text" name="baseUrl"></td>
-                </tr>
-                <tr>
-                    <td class="sign">Email:</td>
-                    <td><input type="text" name="user"></td>
-                </tr>
-                <tr>
-                    <td class="sign">Token:</td>
-                    <td>
-                        <input type="text" name="secret"><br>
-                        <a class="helpline" href="https://id.atlassian.com/manage/api-tokens">Generate token...</a>
-                    </td>
-                </tr>
         </@addForm>
 
         <@addForm "confluence">
-                <tr>
-                    <td class="sign">Source alias:</td>
-                    <td><input type="text" name="sourceName" value="confluence"></td>
-                </tr>
-                <tr>
-                    <td class="sign">Base URL:</td>
-                    <td><input type="text" name="baseUrl"></td>
-                </tr>
-                <tr>
-                    <td class="sign">Email:</td>
-                    <td><input type="text" name="user"></td>
-                </tr>
-                <tr>
-                    <td class="sign">Token:</td>
-                    <td>
-                        <input type="text" name="secret"><br>
-                        <a class="helpline" href="https://id.atlassian.com/manage/api-tokens">Generate token...</a>
-                    </td>
-                </tr>
         </@addForm>
 
         <@addForm "gdrive">
-            <tr>
-                <td class="sign">Source alias:</td>
-                <td><input type="text" name="sourceName" value="gdrive"></td>
-            </tr>
-            <tr>
-                <td class="sign">Email:</td>
-                <td><input type="text" name="user"></td>
-            </tr>
-            <tr>
-                <td class="sign">Client Id:</td>
-                <td><input type="text" name="key"></td>
-            </tr>
-            <tr>
-                <td class="sign">Client Secret:</td>
-                <td>
-                    <input type="text" name="secret">
-                    <div class="helpline" >
-                    <a href="https://console.developers.google.com/projectcreate">Register</a> and <a href="https://console.developers.google.com/">Generate</a>
-                    </div>
-                </td>
-            </tr>
         </@addForm>
 
         <@addForm "slack">
-            <tr>
-                <td class="sign">Source alias:</td>
-                <td><input type="text" name="sourceName" value="slack"></td>
-            </tr>
-            <tr>
-                <td class="sign">UserId:</td>
-                <td><input type="text" name="user"></td>
-            </tr>
-            <tr>
-                <td class="sign">Client Id:</td>
-                <td><input type="text" name="clientId"></td>
-            </tr>
-            <tr>
-                <td class="sign">Client Secret:</td>
-                <td>
-                    <input type="text" name="clientSecret">
-                    <div class="helpline" >
-                    </div>
-                </td>
-            </tr>
         </@addForm>
 
         <@addForm "github">
-            <tr>
-                <td class="sign">Source alias:</td>
-                <td><input type="text" name="sourceName" value="github"></td>
-            </tr><tr>
-                <td class="sign">User:</td>
-                <td><input type="text" name="user"></td>
-            </tr><tr>
-                <td class="sign">Token:</td>
-                <td>
-                    <input type="text" name="secret"><br>
-                    <a class="helpline" href="https://github.com/settings/tokens">Generate token...</a>
-                </td>
-            </tr>
         </@addForm>
 
         <@addForm "trello">
-            <tr>
-                <td class="sign">Source alias:</td>
-                <td><input type="text" name="sourceName" value="trello"></td>
-            </tr>
-            <tr>
-                <td class="sign">User:</td>
-                <td><input type="text" name="user"></td>
-            </tr>
-            <tr>
-                <td class="sign">Key:</td>
-                <td><input type="text" name="key"></td>
-            </tr>
-            <tr>
-                <td class="sign">Token:</td>
-                <td>
-                    <input type="text" name="secret"><br>
-                    <a class="helpline" href="https://trello.com/app-key">Generate token...</a>
-                </td>
-            </tr>
         </@addForm>
     </div>
     <div>

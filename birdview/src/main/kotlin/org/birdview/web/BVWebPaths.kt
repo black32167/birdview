@@ -8,4 +8,5 @@ object BVWebPaths {
     const val USER_SETTINGS = "${USER_ROOT}/settings"
     const val LOGIN = "/login"
     const val SIGNUP = "/signup"
+    const val OAUTH_CODE_ENDPOINT_PATH = "/oauth/code"
 }

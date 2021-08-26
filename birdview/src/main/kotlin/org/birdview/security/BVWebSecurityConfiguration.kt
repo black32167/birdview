@@ -17,15 +17,15 @@ open class BVWebSecurityConfiguration : WebSecurityConfigurerAdapter() {
     @Throws(Exception::class)
     override fun configure(http: HttpSecurity) {
         http
-                .authorizeRequests()
-                    .antMatchers( "/**/*.js", "/**/*.css").permitAll()
-                          .mvcMatchers(BVWebPaths.SIGNUP).permitAll()
-                    .mvcMatchers(BVWebPaths.ADMIN_ROOT).hasRole(Roles.ADMIN)
-                    .mvcMatchers(BVWebPaths.USER_ROOT).hasRole(Roles.USER)
-                    .antMatchers("/**").authenticated()
-                .and()
+            .authorizeRequests()
+                .antMatchers("/**/*.js", "/**/*.css").permitAll()
+                .mvcMatchers(BVWebPaths.SIGNUP).permitAll()
+                .mvcMatchers(BVWebPaths.ADMIN_ROOT).hasRole(Roles.ADMIN)
+                .mvcMatchers(BVWebPaths.USER_ROOT).hasRole(Roles.USER)
+                .antMatchers("/**").authenticated()
+            .and()
                 .formLogin().loginPage("/login").permitAll()//loginProcessingUrl("/login").
-                .and()
+            .and()
                 .logout().permitAll()
     }
 

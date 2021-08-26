@@ -4,38 +4,37 @@ import org.birdview.model.ReportType
 import org.birdview.model.RepresentationType
 import org.birdview.model.UserRole
 import org.birdview.security.UserContext
-import org.birdview.storage.BVSourceSecretsStorage
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.storage.BVUserStorage
 import org.birdview.web.BVWebPaths
+import org.birdview.web.WebUtils
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 @Controller
 @RequestMapping(BVWebPaths.EXPLORE)
 class BVExploreWebController(
-        private val userStorage: BVUserStorage,
-        private val sourceSecretsStorage: BVSourceSecretsStorage
+    private val userStorage: BVUserStorage,
+    private val sourceConfigProvider: BVSourceConfigProvider
 ) {
-    class ReportLink(val reportUrl:String, val reportName:String)
-
     @GetMapping
     fun index(model: Model,
               @RequestParam(value = "user", required = false) user: String?,
               @RequestParam(value = "report", required = false) report: String?
     ): String? {
-        val baseUrl = getBaseUrl()
+        val baseUrl = WebUtils.getBaseUrl()
 
+        val inferredUser = (user ?: UserContext.getUserName())
         model.asMap().putAll(mapOf(
-                "user" to (user ?: UserContext.getUserName()),
+                "user" to inferredUser,
                 "baseURL" to baseUrl,
                 "reportTypes" to ReportType.values(),
                 "representationTypes" to RepresentationType.values(),
                 "userRoles" to UserRole.values(),
-                "sources" to sourceSecretsStorage.listSourceNames(),
+                "sources" to sourceConfigProvider.listEnabledSourceConfigs(inferredUser).map { it.sourceName },
                 "users" to listUsers()
         ))
         return "/report"
@@ -43,8 +42,4 @@ class BVExploreWebController(
 
     private fun listUsers() =
             userStorage.listUserNames()
-
-    private fun getBaseUrl() =
-            ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-
 }

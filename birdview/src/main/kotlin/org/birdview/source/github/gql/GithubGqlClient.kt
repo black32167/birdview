@@ -1,25 +1,24 @@
 package org.birdview.source.github.gql
 
 import org.apache.tomcat.util.http.fileupload.util.Streams
+import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.github.gql.model.*
-import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.storage.BVGithubConfig
+import org.birdview.source.http.BVHttpSourceClientFactory
 import org.birdview.utils.BVTimeUtil
-import org.birdview.utils.remote.BasicAuth
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
 class GithubGqlClient (
-        private val httpClientFactory: BVHttpClientFactory
+    private val httpClientFactory: BVHttpSourceClientFactory
 ) {
     private val log = LoggerFactory.getLogger(GithubGqlClient::class.java)
     private class GQL(
             val query: String
     )
-    fun getPullRequests(githubConfig: BVGithubConfig, githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
+    fun getPullRequests(githubConfig: BVSourceConfigProvider.SyntheticSourceConfig, githubQuery: String, chunkConsumer: (List<GqlGithubPullRequest>) -> Unit) {
         log.info("Running Github query:{}", githubQuery)
-        return BVTimeUtil.logTime("getPullRequests-GQL") {
+        return BVTimeUtil.logTimeAndReturn("getPullRequests-GQL") {
 
             val queryTemplate = javaClass
                     .getResourceAsStream("/github/gql/search.gql")
@@ -34,7 +33,7 @@ class GithubGqlClient (
                         "cursor" to (cursor?.let { "\"${cursor}\"" } ?: "null")))
 
                 val response: GqlGithubResponse<GqlGithubSearchContainer<GqlGithubPullRequest>> =
-                        BVTimeUtil.logTime("getPullRequests-GQL-page") {
+                        BVTimeUtil.logTimeAndReturn("getPullRequests-GQL-page") {
                             getHttpClient(githubConfig)
                                 .post(
                                     GqlGithubSearchPullRequestResponse::class.java,
@@ -58,7 +57,7 @@ class GithubGqlClient (
         }
     }
 
-    fun getUserByEmail(githubConfig: BVGithubConfig, email: String): String? {
+    fun getUserByEmail(githubConfig: BVSourceConfigProvider.SyntheticSourceConfig, email: String): String? {
         val gqlQuery = javaClass
                 .getResourceAsStream("/github/gql/search-user.gql")
                 .let(Streams::asString)
@@ -80,8 +79,6 @@ class GithubGqlClient (
         return query
     }
 
-    private fun getHttpClient(githubConfig: BVGithubConfig) =
-        httpClientFactory.getHttpClient(
-            url = githubConfig.baseGqlUrl
-        ) { BasicAuth(githubConfig.user, githubConfig.token) }
+    private fun getHttpClient(githubConfig: BVSourceConfigProvider.SyntheticSourceConfig) =
+        httpClientFactory.createClient(githubConfig.sourceName, githubConfig.sourceSecret, "${githubConfig.baseUrl}/graphql")
 }

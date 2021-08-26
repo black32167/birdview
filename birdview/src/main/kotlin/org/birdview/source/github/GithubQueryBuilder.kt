@@ -1,20 +1,16 @@
 package org.birdview.source.github
 
 import org.birdview.model.TimeIntervalFilter
-import org.birdview.storage.BVGithubConfig
-import org.birdview.storage.BVUserSourceStorage
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
 @Named
-class GithubQueryBuilder(
-        private val userSourceStorage: BVUserSourceStorage
-) {
-    fun getFilterQueries(user: String, updatedPeriod: TimeIntervalFilter, githubConfig: BVGithubConfig): String =
+class GithubQueryBuilder() {
+    fun getFilterQueries(sourceUserName: String, updatedPeriod: TimeIntervalFilter): String =
                 listOfNotNull(
                         "type:pr ",
-                        userClause(user, githubConfig),
+                        userClause(sourceUserName),
                         getUpdatePeriodClause(updatedPeriod.after, updatedPeriod.before)
                 ).joinToString(" ")
 
@@ -32,11 +28,7 @@ class GithubQueryBuilder(
     private fun format(time: OffsetDateTime) = time.format(DateTimeFormatter.ISO_LOCAL_DATE)
 
 
-    private fun userClause(userAlias: String, githubConfig: BVGithubConfig): String? {
-        val user = getGithubUser(userAlias, githubConfig)
-        return "involves:${user}"
+    private fun userClause(sourceUserName: String): String {
+        return "involves:${sourceUserName}"
     }
-
-    private fun getGithubUser(bvUser: String, githubConfig: BVGithubConfig): String =
-            userSourceStorage.getSourceProfile(bvUser, githubConfig.sourceName).sourceUserName
 }
