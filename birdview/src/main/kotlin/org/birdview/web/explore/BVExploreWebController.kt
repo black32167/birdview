@@ -44,6 +44,7 @@ class BVExploreWebController(
         val currentUser = UserContext.getUserName()
         val usersInWorkgroup = userStorage.getUserSettings(userName = currentUser)
             .let { userSettings -> userStorage.getUsersInWorkGroup(userSettings.workGroups) }
-        return listOf(currentUser) + usersInWorkgroup
+        return usersInWorkgroup.takeIf { it.isNotEmpty() }
+            ?: listOf(currentUser)
     }
 }
