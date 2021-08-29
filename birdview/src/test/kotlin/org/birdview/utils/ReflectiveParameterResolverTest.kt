@@ -39,7 +39,11 @@ class ReflectiveParameterResolverTest {
     )
     val underlyingResolver = object:ParameterResolver {
         override fun <T : Any> resolve(name: String, classifier: KClass<T>): T? =
-            stringValuesMap[name]!! as T?
+            if (classifier == String::class) {
+                stringValuesMap[name] as T?
+            } else {
+                null
+            }
     }
     private val resolver = ReflectiveParameterResolver(underlyingResolver)
 
