@@ -93,6 +93,12 @@ class BVFileUserStorage (
                 .forEach(Files::delete)
     }
 
+    override fun deleteGroup(bvUser: String, groupName: String) {
+        val existingSettings = getUserSettings(bvUser)
+        val updatedSettings = existingSettings.copy(workGroups = existingSettings.workGroups - groupName)
+        update(bvUser, updatedSettings)
+    }
+
     @Cacheable(USER_NAMES_CACHE)
     @Synchronized
     override fun listUserNames(): List<String> = Files.list(bvFoldersConfig.usersConfigFolder)

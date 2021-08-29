@@ -28,14 +28,18 @@ import javax.ws.rs.NotFoundException
 
 @Controller
 @RequestMapping(BVWebPaths.USER_SETTINGS)
-class BVUserSourcesListWebController (
+class BVUserSettingstWebController (
     private val userSourceStorage: BVUserSourceConfigStorage,
     private val userStorage: BVUserStorage,
     private val sourcesProvider: BVSourcesProvider,
     private val sourceSecretsMapper: SourceSecretsMapper
 ) {
-    class ProfileFormData(
+    class UpdateUserFormData(
         val zoneId: String
+    )
+
+    class AddWorkgroupFormData(
+        val workGroup: String
     )
 
     @GetMapping
@@ -46,17 +50,26 @@ class BVUserSourcesListWebController (
         model
             .addAttribute("sourceNames", userSourceStorage.listSourceNames(currentUserName()))
             .addAttribute("availableTimeZoneIds", BVWebTimeZonesUtil.getAvailableTimezoneIds())
-            .addAttribute("profileForm", settings)
+            .addAttribute("user", settings)
 
         return "/user/user-settings"
     }
 
-    @PostMapping
-    fun updateProfile(profileFormData: ProfileFormData): String {
+    @PostMapping("profile")
+    fun updateProfile(updateUserFormData: UpdateUserFormData): String {
         val loggedUser = UserContext.getUserName()
         val settings = userStorage.getUserSettings(loggedUser)
 
-        userStorage.update(loggedUser, settings.copy(zoneId = profileFormData.zoneId))
+        userStorage.update(loggedUser, settings.copy(zoneId = updateUserFormData.zoneId))
+        return "redirect:${BVWebPaths.USER_SETTINGS}"
+    }
+
+    @PostMapping("addWorkGroup")
+    fun addWorkgroup(addWorkgroupFormData: AddWorkgroupFormData): String {
+        val loggedUser = UserContext.getUserName()
+        val settings = userStorage.getUserSettings(loggedUser)
+
+        userStorage.update(loggedUser, settings.copy(workGroups = settings.workGroups + addWorkgroupFormData.workGroup))
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 
@@ -79,8 +92,14 @@ class BVUserSourcesListWebController (
     }
 
     @GetMapping("source/{sourceName}/delete")
-    fun delete(model: Model, @PathVariable("sourceName") sourceName:String): String {
+    fun deleteSource(model: Model, @PathVariable("sourceName") sourceName:String): String {
         userSourceStorage.delete(bvUser = currentUserName(), sourceName = sourceName)
+        return "redirect:${BVWebPaths.USER_SETTINGS}"
+    }
+
+    @GetMapping("group/{groupName}/delete")
+    fun deleteGroup(model: Model, @PathVariable("groupName") groupName:String): String {
+        userStorage.deleteGroup(bvUser = currentUserName(), groupName = groupName)
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 

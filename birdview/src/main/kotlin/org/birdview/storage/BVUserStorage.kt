@@ -19,4 +19,6 @@ interface BVUserStorage {
     fun updateUserStatus(userName: String, enabled: Boolean)
 
     fun delete(userName: String)
+
+    fun deleteGroup(bvUser: String, groupName: String)
 }

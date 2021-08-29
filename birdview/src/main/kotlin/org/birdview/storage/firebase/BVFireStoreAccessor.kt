@@ -4,9 +4,11 @@ import com.google.cloud.firestore.CollectionReference
 import javax.inject.Named
 
 @Named
-class BVFireCollectionAccessor(
+class BVFireStoreAccessor(
     val clientProvider: BVFirebaseClientProvider
 ) {
+    fun db() = clientProvider.getClient()
+
     fun getUserCollection(): CollectionReference =
         clientProvider.getClientForCollection("users")
 

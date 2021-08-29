@@ -39,7 +39,7 @@ class BVSignupWebController (
                     BVUserSettings(
                         passwordHash = PasswordUtils.hash(formData.password),
                         email = formData.email,
-                        zoneId = formData.zoneId
+                        zoneId = formData.zoneId,
                     ))
         } catch (e: BVUserStorage.UserStorageException) {
             model.addAttribute("errorMessage", "User already exists")

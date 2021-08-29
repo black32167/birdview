@@ -12,7 +12,7 @@ import javax.inject.Named
 @Profile(BVProfiles.FIRESTORE)
 @Named
 open class BVFirebaseOAuthTokenStorage(
-    open val collectionAccessor: BVFireCollectionAccessor
+    open val collectionAccessor: BVFireStoreAccessor
 ) : OAuthTokenStorage {
     @Cacheable(BVCacheNames.SOURCE_OAUTH_TOKENS_CACHE_NAME)
     override fun loadOAuthTokens(sourceName: String): BVOAuthTokens? =

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository
 @Profile(BVProfiles.FIRESTORE)
 @Repository
 open class BVFireUserSourceConfigStorage(
-    open val collectionAccessor: BVFireCollectionAccessor
+    open val collectionAccessor: BVFireStoreAccessor
 ): BVUserSourceConfigStorage {
 
     @Cacheable(BVCacheNames.USER_SOURCE_CACHE)

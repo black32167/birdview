@@ -99,15 +99,17 @@ table.treetable {
     margin: 0px;
 }
 
-form table, table.settings {
+form table, .settings {
     border: 1px solid gray;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
 }
-form table {
+
+form table, .form {
     background-color: cyan;
 }
+
 .link-button {
      background: none;
      border: none;

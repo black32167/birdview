@@ -6,5 +6,6 @@ data class BVUserSettings(
         val email: String? = null,
         val passwordHash:String = "",
         val enabled:Boolean = false,
-        val zoneId: String = ZoneId.of("UTC").id
+        val zoneId: String = ZoneId.of("UTC").id,
+        val workGroups: List<String> = listOf()
 )

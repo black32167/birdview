@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import kotlin.reflect.KClass
 
 class ReflectiveParameterResolverTest {
     companion object {
@@ -36,7 +37,11 @@ class ReflectiveParameterResolverTest {
         OBJECT_PARAM1 to "value1",
         OBJECT_PARAM2 to TestEnum.ENUM_VALUE1.name
     )
-    private val resolver = ReflectiveParameterResolver  {name -> stringValuesMap[name]!!}
+    val underlyingResolver = object:ParameterResolver {
+        override fun <T : Any> resolve(name: String, classifier: KClass<T>): T? =
+            stringValuesMap[name]!! as T?
+    }
+    private val resolver = ReflectiveParameterResolver(underlyingResolver)
 
     @Test
     fun testStringParameterResolution() {
