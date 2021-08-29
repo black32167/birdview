@@ -2,6 +2,8 @@
 
 set -e
 
+cd "${BASH_SOURCE%/*}"
+
 case $1 in
 build)
   docker build -t firebase .
