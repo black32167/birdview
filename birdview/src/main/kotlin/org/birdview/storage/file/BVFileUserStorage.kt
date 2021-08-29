@@ -106,6 +106,10 @@ class BVFileUserStorage (
             .map { it.fileName.toString() }
             .collect(Collectors.toList())
 
+    override fun getUsersInWorkGroup(workGroups: List<String>): List<String> =
+        listUserNames()
+            .filter { (getUserSettings(it).workGroups - workGroups).isNotEmpty() }
+
     private fun serialize(file:Path, userSettings: BVUserSettings) {
         jsonDeserializer.serialize(file, userSettings)
     }

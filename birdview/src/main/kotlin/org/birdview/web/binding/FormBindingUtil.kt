@@ -2,6 +2,7 @@ package org.birdview.web.binding
 
 import org.birdview.utils.ParameterResolver
 import org.birdview.utils.ReflectiveObjectMapper
+import org.birdview.utils.ReflectiveParameterResolver
 import javax.servlet.http.HttpServletRequest
 import javax.ws.rs.BadRequestException
 import kotlin.reflect.KClass
@@ -16,7 +17,7 @@ object FormBindingUtil {
                     null
                 }
         }
-        return ReflectiveObjectMapper.toObjectCatching(targetClass, underlyingResolver)
+        return ReflectiveObjectMapper.toObjectCatching(targetClass, ReflectiveParameterResolver(underlyingResolver))
             ?: throw BadRequestException("Could not materialize ${targetClass.simpleName}")
     }
 }

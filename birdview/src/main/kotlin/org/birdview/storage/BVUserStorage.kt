@@ -9,6 +9,8 @@ interface BVUserStorage {
     }
     fun listUserNames(): List<String>
 
+    fun getUsersInWorkGroup(workGroups: List<String>): List<String>
+
     @Throws(UserStorageException::class)
     fun create(userName:String, userSettings: BVUserSettings)
 

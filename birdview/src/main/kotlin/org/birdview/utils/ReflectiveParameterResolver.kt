@@ -12,7 +12,7 @@ class ReflectiveParameterResolver(
 ): ParameterResolver {
     override fun <T: Any> resolve(name: String, classifier: KClass<T>): T? {
         val underlyingResolution = underlyingParametersProvider.resolve(name, classifier)
-        if (underlyingResolution != null) {
+        if (underlyingResolution != null || classifier == String::class) {
             return underlyingResolution
         }
 

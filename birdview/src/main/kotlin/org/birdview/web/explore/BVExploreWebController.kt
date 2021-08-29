@@ -40,6 +40,10 @@ class BVExploreWebController(
         return "/report"
     }
 
-    private fun listUsers() =
-            userStorage.listUserNames()
+    private fun listUsers(): List<String> {
+        val currentUser = UserContext.getUserName()
+        val usersInWorkgroup = userStorage.getUserSettings(userName = currentUser)
+            .let { userSettings -> userStorage.getUsersInWorkGroup(userSettings.workGroups) }
+        return listOf(currentUser) + usersInWorkgroup
+    }
 }

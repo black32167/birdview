@@ -19,6 +19,7 @@ open class BVFireUserSourceConfigStorage(
     override fun getSource(bvUser: String, sourceName: String): BVUserSourceConfig? =
         collectionAccessor.getUserSourcesCollection(bvUser)
             .document(sourceName).get().get()
+            .takeIf { it.exists() }
             ?.let { doc -> DocumentObjectMapper.toObjectCatching(doc, BVUserSourceConfig::class)  }
 
     @CacheEvict(BVCacheNames.USER_SOURCE_CACHE, allEntries = true)

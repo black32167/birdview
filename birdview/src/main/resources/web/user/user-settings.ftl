@@ -7,8 +7,6 @@
 <body>
     <div class="menu">
        <a href="/">< Home</a>
-       |
-       <a href="/user/settings/source/add">Add source</a>
     </div>
 
     <div class="center">
@@ -54,6 +52,9 @@
                     </tr>
                     </#list>
                 </table>
+                <div class="form settings">
+                    <a href="/user/settings/source/add">Add source</a>
+                </div>
             </fieldset>
         </div>
         <div style="float:right">

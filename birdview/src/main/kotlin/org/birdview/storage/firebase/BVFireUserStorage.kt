@@ -24,6 +24,18 @@ open class BVFireUserStorage(
             .map { doc -> doc.id }
     }
 
+    @Cacheable(BVCacheNames.USER_NAMES_CACHE)
+    override fun getUsersInWorkGroup(workGroups: List<String>): List<String> =
+        if (workGroups.isEmpty()) {
+            listOf()
+        } else {
+            fireStore.getUserCollection()
+                .whereArrayContainsAny(BVUserSettings::workGroups.name, workGroups)
+                .get().get()
+                .documents
+                .map { it.id }
+        }
+
     @CacheEvict(BVCacheNames.USER_NAMES_CACHE, allEntries = true)
     override fun create(userName: String, userSettings: BVUserSettings) {
         update(userName, userSettings)
