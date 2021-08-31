@@ -15,4 +15,6 @@ import org.birdview.source.SourceTypeNames
     JsonSubTypes.Type(value = JiraSourceSecretFormData::class, name = SourceTypeNames.JIRA),
     JsonSubTypes.Type(value = TrelloSourceSecretFormData::class, name = SourceTypeNames.TRELLO),
 )
-abstract class SourceSecretFormData
+abstract class SourceSecretFormData {
+    abstract fun getSecretToken():String
+}

@@ -4,4 +4,6 @@ class TrelloSourceSecretFormData(
         val email:String,
         val key: String,
         val secret: String
-): SourceSecretFormData()
+): SourceSecretFormData() {
+        override fun getSecretToken() = secret
+}

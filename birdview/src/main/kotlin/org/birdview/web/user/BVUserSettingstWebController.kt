@@ -6,6 +6,7 @@ import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.SourceSecretsMapper
 import org.birdview.storage.model.source.config.BVUserSourceConfig
+import org.birdview.storage.model.source.secrets.BVLentSecrets
 import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
 import org.birdview.storage.model.source.secrets.BVSourceSecret
 import org.birdview.storage.model.source.secrets.BVTokenSourceSecret
@@ -154,8 +155,15 @@ class BVUserSettingstWebController (
         return getRedirectAfterSaveView(formDataCreate.sourceName, persistentSecret)
     }
 
-    private fun toPersistent(formData: SourceSecretFormData): BVSourceSecret =
-        when (formData) {
+    private fun toPersistent(formData: SourceSecretFormData): BVSourceSecret {
+        val secret = formData.getSecretToken()
+        val LEND_PREFIX = "lend_from:"
+        if (secret.startsWith(LEND_PREFIX)) {
+            val (lender, sourceName) = secret.substring(LEND_PREFIX.length).split(":".toRegex(), 2)
+            return BVLentSecrets(lender, sourceName)
+        }
+
+        return when (formData) {
             is JiraSourceSecretFormData -> BVTokenSourceSecret(
                 user = formData.user,
                 token = formData.secret
@@ -190,6 +198,7 @@ class BVUserSettingstWebController (
             )
             else -> throw UnsupportedOperationException("Unsupported secret form class: ${formData.javaClass}")
         }
+    }
 
     private fun resolveSourceUseName(formData: SourceSecretFormData) =
         when (formData) {

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 @JsonSubTypes(
     JsonSubTypes.Type(value = BVTokenSourceSecret::class, name = "token"),
     JsonSubTypes.Type(value = BVOAuthSourceSecret::class, name = "oauth"),
-    JsonSubTypes.Type(value = BVNoSecret::class, name = "none")
+    JsonSubTypes.Type(value = BVNoSecret::class, name = "none"),
+    JsonSubTypes.Type(value = BVLentSecrets::class, name = "lent")
 )
 interface BVSourceSecret
