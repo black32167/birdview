@@ -8,7 +8,7 @@
     <div class="menu">
        <a href="/user/settings">< Settings</a>
     </div>
-    <form class="center" action="/user/settings/source/${sourceName}" method="POST">
+    <form class="center" action="/user/source/${sourceName}" method="POST">
         <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <input type="hidden" name="sourceName" value="${sourceName}"/>
         <input type="hidden" name="sourceType" value="${sourceType}"/>

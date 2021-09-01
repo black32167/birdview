@@ -1,5 +1,5 @@
 <#macro addForm sourceType>
-<form id="${sourceType}-form" source="${sourceType}" action="/user/settings/source" method="POST">
+<form id="${sourceType}-form" source="${sourceType}" action="/user/source" method="POST">
     <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
     <table>
         <tr>

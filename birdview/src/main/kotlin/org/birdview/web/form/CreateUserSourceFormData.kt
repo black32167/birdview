@@ -7,5 +7,6 @@ class CreateUserSourceFormData (
         val sourceName: String,
         val baseUrl: String,
         val sourceType: SourceType,
+        val filter: String,
         val sourceSecretFormData: SourceSecretFormData
 )

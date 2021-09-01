@@ -7,6 +7,7 @@ class UpdateUserSourceFormData(
     val enabled: String?,
     val baseUrl: String,
     val sourceType: SourceType,
+    val filter: String,
     val sourceSecretFormData: SourceSecretFormData
 ) {
     companion object {
