@@ -2,16 +2,16 @@
 
 <tr>
     <td class="sign">Email:</td>
-    <td><input type="text" name="email" value="${sourceUserName}"></td>
+    <td><input type="text" name="filter" value="${filter}"></td>
 </tr>
 <tr>
     <td class="sign">Client Id:</td>
-    <td><input type="text" name="clientId" value="${secret.clientId}" ></td>
+    <td><input type="text" name="principal" value="${principal}" ></td>
 </tr>
 <tr>
     <td class="sign">Client Secret:</td>
     <td>
-        <input type="text" name="clientSecret" value="${secret.clientSecret}">
+        <input type="text" name="secretToken" value="${secretToken}">
         <a class="helpline" href="${authorizationUrl}">Authorize...</a>
     </td>
 </tr>

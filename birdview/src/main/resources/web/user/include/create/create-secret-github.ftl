@@ -4,12 +4,12 @@
 
 <tr>
     <td class="sign">User:</td>
-    <td><input type="text" name="user"></td>
+    <td><input type="text" name="filter"></td>
 </tr>
 <tr>
     <td class="sign">Token:</td>
     <td>
-        <input type="text" name="secret"><br>
+        <input type="text" name="secretToken"><br>
         <a class="helpline" href="https://github.com/settings/tokens">Generate token...</a>
     </td>
 </tr>
