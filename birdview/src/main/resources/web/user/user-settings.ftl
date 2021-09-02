@@ -44,7 +44,7 @@
                     <#list sourceNames as sourceName>
                     <tr>
                     <td>
-                        <a href="/user/settings/source/${sourceName}/edit">${sourceName}</a>
+                        <a href="/user/source/${sourceName?url("UTF-8")}">${sourceName}</a>
                     </td>
                     <td>
                         <a href="/user/settings/source/${sourceName}/delete">X</a>
@@ -53,7 +53,7 @@
                     </#list>
                 </table>
                 <div class="form settings">
-                    <a href="/user/settings/source/add">Add source</a>
+                    <a href="/user/source">Add source</a>
                 </div>
             </fieldset>
         </div>
