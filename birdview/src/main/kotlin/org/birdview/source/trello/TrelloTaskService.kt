@@ -37,8 +37,14 @@ open class TrelloTaskService(
         val sourceUserName = sourceConfig.sourceUserName
         val query = trelloQueryBuilder.getQueries(sourceUserName, updatedPeriod)
 
-        trelloClient.getCards(sourceConfig, query) { cards->
-            val listsMap = trelloClient.loadLists(sourceConfig, cards.map { it.idList  })
+        trelloClient.getCards(
+            bvUser = bvUser,
+            sourceName = sourceConfig.sourceName,
+            query = query) { cards->
+            val listsMap = trelloClient.loadLists(
+                bvUser = bvUser,
+                sourceName = sourceConfig.sourceName,
+                listsIds = cards.map { it.idList  })
                     .associateBy { it.id }
 
             val tasks = cards.map { card ->

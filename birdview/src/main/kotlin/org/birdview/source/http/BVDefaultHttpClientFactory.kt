@@ -10,8 +10,13 @@ class BVDefaultHttpClientFactory: BVHttpClientFactory {
     init {
         log.info("BVDefaultHttpClientFactory created")
     }
-    override fun getHttpClient(url: String, authProvider: () -> ApiAuth?): BVHttpClient {
-        log.info("Creating HTTP client for {}", url)
+    override fun getHttpClientAuthenticated(url: String, authProvider: () -> ApiAuth?): BVHttpClient {
+        log.info("Creating authenticated HTTP client for {}", url)
         return BVHttpClientImpl(basePath = url, authProvider = authProvider)
+    }
+
+    override fun getHttpClientUnauthenticated(url: String): BVHttpClient {
+        log.info("Creating unauthenticated HTTP client for {}", url)
+        return BVHttpClientImpl(basePath = url, authProvider = {null})
     }
 }

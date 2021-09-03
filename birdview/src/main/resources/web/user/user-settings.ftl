@@ -44,10 +44,10 @@
                     <#list sourceNames as sourceName>
                     <tr>
                     <td>
-                        <a href="/user/source/${sourceName?url("UTF-8")}">${sourceName}</a>
+                        <a href="/user/source/${sourceName?url}">${sourceName}</a>
                     </td>
                     <td>
-                        <a href="/user/settings/source/${sourceName}/delete">X</a>
+                        <a href="/user/source/${sourceName?url}/delete">X</a>
                     </td>
                     </tr>
                     </#list>
@@ -65,7 +65,7 @@
                     <#list user.workGroups as workGroup>
                     <tr>
                         <td>${workGroup}</td>
-                        <td><a href="/user/settings/group/${workGroup?url("UTF-8")}/delete">X</a></td>
+                        <td><a href="/user/group/${workGroup?url}/delete">X</a></td>
                     </tr>
                     </#list>
                 </table>

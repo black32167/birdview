@@ -37,10 +37,11 @@ open class JiraTaskService(
     ) {
         val sourceUserName = sourceConfig.sourceUserName
         jiraClient
-                .findIssues(sourceConfig, jqlBuilder.getJql(sourceUserName, updatedPeriod)) { jiraIssues->
+                .findIssues(bvUser = bvUser, sourceName = sourceConfig.sourceName, jqlBuilder.getJql(sourceUserName, updatedPeriod)) { jiraIssues->
                     chunkConsumer.consume(
                             jiraIssues
-                                    .map { executor.submit(Callable<BVDocument> { mapDocument( it, sourceConfig) }) }
+                                    .map { executor.submit(Callable<BVDocument> {
+                                        mapDocument( it, bvUser = bvUser, sourceName = sourceConfig.sourceName, baseUrl = sourceConfig.baseUrl) }) }
                                     .map { it.get() }
                     )
                 }
@@ -55,21 +56,21 @@ open class JiraTaskService(
         userSourceConfigProvider.getSourceConfig(
             sourceName = sourceName, bvUser = bvUser)?.also { config ->
             val client = jiraClient
-            client.loadByKeys(config, issueKeys.distinct()) { issues ->
-                chunkConsumer.invoke(issues.map { mapDocument(it, config) })
+            client.loadByKeys(bvUser = bvUser, sourceName = sourceName, issueKeys.distinct()) { issues ->
+                chunkConsumer.invoke(issues.map { mapDocument(it, bvUser = bvUser, sourceName = sourceName, baseUrl = config.baseUrl) })
             }
             val docsByUrls = issueUrls.distinct()
-                    .map { url->executor.submit(Callable { client.loadByUrl(config, url) }) }
+                    .map { url->executor.submit(Callable { client.loadByUrl(bvUser = bvUser, sourceName = sourceName, url = url) }) }
                     .map {
-                        mapDocument(it.get(), config)
+                        mapDocument(it.get(), bvUser = bvUser, sourceName = sourceName, baseUrl = config.baseUrl)
                     }
             chunkConsumer.invoke(docsByUrls)
         }
     }
 
-    private fun mapDocument(issue: JiraIssue, config: BVSourceConfigProvider.SyntheticSourceConfig): BVDocument {
+    private fun mapDocument(issue: JiraIssue, bvUser: String, sourceName: String, baseUrl: String): BVDocument {
         val description = issue.fields.description ?: ""
-        val issueLinks = jiraClient.getIssueLinks(config, issue.key)
+        val issueLinks = jiraClient.getIssueLinks(bvUser = bvUser, sourceName = sourceName, issue.key)
 
         try {
             return BVDocument(
@@ -79,14 +80,14 @@ open class JiraTaskService(
                     body = description,
                     updated = parseDate(issue.fields.updated),
                     created = parseDate(issue.fields.created),
-                    httpUrl = "${config.baseUrl}/browse/${issue.key}",
-                    users = extractUsers(issue, config),
+                    httpUrl = "${baseUrl}/browse/${issue.key}",
+                    users = extractUsers(issue, sourceName = sourceName),
                     refs = extractRefsIds(issue, issueLinks),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
-                    operations = extractOperations(issue, config),
+                    operations = extractOperations(issue, sourceName = sourceName),
                     sourceType = getType(),
                     priority = extractPriority(issue),
-                    sourceName = config.sourceName
+                    sourceName = sourceName
             )
         } catch (e:Exception) {
             throw RuntimeException("Could not parse issue $issue", e)
@@ -149,19 +150,19 @@ open class JiraTaskService(
     private fun parseDate(dateTimeString:String?) =
             BVDateTimeUtils.parse(dateTimeString, JIRA_DATETIME_PATTERN)
 
-    private fun extractUsers(issue: JiraIssue, config: BVSourceConfigProvider.SyntheticSourceConfig): List<BVDocumentUser> =
+    private fun extractUsers(issue: JiraIssue, sourceName: String): List<BVDocumentUser> =
         listOfNotNull(
-                mapDocumentUser(issue.fields.assignee, config.sourceName, UserRole.IMPLEMENTOR)
+                mapDocumentUser(issue.fields.assignee, sourceName, UserRole.IMPLEMENTOR)
         )
 
     private fun mapDocumentUser(jiraUser: JiraUser?, sourceName: String, userRole: UserRole): BVDocumentUser? =
             jiraUser?.emailAddress
                     ?.let { emailAddress -> BVDocumentUser(emailAddress, userRole, sourceName) }
 
-    private fun extractOperations(issue: JiraIssue, config: BVSourceConfigProvider.SyntheticSourceConfig): List<BVDocumentOperation> =
+    private fun extractOperations(issue: JiraIssue, sourceName: String): List<BVDocumentOperation> =
         issue.changelog
                 ?.histories
-                ?.flatMap { toOperation(issue, it, config.sourceName) }
+                ?.flatMap { toOperation(issue, it, sourceName) }
                 ?: emptyList()
 
     private fun toOperation(issue: JiraIssue, changelogItem: JiraChangelogItem, sourceName: String): List<BVDocumentOperation> =

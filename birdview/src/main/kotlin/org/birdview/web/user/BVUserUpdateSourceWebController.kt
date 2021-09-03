@@ -74,6 +74,12 @@ class BVUserUpdateSourceWebController(
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 
+    @GetMapping("delete")
+    fun deleteSource(model: Model, @PathVariable("sourceName") sourceName:String): String {
+        userSourceStorage.delete(bvUser = UserContext.getUserName(), sourceName = sourceName)
+        return "redirect:${BVUserSettingstWebController.getPath()}"
+    }
+
     private fun resolvePrincipal(secretConfig: BVSourceSecret): String? =
         when (secretConfig) {
             is BVTokenSourceSecret -> secretConfig.user
@@ -81,7 +87,6 @@ class BVUserUpdateSourceWebController(
             is BVLentSecrets -> secretConfig.lenderUser
             else -> null
         }
-
 
     private fun resolveSecretToken(secretConfig: BVSourceSecret): String? =
         when (secretConfig) {

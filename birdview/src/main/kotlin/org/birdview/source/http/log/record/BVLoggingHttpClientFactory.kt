@@ -28,9 +28,15 @@ class BVLoggingHttpClientFactory(
         }
     }
 
-    override fun getHttpClient(url: String, authProvider: () -> ApiAuth?): BVHttpClient =
+    override fun getHttpClientAuthenticated(url: String, authProvider: () -> ApiAuth?): BVHttpClient =
         LoggingDelegateHttpClient(
-            delegate.getHttpClient(url, authProvider),
+            delegate.getHttpClientAuthenticated(url, authProvider),
+            logFolder,
+            jsonDeserializer)
+
+    override fun getHttpClientUnauthenticated(url: String): BVHttpClient =
+        LoggingDelegateHttpClient(
+            delegate.getHttpClientUnauthenticated(url),
             logFolder,
             jsonDeserializer)
 }

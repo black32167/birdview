@@ -15,7 +15,7 @@ class GDriveClient(
     private val log = LoggerFactory.getLogger(GDriveClient::class.java)
     private val filesPerPage = 500
 
-    fun getFiles(config: BVSourceConfigProvider.SyntheticSourceConfig, query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
+    fun getFiles(bvUser: String, config: BVSourceConfigProvider.SyntheticSourceConfig, query: String?, chunkConsumer: (List<GDriveFile>) -> Unit) {
         if (query == null) {
             return
         } else {
@@ -31,7 +31,7 @@ class GDriveClient(
             var qParameters:Map<String, Any> = mainParameters + mapOf("q" to query)
             do {
                 val filesResponse = BVTimeUtil.logTimeAndReturn("gdrive-getFiles-page") {
-                    getHttpClient(config)
+                    getHttpClient(bvUser = bvUser, sourceName = config.sourceName, config.baseUrl)
                         .get(
                             resultClass = GDriveFileListResponse::class.java,
                             subPath="/files",
@@ -52,6 +52,6 @@ class GDriveClient(
         }
     }
 
-    private fun getHttpClient(config: BVSourceConfigProvider.SyntheticSourceConfig) =
-        httpClientFactory.createClient(config.sourceName, config.sourceSecret, config.baseUrl)
+    private fun getHttpClient(bvUser: String, sourceName: String, url: String) =
+        httpClientFactory.createClient(bvUser = bvUser, sourceName = sourceName, url = url)
 }

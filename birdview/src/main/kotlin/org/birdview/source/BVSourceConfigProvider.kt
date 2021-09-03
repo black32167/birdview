@@ -29,9 +29,10 @@ class BVSourceConfigProvider(
 
     private val log = LoggerFactory.getLogger(BVSourceConfigProvider::class.java)
 
-    fun getSourceConfig(sourceName: String, bvUser: String): SyntheticSourceConfig? =
+    fun getSourceConfig(sourceName: String, bvUser: String): SyntheticSourceConfig =
         userSourceConfigStorage.getSource(bvUser = bvUser, sourceName = sourceName)
             ?.let(this::createSyntheticConfig)
+            ?: throw IllegalArgumentException("Cannot find source ${sourceName} for user ${bvUser}")
 
     fun listEnabledSourceConfigs(bvUser: String): List<SyntheticSourceConfig> {
 

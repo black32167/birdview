@@ -31,16 +31,17 @@ open class GDriveTaskService(
     override fun getTasks(
         bvUser: String,
         updatedPeriod: TimeIntervalFilter,
-        config: BVSourceConfigProvider.SyntheticSourceConfig,
+        sourceConfig: BVSourceConfigProvider.SyntheticSourceConfig,
         chunkConsumer: BVSessionDocumentConsumer
     ) {
-        val sourceUserName = config.sourceUserName
+        val sourceUserName = sourceConfig.sourceUserName
         try {
             client.getFiles(
-                config,
-                gDriveQueryBuilder.getQuery(sourceUserName, updatedPeriod)
+                bvUser = bvUser,
+                config = sourceConfig,
+                query = gDriveQueryBuilder.getQuery(sourceUserName, updatedPeriod)
             ) { files ->
-                chunkConsumer.consume(files.map { file -> toBVDocument(bvUser, file, config) })
+                chunkConsumer.consume(files.map { file -> toBVDocument(bvUser, file, sourceConfig) })
             }
         } catch (e: Exception) {
             log.error("", e)

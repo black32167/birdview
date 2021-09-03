@@ -10,21 +10,32 @@ import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
-class TrelloClient(private val httpClientFactory: BVHttpSourceClientFactory) {
+class TrelloClient(
+    private val httpClientFactory: BVHttpSourceClientFactory,
+    private val sourceConfigProvider: BVSourceConfigProvider) {
     private val log = LoggerFactory.getLogger(TrelloClient::class.java)
     private val cardsPerPage = 50
 
-    fun getCards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
+    fun getCards(bvUser: String, sourceName: String, query:String, chunkConsumer: (List<TrelloCard>) -> Unit) {
         log.info("Running Trello query '{}'", query)
         var page = 0
-        while (searchTrelloCards(trelloConfig, query, page, chunkConsumer)) {
+        while (searchTrelloCards(
+                bvUser = bvUser,
+                sourceName = sourceName,
+                query = query,
+                page = page,
+                chunkConsumer = chunkConsumer)) {
             page++
         }
     }
 
-    private fun searchTrelloCards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
+    private fun searchTrelloCards(bvUser: String, sourceName: String, query:String, page: Int, chunkConsumer: (List<TrelloCard>) -> Unit): Boolean {
         log.info("Loading trello issues page {} for query {}", page, query)
-        val cards = searchTrelloCards(trelloConfig, query, page).cards.toList()
+        val cards = searchTrelloCards(
+            bvUser = bvUser,
+            sourceName = sourceName,
+            query = query,
+            cardsPage = page).cards.toList()
         return if(cards.isEmpty()) {
             false
         } else {
@@ -33,25 +44,28 @@ class TrelloClient(private val httpClientFactory: BVHttpSourceClientFactory) {
         }
     }
 
-    fun getBoards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, boardIds: List<String>): List<TrelloBoard> =
+    fun getBoards(bvUser: String, sourceName: String, boardIds: List<String>): List<TrelloBoard> =
         boardIds.map { boardId ->
             getTrello(
-                trelloConfig = trelloConfig,
+                bvUser = bvUser,
+                sourceName = sourceName,
                 resultClass = TrelloBoard::class.java,
                 subPath = "boards/${boardId}")
         }
 
-    fun loadLists(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, listsIds: List<String>): List<TrelloList> = listsIds.map { listId ->
+    fun loadLists(bvUser: String, sourceName: String, listsIds: List<String>): List<TrelloList> = listsIds.map { listId ->
         getTrello(
-            trelloConfig = trelloConfig,
+            bvUser = bvUser,
+            sourceName = sourceName,
             subPath = "lists/${listId}",
             resultClass = TrelloList::class.java
         )
     }
 
-    private fun searchTrelloCards(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, query: String, cardsPage: Int) =
+    private fun searchTrelloCards(bvUser: String, sourceName: String, query: String, cardsPage: Int) =
         getTrello(
-            trelloConfig = trelloConfig,
+            bvUser = bvUser,
+            sourceName = sourceName,
             resultClass = TrelloCardsSearchResponse::class.java,
             subPath = "search",
             parameters = mapOf(
@@ -63,10 +77,16 @@ class TrelloClient(private val httpClientFactory: BVHttpSourceClientFactory) {
             )
         )
 
-    private fun <T> getTrello(trelloConfig: BVSourceConfigProvider.SyntheticSourceConfig, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()) =
-        httpClientFactory.createClient(trelloConfig.sourceName, trelloConfig.sourceSecret, trelloConfig.baseUrl)
-            .get(
-            resultClass = resultClass,
-            subPath = "/1/${subPath}",
-            parameters = parameters)
+    private fun <T> getTrello(bvUser: String, sourceName: String, resultClass: Class<T>, subPath: String, parameters: Map<String, Any> = emptyMap()): T {
+        val sourceConfig = sourceConfigProvider.getSourceConfig(sourceName = sourceName, bvUser = bvUser)
+        return httpClientFactory.createClient(
+            bvUser = bvUser,
+            sourceName = sourceName,
+            url = sourceConfig.baseUrl
+        ).get(
+                resultClass = resultClass,
+                subPath = "/1/${subPath}",
+                parameters = parameters
+            )
+    }
 }

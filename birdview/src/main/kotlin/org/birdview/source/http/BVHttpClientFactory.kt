@@ -5,6 +5,8 @@ import org.birdview.utils.remote.ApiAuth
 import org.springframework.cache.annotation.Cacheable
 
 interface BVHttpClientFactory {
+    fun getHttpClientAuthenticated(url:String, authProvider:() -> ApiAuth?): BVHttpClient
+
     @Cacheable(cacheNames = arrayOf(BVCacheNames.HTTP_CLIENT_CACHE_NAME), key = "#url.toString()", sync = true)
-    fun getHttpClient(url:String, authProvider:() -> ApiAuth? = {null}): BVHttpClient
+    fun getHttpClientUnauthenticated(url:String): BVHttpClient
 }

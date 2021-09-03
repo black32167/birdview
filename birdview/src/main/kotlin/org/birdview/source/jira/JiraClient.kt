@@ -1,6 +1,7 @@
 package org.birdview.source.jira
 
 import org.birdview.source.BVSourceConfigProvider
+import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.BVHttpSourceClientFactory
 import org.birdview.source.jira.model.JiraIssue
 import org.birdview.source.jira.model.JiraIssuesFilterRequest
@@ -17,7 +18,8 @@ import javax.inject.Named
 
 @Named
 class JiraClient(
-    private val httpClientFactory: BVHttpSourceClientFactory
+    private val httpClientFactory: BVHttpSourceClientFactory,
+    private val sourceConfigProvider: BVSourceConfigProvider,
 ) {
     companion object {
         private const val API_SUFFIX = "/rest/api/2"
@@ -26,7 +28,7 @@ class JiraClient(
     private val issuesPerPage = 50
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
-    fun findIssues(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig, jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
+    fun findIssues(bvUser: String, sourceName: String, jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
         if (jql == null) {
             return
         }
@@ -41,14 +43,14 @@ class JiraClient(
         var startAt:Int? = 0
         do {
             val response = BVTimeUtil.logTimeAndReturn("jira-findIssues-page") {
-                getHttpClient(jiraConfig)
+                getHttpClient(bvUser = bvUser, sourceName = sourceName)
                     .post(
                         resultClass = JiraIssuesFilterResponse::class.java,
                         subPath = "search",
                         postEntity = jiraIssuesRequest.copy(startAt = startAt!!))
                     .also { issuesResponse ->
                         val issues = issuesResponse.issues
-                            .map { executor.submit(Callable { loadByUrl(jiraConfig, it.self) }) }
+                            .map { executor.submit(Callable { loadByUrl(bvUser = bvUser, sourceName = sourceName, url = it.self) }) }
                             .mapNotNull { future ->
                                 try {
                                     future.get()
@@ -66,12 +68,13 @@ class JiraClient(
         } while (!response.isLast && !response.issues.isEmpty())
     }
 
-    fun loadByKeys(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig, issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
+    fun loadByKeys(bvUser: String, sourceName: String, issueKeys: List<String>, chunkConsumer: (List<JiraIssue>) -> Unit) {
         val issueFutures = ConcurrentHashMap<String, Future<JiraIssue>>()
         issueKeys.forEach { issueKey ->
             issueFutures.computeIfAbsent(issueKey) {
+                val jiraConfig = sourceConfigProvider.getSourceConfig(sourceName = sourceName, bvUser = bvUser)
                 val url = "${getApiRootUrl(jiraConfig)}/issue/${issueKey}"
-                executor.submit(Callable { loadByUrl(jiraConfig, url) })
+                executor.submit(Callable { loadByUrl(bvUser = bvUser, sourceName = sourceName, url) })
             }
         }
         val issues = issueFutures.mapNotNull { (issueKey, issueFuture) ->
@@ -86,26 +89,29 @@ class JiraClient(
         chunkConsumer(issues)
     }
 
-    fun loadByUrl(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig, url:String): JiraIssue {
+    fun loadByUrl(bvUser: String, sourceName: String, url:String): JiraIssue {
+        val jiraConfig = sourceConfigProvider.getSourceConfig(sourceName = sourceName, bvUser = bvUser)
         if (!url.startsWith(getApiRootUrl(jiraConfig))) {
             throw IllegalArgumentException("Can't load ${url} from ${jiraConfig.baseUrl}")
         }
-        return getHttpClient(jiraConfig).get(
+        return getHttpClient(bvUser = bvUser, sourceName = sourceName).get(
             resultClass = JiraIssue::class.java,
             subPath = url.substring(getApiRootUrl(jiraConfig).length),
             parameters = mapOf("expand" to "changelog")
         )
     }
 
-    fun getIssueLinks(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig, issueKey: String): Array<JiraRemoteLink> =
-        getHttpClient(jiraConfig).get(
+    fun getIssueLinks(bvUser: String, sourceName:String, issueKey: String): Array<JiraRemoteLink> =
+        getHttpClient(bvUser = bvUser, sourceName = sourceName).get(
             resultClass = Array<JiraRemoteLink>::class.java,
             subPath = "issue/${issueKey}/remotelink",
             parameters = mapOf("expand" to "changelog")
         )
 
-    private fun getHttpClient(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig) =
-        httpClientFactory.createClient(jiraConfig.sourceName, jiraConfig.sourceSecret, getApiRootUrl(jiraConfig))
+    private fun getHttpClient(bvUser: String, sourceName: String):BVHttpClient {
+        val sourceConfig = sourceConfigProvider.getSourceConfig(sourceName = sourceName, bvUser = bvUser)
+        return httpClientFactory.createClient(bvUser = bvUser, sourceName = sourceName, getApiRootUrl(sourceConfig))
+    }
 
     private fun getApiRootUrl(jiraConfig: BVSourceConfigProvider.SyntheticSourceConfig) = "${jiraConfig.baseUrl}${API_SUFFIX}"
 }

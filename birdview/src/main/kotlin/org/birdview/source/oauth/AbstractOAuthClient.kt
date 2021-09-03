@@ -26,7 +26,7 @@ abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
             }
 
     private fun getRemoteAccessToken(config: BVOAuthSourceSecret, refreshToken: String): BVOAuthTokens {
-        return httpClientFactory.getHttpClient(config.tokenExchangeUrl)
+        return httpClientFactory.getHttpClientUnauthenticated(config.tokenExchangeUrl)
             .postForm(
                 resultClass = getAccessTokenResponseClass(),
                 formFields = getTokenRefreshFormContent(refreshToken, config)
@@ -57,7 +57,7 @@ abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
             "redirect_uri" to redirectUrl
         )
         val accessTokenExchangeResponse =
-            httpClientFactory.getHttpClient(oauthSecret.tokenExchangeUrl).postForm(
+            httpClientFactory.getHttpClientUnauthenticated(oauthSecret.tokenExchangeUrl).postForm(
                 resultClass = getAccessTokenResponseClass(),
                 formFields = fields)
         saveOAuthTokens(sourceName, accessTokenExchangeResponse);

@@ -21,7 +21,6 @@ import javax.inject.Named
 open class GithubTaskService(
     private val gqlClient: GithubGqlClient,
     private val githubQueryBuilder: GithubQueryBuilder,
-    private val sourceConfigProvider: BVSourceConfigProvider,
 ): BVTaskSource {
     private val log = LoggerFactory.getLogger(GithubTaskService::class.java)
 
@@ -33,18 +32,15 @@ open class GithubTaskService(
     ) {
         val sourceUserName = sourceConfig.sourceUserName
         val githubQuery = githubQueryBuilder.getFilterQueries(sourceUserName, updatedPeriod)
-        gqlClient.getPullRequests(sourceConfig, githubQuery) { prs ->
+        gqlClient.getPullRequests(bvUser = bvUser, sourceName = sourceConfig.sourceName, githubQuery) { prs ->
             val docs = prs.map { pr -> toBVDocument(pr, sourceConfig) }
             chunkConsumer.consume(docs)
         }
     }
 
     override fun resolveSourceUserId(bvUser: String, sourceName: String, email: String):String {
-        val githubConfig = sourceConfigProvider.getSourceConfig(
-            sourceName = sourceName,
-            bvUser = bvUser)!!
         val userName = try {
-            gqlClient.getUserByEmail(githubConfig, email)
+            gqlClient.getUserByEmail(bvUser = bvUser, sourceName = sourceName, email = email)
         } catch (e: Throwable) {
             log.error("error resolving Github user by email", e)
             null

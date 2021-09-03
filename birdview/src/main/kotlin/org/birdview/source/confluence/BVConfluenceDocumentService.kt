@@ -30,7 +30,7 @@ class BVConfluenceDocumentService (
                 (updatedPeriod.after?.let { after -> " AND lastmodified>\"${formatDate(after)}\" " } ?: "") +
                 (updatedPeriod.before?.let { before -> " AND lastmodified<=\"${formatDate(before)}\" " } ?: "") +
                 " ORDER BY lastmodified DESC"
-        client.findDocuments(sourceConfig, cql) { confluenceDocuments ->
+        client.findDocuments(bvUser, sourceConfig.sourceName, cql) { confluenceDocuments ->
             // Feed loaded pages
             confluenceDocuments
                 .filter { it.content?.type == "page" }
@@ -46,7 +46,7 @@ class BVConfluenceDocumentService (
                 .distinct()
                 .filter { pageUrl->!chunkConsumer.isConsumed(pageUrl) }
                 .map { pageUrl ->
-                    client.loadPage(sourceConfig, pageUrl)
+                    client.loadPage(bvUser = bvUser, sourceName = sourceConfig.sourceName, pageUrl)
                 }
                 .map { mapDocument(it, confluenceConfig = sourceConfig, bvUser = bvUser) }
                 .also (chunkConsumer::consume)
@@ -60,7 +60,7 @@ class BVConfluenceDocumentService (
         val docUrl = "${confluenceConfig.baseUrl}/${confluenceDocument._links.webui.trimStart('/')}"
 
         // load document comments
-        val comments:List<ConfluenceSearchItemContent> = client.loadComments(confluenceConfig, confluenceDocument.id)
+        val comments:List<ConfluenceSearchItemContent> = client.loadComments(bvUser = bvUser, sourceName = sourceName, confluenceDocument.id)
 
         return BVDocument(
                 ids = setOf(
