@@ -24,11 +24,11 @@ abstract class BVUserSourceWebControllerSupport {
         return req
     }
 
-    protected fun toPersistent(sourceType: SourceType, formData: SourceSecretFormData, fallbackPrincipal: String): BVSourceSecret {
+    protected fun toPersistent(sourceName: String, sourceType: SourceType, formData: SourceSecretFormData, fallbackPrincipal: String): BVSourceSecret {
         val secret = formData.secretToken
         if (secret.startsWith(LEND_PREFIX)) {
-            val (lender, sourceName) = secret.substring(LEND_PREFIX.length).split(":".toRegex(), 2)
-            return BVLentSecrets(lender, sourceName)
+            val (lender, lenderSourceName) = secret.substring(LEND_PREFIX.length).split(":".toRegex(), 2)
+            return BVLentSecrets(lender, lenderSourceName)
         }
 
         return when (sourceType) {
@@ -37,6 +37,7 @@ abstract class BVUserSourceWebControllerSupport {
                 token = formData.secretToken
             )
             SourceType.GDRIVE -> BVOAuthSourceSecret(
+                sourceName = sourceName,
                 flavor = BVOAuthSourceSecret.OAuthFlavour.GDRIVE,
                 clientId = formData.principal ?: fallbackPrincipal,
                 clientSecret = formData.secretToken,
@@ -45,6 +46,7 @@ abstract class BVUserSourceWebControllerSupport {
                 scope = "https://www.googleapis.com/auth/drive"
             )
             SourceType.SLACK -> BVOAuthSourceSecret(
+                sourceName = sourceName,
                 flavor = BVOAuthSourceSecret.OAuthFlavour.SLACK,
                 clientId = formData.principal ?: fallbackPrincipal,
                 clientSecret = formData.secretToken,

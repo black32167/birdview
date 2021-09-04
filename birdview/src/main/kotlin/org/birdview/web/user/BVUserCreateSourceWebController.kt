@@ -32,7 +32,7 @@ class BVUserCreateSourceWebController(
 
     @PostMapping
     fun add(formDataCreate: CreateUserSourceFormData): Any {
-        val persistentSecret = toPersistent(formDataCreate.sourceType, formDataCreate.sourceSecretFormData, formDataCreate.filter)
+        val persistentSecret = toPersistent(formDataCreate.sourceName, formDataCreate.sourceType, formDataCreate.sourceSecretFormData, formDataCreate.filter)
         userSourceStorage.create(
             bvUser = UserContext.getUserName(),
             sourceConfig = BVUserSourceConfig(

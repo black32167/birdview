@@ -68,7 +68,7 @@ class BVUserUpdateSourceWebController(
                 baseUrl = formDataUpdate.baseUrl,
                 sourceType = formDataUpdate.sourceType,
                 serializedSourceSecret = sourceSecretsMapper.serialize(
-                    toPersistent(formDataUpdate.sourceType, formDataUpdate.sourceSecretFormData, formDataUpdate.filter))
+                    toPersistent(sourceName, formDataUpdate.sourceType, formDataUpdate.sourceSecretFormData, formDataUpdate.filter))
             )
         )
         return "redirect:${BVWebPaths.USER_SETTINGS}"

@@ -12,14 +12,14 @@ abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
 ) {
     private val log = LoggerFactory.getLogger(AbstractOAuthClient::class.java)
 
-    open fun getToken(sourceName: String, config: BVOAuthSourceSecret): String? =
-        defaultTokenStorage.loadOAuthTokens(sourceName)
+    open fun getToken(config: BVOAuthSourceSecret): String? =
+        defaultTokenStorage.loadOAuthTokens(config.sourceName)
             ?.let { tokens ->
                 val validAccessToken: String? = tokens.accessToken
                     .takeUnless { tokens.isExpired() }
                     ?: tokens.refreshToken?.let { refreshToken ->
                         val renewedTokens = getRemoteAccessToken(config, refreshToken)
-                        defaultTokenStorage.saveOAuthTokens(sourceName, renewedTokens)
+                        defaultTokenStorage.saveOAuthTokens(config.sourceName, renewedTokens)
                         renewedTokens.accessToken
                     }
                 validAccessToken

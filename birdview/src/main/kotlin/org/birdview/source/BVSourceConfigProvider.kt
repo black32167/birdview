@@ -40,7 +40,7 @@ class BVSourceConfigProvider(
             .filter(BVUserSourceConfig::enabled)
 
         return enabledUserSources
-            .map(this::createSyntheticConfig)
+            .mapNotNull (this::createSyntheticConfig)
             .filter { isAuthenticated(it) }
     }
 
@@ -59,7 +59,7 @@ class BVSourceConfigProvider(
         return true
     }
 
-    private fun createSyntheticConfig(userSourceConfig: BVUserSourceConfig): SyntheticSourceConfig =
+    private fun createSyntheticConfig(userSourceConfig: BVUserSourceConfig): SyntheticSourceConfig? = try {
         SyntheticSourceConfig(
             sourceName = userSourceConfig.sourceName,
             sourceType = userSourceConfig.sourceType,
@@ -67,4 +67,7 @@ class BVSourceConfigProvider(
             sourceUserName = userSourceConfig.sourceUserName,
             sourceSecret = sourceSecretsMapper.deserialize(userSourceConfig.serializedSourceSecret)
         )
+    } catch (e: Exception) {
+        null
+    }
 }
