@@ -69,7 +69,7 @@
                     </tr>
                     </#list>
                 </table>
-                <form class="center" action="/user/settings/addWorkGroup" method="POST">
+                <form class="center" action="/user/group" method="POST">
                     <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="form settings">
                         <input type="text" name="workGroup">

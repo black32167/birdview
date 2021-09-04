@@ -6,11 +6,11 @@
 </tr>
 <tr>
     <td class="sign">Email:</td>
-    <td><input type="text" name="filter"></td>
+    <td><input type="text" name="principal"></td>
 </tr>
 <tr>
     <td class="sign">User Id:</td>
-    <td><input type="text" name="principal"></td>
+    <td><input type="text" name="filter"></td>
 </tr>
 <tr>
     <td class="sign">Token:</td>
