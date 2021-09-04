@@ -41,7 +41,7 @@ open class BVFireUserStorage(
         update(userName, userSettings)
     }
 
-    @CacheEvict(BVCacheNames.USER_SETTINGS_CACHE, allEntries = true)
+    @CacheEvict(cacheNames = [BVCacheNames.USER_NAMES_CACHE, BVCacheNames.USER_SETTINGS_CACHE], allEntries = true)
     override fun update(userName: String, userSettings: BVUserSettings) {
         fireStore.getUserCollection()
             .document(userName).set(userSettings).get()
