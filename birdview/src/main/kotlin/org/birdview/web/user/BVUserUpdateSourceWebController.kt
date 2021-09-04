@@ -84,7 +84,7 @@ class BVUserUpdateSourceWebController(
         when (secretConfig) {
             is BVTokenSourceSecret -> secretConfig.user
             is BVOAuthSourceSecret -> secretConfig.clientId
-            is BVLentSecrets -> secretConfig.lenderUser
+            is BVLentSecrets -> ""
             else -> null
         }
 

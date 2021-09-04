@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
-class SourceSecretsMapper(val jsonDeserializer: JsonDeserializer) {
+class SourceSecretsMapper(private val jsonDeserializer: JsonDeserializer) {
     private val log = LoggerFactory.getLogger(SourceSecretsMapper::class.java)
 
     fun serialize(secret: BVSourceSecret) =
