@@ -12,14 +12,14 @@ abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
 ) {
     private val log = LoggerFactory.getLogger(AbstractOAuthClient::class.java)
 
-    open fun getToken(config: BVOAuthSourceSecret): String? =
-        defaultTokenStorage.loadOAuthTokens(config.sourceName)
+    open fun getToken(bvUser: String, config: BVOAuthSourceSecret): String? =
+        defaultTokenStorage.loadOAuthTokens(bvUser = bvUser, sourceName = config.sourceName)
             ?.let { tokens ->
                 val validAccessToken: String? = tokens.accessToken
                     .takeUnless { tokens.isExpired() }
                     ?: tokens.refreshToken?.let { refreshToken ->
                         val renewedTokens = getRemoteAccessToken(config, refreshToken)
-                        defaultTokenStorage.saveOAuthTokens(config.sourceName, renewedTokens)
+                        defaultTokenStorage.saveOAuthTokens(bvUser = bvUser, sourceName = config.sourceName, renewedTokens)
                         renewedTokens.accessToken
                     }
                 validAccessToken
@@ -42,12 +42,15 @@ abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
     protected abstract fun extractTokensData(response: RT): BVOAuthTokens
     abstract fun getAccessTokenResponseClass(): Class<RT>
 
-    protected abstract fun saveOAuthTokens(sourceName: String, rawResponse: RT)
+    protected abstract fun saveOAuthTokens(bvUser: String, sourceName: String, rawResponse: RT)
 
-    fun updateAccessToken(sourceName: String,
-                          authCode: String,
-                          redirectUrl: String,
-                          oauthSecret: BVOAuthSourceSecret) {
+    fun updateAccessToken(
+        bvUser: String,
+        sourceName: String,
+        authCode: String,
+        redirectUrl: String,
+        oauthSecret: BVOAuthSourceSecret
+    ) {
         val fields = mapOf(
             "client_id" to oauthSecret.clientId,
             "client_secret" to oauthSecret.clientSecret,
@@ -59,7 +62,8 @@ abstract class AbstractOAuthClient<RT: OAuthTokenResponse>(
         val accessTokenExchangeResponse =
             httpClientFactory.getHttpClientUnauthenticated(oauthSecret.tokenExchangeUrl).postForm(
                 resultClass = getAccessTokenResponseClass(),
-                formFields = fields)
-        saveOAuthTokens(sourceName, accessTokenExchangeResponse);
+                formFields = fields
+            )
+        saveOAuthTokens(bvUser = bvUser, sourceName = sourceName, accessTokenExchangeResponse);
     }
 }

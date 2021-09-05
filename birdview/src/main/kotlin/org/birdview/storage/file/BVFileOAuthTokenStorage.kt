@@ -15,26 +15,26 @@ import javax.inject.Named
 class BVFileOAuthTokenStorage(
     val bvFoldersConfig: BVFoldersConfig
 ): OAuthTokenStorage {
-    override fun loadOAuthTokens(sourceName: String): BVOAuthTokens? =
-        readToken(getAccessTokenFilePath(sourceName))
+    override fun loadOAuthTokens(bvUser:String, sourceName: String): BVOAuthTokens? =
+        readToken(getAccessTokenFilePath(bvUser = bvUser, sourceName = sourceName))
             ?.let { accessToken->
                 BVOAuthTokens(
                     accessToken = accessToken,
-                    refreshToken = readToken(getRefreshTokenFilePath(sourceName)) ?: "",
+                    refreshToken = readToken(getRefreshTokenFilePath(bvUser = bvUser, sourceName = sourceName)) ?: "",
                 )
             }
 
-    override fun saveOAuthTokens(sourceName: String, tokens: BVOAuthTokens) {
-        saveToken(getAccessTokenFilePath(sourceName), tokens.accessToken)
+    override fun saveOAuthTokens(bvUser:String, sourceName: String, tokens: BVOAuthTokens) {
+        saveToken(getAccessTokenFilePath(bvUser = bvUser, sourceName = sourceName), tokens.accessToken)
         tokens.refreshToken?.also { refreshToken ->
-            saveToken(getRefreshTokenFilePath(sourceName), refreshToken)
+            saveToken(getRefreshTokenFilePath(bvUser = bvUser, sourceName = sourceName), refreshToken)
         }
     }
 
-    private fun getRefreshTokenFilePath(source: String): Path =
-        bvFoldersConfig.oauthTokenDir.resolve("${source}.token")
-    private fun getAccessTokenFilePath(sourceName: String): Path =
-        bvFoldersConfig.oauthTokenDir.resolve("${sourceName}.access.token")
+    private fun getRefreshTokenFilePath(bvUser: String, sourceName: String): Path =
+        bvFoldersConfig.getUserSourceTokensFolder(bvUser).resolve("${sourceName}.token")
+    private fun getAccessTokenFilePath(bvUser: String, sourceName: String): Path =
+        bvFoldersConfig.getUserSourceTokensFolder(bvUser).resolve("${sourceName}.access.token")
     private fun readToken(filePath: Path):String? =
         filePath
             .takeIf { Files.exists(it) }

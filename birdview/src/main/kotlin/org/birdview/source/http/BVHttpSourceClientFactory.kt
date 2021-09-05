@@ -26,18 +26,18 @@ open class BVHttpSourceClientFactory(
         return httpClientFactory.getHttpClientAuthenticated(url) {
             val sourceConfig = sourceConfigProvider.getSourceConfig(sourceName = sourceName, bvUser = bvUser)
                 ?: throw IllegalArgumentException("Could not find config for source ${sourceName}, user ${bvUser}")
-            getAuth(sourceConfig.sourceSecret)
+            getAuth(bvUser, sourceConfig.sourceSecret)
         }
     }
 
-    private fun getAuth(sourceSecret: BVSourceSecret): ApiAuth =
+    private fun getAuth(bvUser: String, sourceSecret: BVSourceSecret): ApiAuth =
         when (sourceSecret) {
             is BVTokenSourceSecret -> BasicAuth(sourceSecret.user, sourceSecret.token)
             is BVOAuthSourceSecret -> when (sourceSecret.flavor) {
-                BVOAuthSourceSecret.OAuthFlavour.GDRIVE -> gdriveOAuthClient.getToken(sourceSecret)
+                BVOAuthSourceSecret.OAuthFlavour.GDRIVE -> gdriveOAuthClient.getToken(bvUser = bvUser, sourceSecret)
                     ?.let(::BearerAuth)
                     ?: throw RuntimeException("Failed retrieving Google API access token")
-                BVOAuthSourceSecret.OAuthFlavour.SLACK -> slackOAuthClient.getToken(sourceSecret)
+                BVOAuthSourceSecret.OAuthFlavour.SLACK -> slackOAuthClient.getToken(bvUser = bvUser, sourceSecret)
                     ?.let(::BearerAuth)
                     ?: throw RuntimeException("Failed retrieving Google API access token")
             }
@@ -48,7 +48,7 @@ open class BVHttpSourceClientFactory(
                     if (lentSecret is BVLentSecrets)
                         throw IllegalStateException("Sublending of secrets is not allowed: (${sourceSecret}->${lentSecret}")
                     else
-                        getAuth(lentSecret)
+                        getAuth(bvUser, lentSecret)
                 }
             else -> throw RuntimeException("Unsupported auth type: ${sourceSecret}")
         }

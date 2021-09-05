@@ -63,6 +63,7 @@ class OAuthSourceWebController (
         }
 
         oAuthClient.updateAccessToken(
+            bvUser = bvUser,
             sourceName = sourceName,
             authCode = authCode,
             redirectUrl = getRedirectCodeUrl(sourceName),

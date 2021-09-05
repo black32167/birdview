@@ -15,14 +15,14 @@ open class BVFirebaseOAuthTokenStorage(
     open val collectionAccessor: BVFireStoreAccessor
 ) : OAuthTokenStorage {
     @Cacheable(BVCacheNames.SOURCE_OAUTH_TOKENS_CACHE_NAME)
-    override fun loadOAuthTokens(sourceName: String): BVOAuthTokens? =
-        collectionAccessor.getDefaultRefreshTokensCollection()
+    override fun loadOAuthTokens(bvUser: String, sourceName: String): BVOAuthTokens? =
+        collectionAccessor.getRefreshTokensCollection(bvUser)
             .document(sourceName).get().get()
             .toObject(BVOAuthTokens::class.java);
 
     @CacheEvict(BVCacheNames.SOURCE_OAUTH_TOKENS_CACHE_NAME, key = "#sourceName")
-    override fun saveOAuthTokens(sourceName: String, tokens: BVOAuthTokens) {
-        collectionAccessor.getDefaultRefreshTokensCollection()
+    override fun saveOAuthTokens(bvUser: String, sourceName: String, tokens: BVOAuthTokens) {
+        collectionAccessor.getRefreshTokensCollection(bvUser)
             .document(sourceName).set(tokens).get()
     }
 }

@@ -41,13 +41,13 @@ class BVSourceConfigProvider(
 
         return enabledUserSources
             .mapNotNull (this::createSyntheticConfig)
-            .filter { isAuthenticated(it) }
+            .filter { isAuthenticated(bvUser, it) }
     }
 
-    private fun isAuthenticated(config: SyntheticSourceConfig): Boolean {
+    private fun isAuthenticated(bvUser: String, config: SyntheticSourceConfig): Boolean {
         if (config.sourceSecret is BVOAuthSourceSecret) {
             val sourceName = config.sourceName
-            val token = oAuthTokenStorage.loadOAuthTokens(sourceName)
+            val token = oAuthTokenStorage.loadOAuthTokens(bvUser, sourceName)
             if (token == null) {
                 log.debug("OAuth token is not set for source {}", sourceName)
                 return false
