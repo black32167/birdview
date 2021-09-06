@@ -17,4 +17,11 @@ class DocumentIdMapperTest {
         val mappedId = DocumentIdMapper.map(SourceType.CONFLUENCE, "https://canvadev.atlassian.net/wiki/spaces/MAR/pages/2369651567/Switching+to+reserve+cache+cluster")
         assertThat(mappedId).isEqualTo("https://canvadev.atlassian.net/wiki:2369651567")
     }
+
+    @Test
+    fun testConfluenceMapping3() {
+        val mappedId = DocumentIdMapper.map(SourceType.CONFLUENCE, "https://canvadev.atlassian.net/wiki/spaces/MAR/pages/2349139334")
+        assertThat(mappedId).isEqualTo("https://canvadev.atlassian.net/wiki:2349139334")
+    }
+
 }
