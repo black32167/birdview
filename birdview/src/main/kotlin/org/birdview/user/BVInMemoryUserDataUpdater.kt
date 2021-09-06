@@ -46,7 +46,12 @@ class BVInMemoryUserDataUpdater (
     }
 
     private fun refreshUsers() {
-        requestUserRefresh(*userStorage.listUserNames().toTypedArray())
+        try {
+            log.info("Pulling initial information from users sources")
+            requestUserRefresh(*userStorage.listUserNames().toTypedArray())
+        } catch (e: Exception) {
+            log.error("Failed pull initial information from users sources", e)
+        }
     }
 
     override fun requestUserRefresh(vararg bvUsers: String) {
