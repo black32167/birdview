@@ -5,10 +5,7 @@ import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
-import org.birdview.source.BVSessionDocumentConsumer
-import org.birdview.source.BVSourceConfigProvider
-import org.birdview.source.BVTaskSource
-import org.birdview.source.SourceType
+import org.birdview.source.*
 import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVFilters
@@ -64,8 +61,7 @@ class BVConfluenceDocumentService (
 
         return BVDocument(
                 ids = setOf(
-                    BVDocumentId(id = docUrl),
-                    BVDocumentId("https://canvadev.atlassian.net/wiki/pages/viewpage.action?pageId=${confluenceDocument.id}")),
+                    BVDocumentId(id = DocumentIdMapper.map(confluenceConfig.sourceType, docUrl))),
                 title = confluenceDocument.title,
                 key = "open",
                 body = confluenceDocument._expandable.body ?: "",

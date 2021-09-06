@@ -110,7 +110,7 @@ open class JiraTaskService(
 
     private fun mapExternalLinks(remoteLinks: Array<JiraRemoteLink>) =
         remoteLinks
-            .filter { it.relationship?.contains("mentioned")?.not() ?: true }
+          //  .filter { it.relationship?.contains("mentioned")?.not() ?: true }
             .map { it._object.url }
             .flatMap { BVFilters.filterRefsFromText(it) }
             .map { id->BVDocumentRef(id, RelativeHierarchyType.LINK_TO_CHILD) }
