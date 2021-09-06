@@ -56,6 +56,23 @@ html, body {
 .title_leaf {
     color: red;
 }
+
+.title-content {
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    text-overflow: ellipsis;
+    max-width:500px;
+    line-height: 1.2;
+}
+.title-links {
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    text-overflow: ellipsis;
+    max-width:300px;
+    line-height: 1.2;
+}
 .source {
 }
 .menu_right {
