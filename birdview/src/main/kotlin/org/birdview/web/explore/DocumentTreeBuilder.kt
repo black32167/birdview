@@ -132,8 +132,9 @@ class DocumentTreeBuilder(
                                     }
                                 }
                             } else {
-                                alternatives.computeIfAbsent(originalDocNode.internalId) { mutableSetOf() } +=
-                                    createNode(referredDoc).internalId
+                                //TODO: For now, commenting alternative representation resolution
+                              /*  alternatives.computeIfAbsent(originalDocNode.internalId) { mutableSetOf() } +=
+                                    createNode(referredDoc).internalId*/
                             }
                         }
                     }
