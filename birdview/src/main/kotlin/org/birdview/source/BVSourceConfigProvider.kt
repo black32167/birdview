@@ -49,10 +49,10 @@ class BVSourceConfigProvider(
             val sourceName = config.sourceName
             val token = oAuthTokenStorage.loadOAuthTokens(bvUser, sourceName)
             if (token == null) {
-                log.debug("OAuth token is not set for source {}", sourceName)
+                log.debug("OAuth token is not set for source {}, user {}", sourceName, bvUser)
                 return false
             } else if (token.isExpired() && token.refreshToken == null) {
-                log.warn("OAuth token is expired but can't be renewed for source {}", sourceName)
+                log.warn("OAuth token is expired but can't be renewed for source {}, user {}", sourceName, bvUser)
                 return false
             }
         }

@@ -8,5 +8,5 @@ open class BVDocumentRef (
 )
 
 enum class RelativeHierarchyType {
-    UNSPECIFIED, LINK_TO_PARENT, LINK_TO_CHILD
+    UNSPECIFIED, LINK_TO_PARENT, LINK_TO_CHILD, LINK_TO_DEPENDENT, LINK_TO_BLOCKER
 }

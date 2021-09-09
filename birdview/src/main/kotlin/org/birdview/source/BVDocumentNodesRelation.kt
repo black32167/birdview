@@ -34,6 +34,7 @@ class BVDocumentNodesRelation (
                 }
                 RelativeHierarchyType.LINK_TO_PARENT -> BVDocumentsRelation(referencedNode, node)
                 RelativeHierarchyType.LINK_TO_CHILD -> BVDocumentsRelation(node, referencedNode)
+                else  -> null
             }
 
         fun from(referencedNode: BVDocumentViewTreeNode, node: BVDocumentViewTreeNode, hierarchyType: RelativeHierarchyType): BVDocumentNodesRelation? =
@@ -50,6 +51,7 @@ class BVDocumentNodesRelation (
                 }
                 RelativeHierarchyType.LINK_TO_PARENT -> BVDocumentNodesRelation(referencedNode, node)
                 RelativeHierarchyType.LINK_TO_CHILD -> BVDocumentNodesRelation(node, referencedNode)
+                else -> null
             }
 
         private fun signInt(x: Int): Int =

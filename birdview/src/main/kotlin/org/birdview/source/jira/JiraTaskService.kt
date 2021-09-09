@@ -125,9 +125,9 @@ open class JiraTaskService(
         val refInfo = BVDocumentId(issueUrl)
         return when (outwardToken) {
             "blocks", "contributes to", "split to", "resolves", "has to be done before", "has to be finished together with" ->
-                BVDocumentRef(refInfo, RelativeHierarchyType.LINK_TO_PARENT)
+                BVDocumentRef(refInfo, RelativeHierarchyType.LINK_TO_DEPENDENT)
             "depends on" ->
-                BVDocumentRef(refInfo, RelativeHierarchyType.LINK_TO_CHILD)
+                BVDocumentRef(refInfo, RelativeHierarchyType.LINK_TO_BLOCKER)
             "relates on", "relates to" ->
                 BVDocumentRef(refInfo)
             "duplicates", "clones"->

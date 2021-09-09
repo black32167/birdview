@@ -36,10 +36,10 @@ open class BVHttpSourceClientFactory(
             is BVOAuthSourceSecret -> when (sourceSecret.flavor) {
                 BVOAuthSourceSecret.OAuthFlavour.GDRIVE -> gdriveOAuthClient.getToken(bvUser = bvUser, sourceSecret)
                     ?.let(::BearerAuth)
-                    ?: throw RuntimeException("Failed retrieving Google API access token")
+                    ?: throw RuntimeException("Failed retrieving Google API access token: user=$bvUser, source=${sourceSecret.sourceName}")
                 BVOAuthSourceSecret.OAuthFlavour.SLACK -> slackOAuthClient.getToken(bvUser = bvUser, sourceSecret)
                     ?.let(::BearerAuth)
-                    ?: throw RuntimeException("Failed retrieving Google API access token")
+                    ?: throw RuntimeException("Failed retrieving Google API access token: user=$bvUser, source=${sourceSecret.sourceName}")
             }
             is BVLentSecrets -> sourceConfigProvider.getSourceConfig(
                 sourceName = sourceSecret.lenderSourceName, bvUser = sourceSecret.lenderUser)
