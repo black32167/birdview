@@ -3,10 +3,7 @@ package org.birdview.source.jira
 import org.birdview.source.BVSourceConfigProvider
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.BVHttpSourceClientFactory
-import org.birdview.source.jira.model.JiraIssue
-import org.birdview.source.jira.model.JiraIssuesFilterRequest
-import org.birdview.source.jira.model.JiraIssuesFilterResponse
-import org.birdview.source.jira.model.JiraRemoteLink
+import org.birdview.source.jira.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
@@ -100,6 +97,12 @@ class JiraClient(
             parameters = mapOf("expand" to "changelog")
         )
     }
+
+    fun getIssueComments(bvUser: String, sourceName:String, issueKey: String): JiraCommentsResponse =
+        getHttpClient(bvUser = bvUser, sourceName = sourceName).get(
+            resultClass = JiraCommentsResponse::class.java,
+            subPath = "issue/${issueKey}/comment"
+        )
 
     fun getIssueLinks(bvUser: String, sourceName:String, issueKey: String): Array<JiraRemoteLink> =
         getHttpClient(bvUser = bvUser, sourceName = sourceName).get(

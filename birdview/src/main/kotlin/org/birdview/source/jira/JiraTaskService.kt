@@ -84,7 +84,7 @@ open class JiraTaskService(
                     users = extractUsers(issue, sourceName = sourceName),
                     refs = extractRefsIds(issue, issueLinks),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
-                    operations = extractOperations(issue, sourceName = sourceName),
+                    operations = extractOperations(bvUser = bvUser, issue, sourceName = sourceName),
                     sourceType = getType(),
                     priority = extractPriority(issue),
                     sourceName = sourceName
@@ -159,19 +159,37 @@ open class JiraTaskService(
             jiraUser?.emailAddress
                     ?.let { emailAddress -> BVDocumentUser(emailAddress, userRole, sourceName) }
 
-    private fun extractOperations(issue: JiraIssue, sourceName: String): List<BVDocumentOperation> =
-        issue.changelog
-                ?.histories
-                ?.flatMap { toOperation(issue, it, sourceName) }
-                ?: emptyList()
+    private fun extractOperations(bvUser: String, issue: JiraIssue, sourceName: String): List<BVDocumentOperation> {
+        val issueStatesOperations = issue.changelog
+            ?.histories
+            ?.flatMap { toOperation(issue, it, sourceName) }
+            ?: emptyList()
+        val issueCommentsOperations = jiraClient.getIssueComments(bvUser = bvUser, sourceName = sourceName, issueKey = issue.key)
+            .comments
+            .map { toOperation (issue, it, sourceName) }
+        return (issueCommentsOperations + issueStatesOperations).sortedByDescending { it.created }
+    }
+
+    private fun toOperation(issue: JiraIssue, comment: JiraComment, sourceName: String): BVDocumentOperation =
+        BVDocumentOperation(
+            author = comment.updateAuthor.emailAddress ?: "???",
+            description = "comment",
+            created = parseDate(comment.updated),
+            sourceName = sourceName,
+            type = if (comment.updateAuthor.emailAddress == issue.fields.assignee?.emailAddress) {
+                BVDocumentOperationType.UPDATE
+            } else {
+                BVDocumentOperationType.COMMENT
+            }
+        )
 
     private fun toOperation(issue: JiraIssue, changelogItem: JiraChangelogItem, sourceName: String): List<BVDocumentOperation> =
             changelogItem.items.map { historyItem ->
                 BVDocumentOperation(
-                        author = changelogItem.author.emailAddress ?: "???",
-                        description = historyItem.field,
-                        created = parseDate(changelogItem.created),
-                        sourceName = sourceName,
+                    author = changelogItem.author.emailAddress ?: "???",
+                    description = historyItem.field,
+                    created = parseDate(changelogItem.created),
+                    sourceName = sourceName,
                     type = if (changelogItem.author.emailAddress == issue.fields.assignee?.emailAddress) {
                         BVDocumentOperationType.UPDATE
                     } else {
