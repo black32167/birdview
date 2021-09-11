@@ -45,17 +45,17 @@ open class BVDocumentPredicate(
             }
         }
 
-        val inferredDocStatus = doc.status
-        val targetDocumentStatuses = filter.docStatuses
-        if (!targetDocumentStatuses.contains(inferredDocStatus)) {
-            log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
-            return false
-        }
-
-        if (!targetDocumentStatuses.contains(doc.status)) {
-            log.trace("Filtering out doc #{} (doc.status)", doc.title)
-            return false
-        }
+//        val inferredDocStatus = doc.status
+//        val targetDocumentStatuses = filter.docStatuses
+//        if (!targetDocumentStatuses.contains(inferredDocStatus)) {
+//            log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
+//            return false
+//        }
+//
+//        if (!targetDocumentStatuses.contains(doc.status)) {
+//            log.trace("Filtering out doc #{} (doc.status)", doc.title)
+//            return false
+//        }
 
 
         log.trace("Including doc #{}", doc.title)

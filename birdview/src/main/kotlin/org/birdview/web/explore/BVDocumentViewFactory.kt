@@ -15,7 +15,7 @@ class BVDocumentViewFactory(private val userSettings: BVLoggedUserSettingsProvid
                     ids = doc.ids.map { it.id },
                     httpUrl = doc.httpUrl,
                     sourceName = doc.sourceName,
-                    status = doc.status?.name ?: "???",
+                    status = doc.status?.name ?: "",
                     title = doc.title,
                     updated = BVDateTimeUtils.format(
                             doc.updated?.atZoneSameInstant(getDisplayTimezoneId()), "dd-MM-yyyy"),

@@ -2,7 +2,6 @@ package org.birdview.source.confluence
 
 import org.birdview.analysis.*
 import org.birdview.model.BVDocumentRef
-import org.birdview.model.BVDocumentStatus
 import org.birdview.model.TimeIntervalFilter
 import org.birdview.model.UserRole
 import org.birdview.source.*
@@ -70,7 +69,7 @@ class BVConfluenceDocumentService (
                 httpUrl = docUrl,
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
                 refs = extractRefs(confluenceDocument), // TODO
-                status = BVDocumentStatus.PROGRESS,
+                status = null,
                 operations = extractOperations(bvUser = bvUser, confluenceDocument, comments, sourceName),
                 sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW,
