@@ -71,7 +71,7 @@ class BVConfluenceDocumentService (
                 users = listOf(BVDocumentUser(userName = confluenceUser, sourceName = sourceName, role = UserRole.IMPLEMENTOR)), //TODO
                 refs = extractRefs(confluenceDocument), // TODO
                 status = BVDocumentStatus.PROGRESS,
-                operations = extractOperations(confluenceDocument, comments, sourceName),
+                operations = extractOperations(bvUser = bvUser, confluenceDocument, comments, sourceName),
                 sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW,
                 sourceName = sourceName
@@ -85,6 +85,7 @@ class BVConfluenceDocumentService (
     }
 
     private fun extractOperations(
+        bvUser: String,
         confluenceDocument: ConfluenceSearchItemContent,
         comments: List<ConfluenceSearchItemContent>,
         sourceName: String
@@ -115,19 +116,45 @@ class BVConfluenceDocumentService (
             ))
         }
 
-        history.contributors.publishers.users
-            .map { user ->
-                val contributorAccountId = user.accountId
-                BVDocumentOperation(
+//        history.contributors.publishers.users
+//            .map { user ->
+//                val contributorAccountId = user.accountId
+//                BVDocumentOperation(
+//                    description = "",
+//                    author = contributorAccountId,
+//                    authorDisplayName = user.run { email ?: displayName },
+//                    created = parseDate(confluenceDocument.version._when),
+//                    sourceName = sourceName,
+//                    type = BVDocumentOperationType.UPDATE
+//                )
+//            }
+//            .forEach (operations::add)
+
+        client.loadVersions(bvUser = bvUser, pageId = confluenceDocument.id, sourceName = sourceName)
+            .forEach { version ->
+                operations.add(BVDocumentOperation(
                     description = "",
-                    author = contributorAccountId,
-                    authorDisplayName = user.run { email ?: displayName },
-                    created = parseDate(confluenceDocument.version._when),
+                    author = version.by.accountId,
+                    authorDisplayName = version.by.run { email ?: displayName },
+                    created = parseDate(version._when),
                     sourceName = sourceName,
                     type = BVDocumentOperationType.UPDATE
-                )
+                ))
+                version.collaborators
+                    ?.users
+                    ?.map { collaborator->
+                        BVDocumentOperation(
+                            description = "",
+                            author = collaborator.accountId,
+                            authorDisplayName = collaborator.run { email ?: displayName },
+                            created = parseDate(version._when),
+                            sourceName = sourceName,
+                            type = BVDocumentOperationType.UPDATE
+                        )
+                    }
+                    ?.forEach (operations::add)
             }
-            .forEach (operations::add)
+
 
         return operations
     }

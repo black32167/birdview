@@ -1,10 +1,7 @@
 package org.birdview.source.confluence
 
 import org.birdview.source.BVSourceConfigProvider
-import org.birdview.source.confluence.model.ConfluenceSearchItem
-import org.birdview.source.confluence.model.ConfluenceSearchItemContent
-import org.birdview.source.confluence.model.ConfluenceSearchPageResponseSearchResult
-import org.birdview.source.confluence.model.ContentArray
+import org.birdview.source.confluence.model.*
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.BVHttpSourceClientFactory
 import org.birdview.utils.BVTimeUtil
@@ -77,6 +74,18 @@ class ConfluenceClient(
             parameters = mapOf(
                 "limit" to 100,
                 "expand" to pageExpands.joinToString(",")
+            )
+        ).results
+    }
+
+    fun loadVersions(pageId: String, bvUser: String, sourceName: String): List<ConfluenceVersion> {
+        val sourceConfig = sourceConfigProvider.getSourceConfig(sourceName = sourceName, bvUser = bvUser)
+        return getHttpClient(bvUser = bvUser, sourceName = sourceName, url = getApiUrl(sourceConfig.baseUrl)).get(
+            resultClass = ConfluenceVersionsResponse::class.java,
+            subPath = "content/${pageId}/version",
+            parameters = mapOf(
+                "limit" to 100,
+                "expand" to "collaborators"
             )
         ).results
     }
