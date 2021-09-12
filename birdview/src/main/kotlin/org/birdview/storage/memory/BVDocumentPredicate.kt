@@ -24,9 +24,9 @@ open class BVDocumentPredicate(
 
         val docUpdated = when (filter.userFilter.role) {
             UserRole.IMPLEMENTOR ->
-                getLastUserUpdateDate(doc, filter.userFilter, BVDocumentOperationType.UPDATE)
+                getLastImplementorActivityDate(doc, filter.userFilter)
             UserRole.COMMENTER ->
-                getLastUserUpdateDate(doc, filter.userFilter, BVDocumentOperationType.COMMENT)
+                getLastCommenterActivityDate(doc = doc, userFilter = filter.userFilter)
             UserRole.WATCHER ->
                 doc.updated.takeIf { isDocEverModifiedByUser(doc, filter.userFilter.userAlias) }
         }
@@ -45,21 +45,43 @@ open class BVDocumentPredicate(
             }
         }
 
-//        val inferredDocStatus = doc.status
-//        val targetDocumentStatuses = filter.docStatuses
-//        if (!targetDocumentStatuses.contains(inferredDocStatus)) {
-//            log.trace("Filtering out doc #{} (inferredDocStatus)", doc.title)
-//            return false
-//        }
-//
-//        if (!targetDocumentStatuses.contains(doc.status)) {
-//            log.trace("Filtering out doc #{} (doc.status)", doc.title)
-//            return false
-//        }
+        if (doc.status != null) {
+            val targetDocumentStatuses = filter.docStatuses
+
+            if (!targetDocumentStatuses.contains(doc.status)) {
+                log.trace("Filtering out doc #{} (doc.status)", doc.title)
+                return false
+            }
+        }
 
 
         log.trace("Including doc #{}", doc.title)
         return true
+    }
+
+    private fun getLastCommenterActivityDate(
+        doc: BVDocument,
+        userFilter: UserFilter,
+    ):  OffsetDateTime? {
+        if (getLastUserUpdateDate(doc = doc, userFilter =  userFilter, operationType = BVDocumentOperationType.UPDATE) != null) {
+            return null
+        }
+        return getLastUserUpdateDate(doc = doc, userFilter =  userFilter, operationType = BVDocumentOperationType.COMMENT)
+    }
+
+    private fun getLastImplementorActivityDate(
+        doc: BVDocument,
+        userFilter: UserFilter,
+    ):  OffsetDateTime? {
+        val lastUpdateDate = getLastUserUpdateDate(doc = doc, userFilter =  userFilter, operationType = BVDocumentOperationType.UPDATE)
+            ?: return null
+
+        val lastCommentDate = getLastUserUpdateDate(doc = doc, userFilter =  userFilter, operationType = BVDocumentOperationType.COMMENT)
+        return if (lastCommentDate != null && lastCommentDate > lastUpdateDate) {
+            lastCommentDate
+        } else {
+            lastUpdateDate
+        }
     }
 
     private fun resolveUserName(bvUser:String, sourceName: String) =
