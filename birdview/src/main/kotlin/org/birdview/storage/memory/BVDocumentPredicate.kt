@@ -74,14 +74,21 @@ open class BVDocumentPredicate(
 //        date?.toInstant()?.atZone(ZoneId.of("UTC"))
 
     private fun isDocEverModifiedByUser(doc: BVDocument, bvUser: String): Boolean {
+        val userIsImplementor = doc.users.any { docUser ->
+            resolveUserName(bvUser, docUser.sourceName) == docUser.userName && docUser.role == UserRole.IMPLEMENTOR
+        }
+        if (userIsImplementor) {
+            return false
+        }
+
         val hasFilteredUser = doc.users.any { docUser ->
             resolveUserName(bvUser, docUser.sourceName) == docUser.userName
         }
-
-        return if (hasFilteredUser)
+        if (hasFilteredUser) {
             return true
-        else
-            getLastUserOperation(doc, bvUser) != null
+        }
+
+        return getLastUserOperation(doc, bvUser) != null
     }
 
     private fun getLastUserOperation(doc: BVDocument, bvUser:String, operationType: BVDocumentOperationType? = null): BVDocumentOperation? {
