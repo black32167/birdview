@@ -20,7 +20,6 @@ import javax.inject.Named
 @Named
 open class JiraTaskService(
     private val jiraClient: JiraClient,
-    //private val sourceSecretsStorage: BVSourceSecretsStorage,
     private val jqlBuilder: JqlBuilder,
     private val userSourceConfigProvider: BVSourceConfigProvider,
 
