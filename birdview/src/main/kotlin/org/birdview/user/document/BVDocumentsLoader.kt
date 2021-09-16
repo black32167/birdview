@@ -41,7 +41,7 @@ class BVDocumentsLoader (
                                 documentConsumer
                             )
                         } catch (e: Throwable) {
-                            log.error("Error loading documents for ${sourceConfig.sourceType}", e)
+                            log.error("Error loading documents for ${sourceConfig.sourceType}, sm=${sourceManager.getType()} user=${bvUser}:", e)
                         }
                     }
                 }, executor)

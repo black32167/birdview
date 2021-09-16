@@ -17,7 +17,7 @@ class ConfluenceClient(
         private const val API_SUFFIX = "/rest/api"
     }
     private val log = LoggerFactory.getLogger(ConfluenceClient::class.java)
-    private val documentsPerPage = 50
+    private val documentsPerPage = 30
     private val pageExpands = listOf(
         "history.contributors.publishers.users",
         "version"

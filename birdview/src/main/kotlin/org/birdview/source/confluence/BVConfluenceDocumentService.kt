@@ -22,7 +22,7 @@ class BVConfluenceDocumentService (
         val confluenceUser = sourceConfig.sourceUserName
         val cql =
             "type IN (page,comment) AND " +
-                "(contributor=\"${confluenceUser}\" OR creator=\"${confluenceUser}\")" +
+                "(contributor=\"${confluenceUser}\" OR creator=\"${confluenceUser}\" OR watcher=\"${confluenceUser}\")" +
                 (updatedPeriod.after?.let { after -> " AND lastmodified>\"${formatDate(after)}\" " } ?: "") +
                 (updatedPeriod.before?.let { before -> " AND lastmodified<=\"${formatDate(before)}\" " } ?: "") +
                 " ORDER BY lastmodified DESC"

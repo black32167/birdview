@@ -5,6 +5,7 @@ import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
+import org.birdview.storage.BVUserStorage
 import org.birdview.time.BVTimeService
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.user.BVUserLog
@@ -25,7 +26,8 @@ class BVRestController(
         private val documentStorage: BVDocumentStorage,
         private val userLog: BVUserLog,
         private val timeService: BVTimeService,
-        private val documentTreeBuilder: DocumentTreeBuilder
+        private val documentTreeBuilder: DocumentTreeBuilder,
+        private val userStorage: BVUserStorage
 ) {
     class DocumentRequest(
             val user: String?,
@@ -40,8 +42,10 @@ class BVRestController(
     fun documents(
             documentRequest: DocumentRequest
     ): Collection<BVDocumentViewTreeNode> {
-        val today = timeService.getNow().truncatedTo(ChronoUnit.DAYS)
         val user = documentRequest.user.takeUnless { it == "" } ?: UserContext.getUserName()
+        val userProfile = userStorage.getUserSettings(user)
+        val today = timeService.getNow().truncatedTo(ChronoUnit.DAYS)
+        userProfile.zoneId
         val userRoles = documentRequest.userRole?.let { listOf(it) } ?: inferRolesFromReportType(documentRequest.reportType)
         val topNodes = ArrayList<BVDocumentViewTreeNode>()
         for (role in userRoles) {

@@ -54,7 +54,6 @@ open class BVDocumentPredicate(
             }
         }
 
-
         log.trace("Including doc #{}", doc.title)
         return true
     }

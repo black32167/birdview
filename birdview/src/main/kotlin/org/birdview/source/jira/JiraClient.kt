@@ -22,7 +22,7 @@ class JiraClient(
         private const val API_SUFFIX = "/rest/api/2"
     }
     private val log = LoggerFactory.getLogger(JiraClient::class.java)
-    private val issuesPerPage = 50
+    private val issuesPerPage = 30
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory())
 
     fun findIssues(bvUser: String, sourceName: String, jql: String?, chunkConsumer: (List<JiraIssue>) -> Unit) {
