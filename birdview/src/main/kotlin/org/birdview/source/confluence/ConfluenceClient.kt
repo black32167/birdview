@@ -36,28 +36,24 @@ class ConfluenceClient(
 
         val sourceConfig = sourceConfigProvider.getSourceConfig(bvUser = bvUser, sourceName = sourceName)
         var startAt: Int = 0
-        try {
-            do {
-                val response = BVTimeUtil.logTimeAndReturn("confluence-findDocs-page") {
-                    getHttpClient(bvUser, sourceName, getApiUrl(sourceConfig.baseUrl)).get(
-                        resultClass = ConfluenceSearchPageResponseSearchResult::class.java,
-                        subPath = "search",
-                        parameters = mapOf<String, Any>(
-                            "start" to startAt,
-                            "limit" to documentsPerPage,
-                            "cql" to cql,
-                            "expand" to pageExpands.map { "content.${it}" }.joinToString (",")
-                        )
-                    ).also {
-                        log.info("Loaded {} confluence pages", it.results.size)
-                        chunkConsumer(it.results)
-                    }
+        do {
+            val response = BVTimeUtil.logTimeAndReturn("confluence-findDocs-page") {
+                getHttpClient(bvUser, sourceName, getApiUrl(sourceConfig.baseUrl)).get(
+                    resultClass = ConfluenceSearchPageResponseSearchResult::class.java,
+                    subPath = "search",
+                    parameters = mapOf<String, Any>(
+                        "start" to startAt,
+                        "limit" to documentsPerPage,
+                        "cql" to cql,
+                        "expand" to pageExpands.map { "content.${it}" }.joinToString (",")
+                    )
+                ).also {
+                    log.info("Loaded {} confluence pages", it.results.size)
+                    chunkConsumer(it.results)
                 }
-                startAt = response.start + response.size
-            } while (startAt < response.totalSize)
-        } catch (e: Exception) {
-            log.error("", e)
-        }
+            }
+            startAt = response.start + response.size
+        } while (startAt < response.totalSize)
     }
 
     fun loadPage(bvUser: String, sourceName: String, pageUrl: String): ConfluenceSearchItemContent =
