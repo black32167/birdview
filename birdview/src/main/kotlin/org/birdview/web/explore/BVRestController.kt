@@ -5,7 +5,6 @@ import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
-import org.birdview.storage.BVUserStorage
 import org.birdview.time.BVTimeService
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.user.BVUserLog
@@ -16,7 +15,6 @@ import org.birdview.web.explore.model.BVUserLogEntry
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.time.temporal.ChronoUnit
 
 @RestController()
 @RequestMapping("/rest")
@@ -26,8 +24,7 @@ class BVRestController(
         private val documentStorage: BVDocumentStorage,
         private val userLog: BVUserLog,
         private val timeService: BVTimeService,
-        private val documentTreeBuilder: DocumentTreeBuilder,
-        private val userStorage: BVUserStorage
+        private val documentTreeBuilder: DocumentTreeBuilder
 ) {
     class DocumentRequest(
             val user: String?,
@@ -43,16 +40,14 @@ class BVRestController(
             documentRequest: DocumentRequest
     ): Collection<BVDocumentViewTreeNode> {
         val user = documentRequest.user.takeUnless { it == "" } ?: UserContext.getUserName()
-        val userProfile = userStorage.getUserSettings(user)
-        val today = timeService.getNow().truncatedTo(ChronoUnit.DAYS)
-        userProfile.zoneId
+        val todayInUserTz = timeService.getTodayInUserZone(user)
         val userRoles = documentRequest.userRole?.let { listOf(it) } ?: inferRolesFromReportType(documentRequest.reportType)
         val topNodes = ArrayList<BVDocumentViewTreeNode>()
         for (role in userRoles) {
             val docFilter = BVDocumentFilter(
                     docStatuses = getTargetDocStatuses(documentRequest.reportType),
                     grouping = true,
-                    updatedPeriod = TimeIntervalFilter(after = today.minusDays(documentRequest.daysBack)),
+                    updatedPeriod = TimeIntervalFilter(after = todayInUserTz.minusDays(documentRequest.daysBack)),
                     userFilter = UserFilter(userAlias = user, role = role),
                     sourceType = documentRequest.sourceType,
                     representationType = documentRequest.representationType)

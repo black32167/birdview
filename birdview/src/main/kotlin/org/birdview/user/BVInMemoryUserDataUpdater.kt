@@ -63,10 +63,9 @@ class BVInMemoryUserDataUpdater (
         log.info(">>>>>>>>> Idle users :${idleBvUsers.joinToString (",")}")
 
         updateScheduleExecutor.submit {
-            val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
-                ?: timeService.getNow()
-
             for (bvUser in idleBvUsers) {
+                val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
+                    ?: timeService.getTodayInUserZone(bvUser)
                 userFutures[bvUser] = userUpdateExecutor.submit {
                     var endTime: OffsetDateTime? = null
                     var startTime = now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
