@@ -31,6 +31,7 @@ open class BVFireUserStorage(
         } else {
             fireStore.getUserCollection()
                 .whereArrayContainsAny(BVUserSettings::workGroups.name, workGroups)
+                .whereEqualTo(BVUserSettings::enabled.name, true)
                 .get().get()
                 .documents
                 .map { it.id }
@@ -53,11 +54,11 @@ open class BVFireUserStorage(
             .document(userName).get().get()
             .let { DocumentObjectMapper.toObjectCatching(it, BVUserSettings::class)!! }
 
-    @CacheEvict(BVCacheNames.USER_SETTINGS_CACHE, allEntries = true)
+    @CacheEvict(cacheNames = [BVCacheNames.USER_SETTINGS_CACHE, BVCacheNames.USER_NAMES_CACHE], allEntries = true)
     override fun updateUserStatus(userName: String, enabled: Boolean) {
         fireStore.getUserCollection()
             .document(userName)
-            .update(BVUserSettings::enabled.name, true)
+            .update(BVUserSettings::enabled.name, enabled)
             .get()
     }
 
