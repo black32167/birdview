@@ -10,17 +10,11 @@ class BVFireStoreAccessor(
     fun db() = clientProvider.getClient()
 
     fun getUserCollection(): CollectionReference =
-        clientProvider.getClientForCollection("users")
-
-    fun getUserSourceCredentialsCollection(bvUser: String): CollectionReference =
-        getUserCollection().document(bvUser).collection("sourceCredentials")
+        clientProvider.getClientForCollection(BVFireCollections.USERS)
 
     fun getRefreshTokensCollection(bvUser: String): CollectionReference =
-        getUserCollection().document(bvUser).collection("oauthRefreshTokens")
-
-    fun getStorageSecretsCollection(): CollectionReference =
-        clientProvider.getClientForCollection("storageSecrets")
+        getUserCollection().document(bvUser).collection(BVFireCollections.OAUTH_REFRESH_TOKENS)
 
     fun getUserSourcesCollection(bvUser: String) =
-        getUserCollection().document(bvUser).collection("userSources")
+        getUserCollection().document(bvUser).collection(BVFireCollections.USER_SOURCES)
 }
