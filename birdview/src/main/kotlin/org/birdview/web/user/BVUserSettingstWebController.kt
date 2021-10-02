@@ -1,5 +1,6 @@
 package org.birdview.web.user
 
+import org.birdview.security.PasswordUtils
 import org.birdview.security.UserContext
 import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.BVUserStorage
@@ -20,10 +21,16 @@ class BVUserSettingstWebController (
 ) {
     companion object {
         fun getPath() = BVWebPaths.USER_SETTINGS
+        val USER_SETTINGS_TEMPLATE = "/user/user-settings"
+        val MESSAGE = "message"
     }
 
-    class UpdateUserFormData(
+    class UpdateZoneFormData(
         val zoneId: String
+    )
+
+    class UpdatePasswordFormData(
+        val newPassword: String
     )
 
     class AddWorkgroupFormData(
@@ -32,6 +39,37 @@ class BVUserSettingstWebController (
 
     @GetMapping
     fun index(model: Model): String {
+        setPageContext(model)
+        return USER_SETTINGS_TEMPLATE
+    }
+
+    @PostMapping("profile")
+    // TODO: non transactional
+    fun updateProfile(model: Model, updateZoneFormData: UpdateZoneFormData): String {
+        val loggedUser = UserContext.getUserName()
+        val settings = userStorage.getUserSettings(loggedUser)
+
+        userStorage.update(loggedUser, settings.copy(zoneId = updateZoneFormData.zoneId))
+
+        return "redirect:${BVWebPaths.USER_SETTINGS}"
+    }
+
+    @PostMapping("password")
+    // TODO: non transactional
+    fun updatePassword(model: Model, updatePasswordFormData: UpdatePasswordFormData): String {
+        val loggedUser = UserContext.getUserName()
+        val settings = userStorage.getUserSettings(loggedUser)
+
+        userStorage.update(loggedUser, settings.copy(passwordHash = PasswordUtils.hash(updatePasswordFormData.newPassword)))
+
+        model.addAttribute(MESSAGE, "Password changed")
+
+        return "redirect:${BVWebPaths.USER_SETTINGS}"
+    }
+
+    private fun currentUserName() = UserContext.getUserName()
+
+    private fun setPageContext(model: Model) {
         val loggedUser = UserContext.getUserName()
         val settings = userStorage.getUserSettings(loggedUser)
 
@@ -39,19 +77,5 @@ class BVUserSettingstWebController (
             .addAttribute("sourceNames", userSourceStorage.listSourceNames(currentUserName()))
             .addAttribute("availableTimeZoneIds", BVWebTimeZonesUtil.getAvailableTimezoneIds())
             .addAttribute("user", settings)
-
-        return "/user/user-settings"
     }
-
-    @PostMapping("profile")
-    // TODO: non transactional
-    fun updateProfile(updateUserFormData: UpdateUserFormData): String {
-        val loggedUser = UserContext.getUserName()
-        val settings = userStorage.getUserSettings(loggedUser)
-
-        userStorage.update(loggedUser, settings.copy(zoneId = updateUserFormData.zoneId))
-        return "redirect:${BVWebPaths.USER_SETTINGS}"
-    }
-
-    private fun currentUserName() = UserContext.getUserName()
 }

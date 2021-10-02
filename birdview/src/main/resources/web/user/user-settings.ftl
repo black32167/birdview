@@ -9,29 +9,52 @@
        <a href="/">< Home</a>
     </div>
 
+    <#if message??>
+        <div>${message}</div>
+    </#if>
     <div class="center">
-        <div>
-            <form class="center" action="/user/settings/profile" method="POST">
-                <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                <table class="settings">
-                    <tr>
-                        <td class="sign">Timezone:</td>
-                        <td>
-                          <select name="zoneId">
-                              <#list availableTimeZoneIds as availableTimeZoneId>
-                                <#if user.zoneId == availableTimeZoneId>
-                                  <option value="${availableTimeZoneId}" selected="selected">${availableTimeZoneId}</option>
-                                <#else>
-                                  <option value="${availableTimeZoneId}">${availableTimeZoneId}</option>
-                                </#if>
-                              </#list>
-                          </select>
-                          <input type="submit" value="Update">
-                        </td>
-                    </tr>
-                </table>
-            </form>
-        </div>
+        <table style="border:0px; padding:0px">
+        <tr><td>
+            <div>
+                <form class="center" action="/user/settings/profile" method="POST" style="width:100%">
+                    <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <table class="settings" style="width:30em; margin:0px;">
+                        <tr>
+                            <td class="sign" style="width:11em;">Timezone:</td>
+                            <td>
+                              <select name="zoneId" style="width:15em;">
+                                  <#list availableTimeZoneIds as availableTimeZoneId>
+                                    <#if user.zoneId == availableTimeZoneId>
+                                      <option value="${availableTimeZoneId}" selected="selected">${availableTimeZoneId}</option>
+                                    <#else>
+                                      <option value="${availableTimeZoneId}">${availableTimeZoneId}</option>
+                                    </#if>
+                                  </#list>
+                              </select>
+                              <input type="submit" value="Update">
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </td></tr>
+        <tr><td>
+            <div>
+                <form class="center" action="/user/settings/password" method="POST" style="width:100%">
+                    <input type="hidden" id="csrf_token" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <table class="settings" style="width:30em; margin:0px;">
+                        <tr>
+                            <td class="sign" style="width:11em;">Change Password:</td>
+                            <td>
+                              <input name="newPassword" style="width:15em;"></input>
+                              <input type="submit" value="Update">
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </td></tr>
+        </table>
 
         <div style="float:left">
             <fieldset class="settings">
@@ -57,7 +80,7 @@
                 </div>
             </fieldset>
         </div>
-        <div style="float:right">
+        <div style="float:left">
             <fieldset class="settings">
                 <legend>Workgroups</legend>
 

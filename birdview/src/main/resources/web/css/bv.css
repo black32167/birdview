@@ -107,6 +107,12 @@ html, body {
 .log-message {
     margin-left: 10px;
 }
+.page-message {
+    margin:auto;
+    display: table;
+    border: 1px black;
+    border-radius: 5px;
+}
 .center {
     margin:auto;
     display: table;
