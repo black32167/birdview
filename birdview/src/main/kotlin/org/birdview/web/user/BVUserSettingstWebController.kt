@@ -11,6 +11,8 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
 @Controller
 @RequestMapping(BVWebPaths.USER_SETTINGS)
@@ -38,32 +40,39 @@ class BVUserSettingstWebController (
     )
 
     @GetMapping
-    fun index(model: Model): String {
+    fun index(model: Model, @RequestParam(value = "message", required = false) message:String?): String {
+        model.addAttribute(MESSAGE, message);
         setPageContext(model)
         return USER_SETTINGS_TEMPLATE
     }
 
     @PostMapping("profile")
     // TODO: non transactional
-    fun updateProfile(model: Model, updateZoneFormData: UpdateZoneFormData): String {
+    fun updateProfile(redirectAttributes: RedirectAttributes, updateZoneFormData: UpdateZoneFormData): String {
         val loggedUser = UserContext.getUserName()
         val settings = userStorage.getUserSettings(loggedUser)
 
         userStorage.update(loggedUser, settings.copy(zoneId = updateZoneFormData.zoneId))
+
+        redirectAttributes.addAttribute(MESSAGE, "Time zone updated!")
 
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 
     @PostMapping("password")
     // TODO: non transactional
-    fun updatePassword(model: Model, updatePasswordFormData: UpdatePasswordFormData): String {
-        val loggedUser = UserContext.getUserName()
-        val settings = userStorage.getUserSettings(loggedUser)
+    fun updatePassword(redirectAttributes: RedirectAttributes, updatePasswordFormData: UpdatePasswordFormData): String {
+        val newPassword = updatePasswordFormData.newPassword
+        if (newPassword.isEmpty()) {
+            redirectAttributes.addAttribute(MESSAGE, "Password WAS NOT changed!")
+        } else {
+            val loggedUser = UserContext.getUserName()
+            val settings = userStorage.getUserSettings(loggedUser)
 
-        userStorage.update(loggedUser, settings.copy(passwordHash = PasswordUtils.hash(updatePasswordFormData.newPassword)))
+            userStorage.update(loggedUser, settings.copy(passwordHash = PasswordUtils.hash(newPassword)))
 
-        model.addAttribute(MESSAGE, "Password changed")
-
+            redirectAttributes.addAttribute(MESSAGE, "Password changed!")
+        }
         return "redirect:${BVWebPaths.USER_SETTINGS}"
     }
 

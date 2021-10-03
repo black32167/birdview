@@ -10,7 +10,7 @@
     </div>
 
     <#if message??>
-        <div>${message}</div>
+        <div class="page-message">${message}</div>
     </#if>
     <div class="center">
         <table style="border:0px; padding:0px">

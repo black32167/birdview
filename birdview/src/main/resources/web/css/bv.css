@@ -110,8 +110,10 @@ html, body {
 .page-message {
     margin:auto;
     display: table;
-    border: 1px black;
+    border: 1px solid black;
     border-radius: 5px;
+    padding: 5px;
+    background-color: lightblue;
 }
 .center {
     margin:auto;
