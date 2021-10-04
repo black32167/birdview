@@ -52,7 +52,9 @@ open class BVFireUserStorage(
     override fun getUserSettings(userName: String): BVUserSettings =
         fireStore.getUserCollection()
             .document(userName).get().get()
-            .let { DocumentObjectMapper.toObjectCatching(it, BVUserSettings::class)!! }
+            .takeIf { it.exists() }
+            ?.let { DocumentObjectMapper.toObjectCatching(it, BVUserSettings::class)!! }
+            ?: throw NoSuchElementException("User not found:${userName}")
 
     @CacheEvict(cacheNames = [BVCacheNames.USER_SETTINGS_CACHE, BVCacheNames.USER_NAMES_CACHE], allEntries = true)
     override fun updateUserStatus(userName: String, enabled: Boolean) {
