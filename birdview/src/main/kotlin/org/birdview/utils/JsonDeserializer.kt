@@ -3,6 +3,7 @@ package org.birdview.utils
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.nio.file.Path
 import javax.inject.Named
@@ -10,8 +11,9 @@ import javax.inject.Named
 @Named
 class JsonDeserializer {
     private val objectMapper = ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .registerModule(KotlinModule())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .registerModule(KotlinModule())
+        .registerModule(JavaTimeModule())
     fun <T> deserialize(jsonFile: Path, targetClass: Class<T>): T = try {
         objectMapper.readValue(jsonFile.toFile(), targetClass)
     } catch (e: Exception) {
