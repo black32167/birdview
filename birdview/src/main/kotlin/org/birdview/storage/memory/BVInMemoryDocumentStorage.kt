@@ -1,16 +1,19 @@
 package org.birdview.storage.memory
 
+import org.birdview.BVProfiles
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.RelativeHierarchyType.*
 import org.birdview.storage.BVDocumentStorage
+import org.springframework.context.annotation.Profile
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Named
 
 @Named
+@Profile(BVProfiles.LOCAL)
 class BVInMemoryDocumentStorage(
         private val docPredicate: BVDocumentPredicate
 ): BVDocumentStorage {

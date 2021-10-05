@@ -17,7 +17,7 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 import javax.inject.Named
 
-@Profile(BVProfiles.FILESTORE)
+@Profile(BVProfiles.LOCAL)
 @Named
 class BVFileUserStorage (
     private val bvFoldersConfig: BVFoldersConfig,

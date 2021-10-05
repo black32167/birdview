@@ -1,6 +1,6 @@
 package org.birdview
 
 object BVProfiles {
-    const val FIRESTORE = "firestore"
-    const val FILESTORE = "filestore"
+    const val CLOUD = "firestore"
+    const val LOCAL = "filestore"
 }

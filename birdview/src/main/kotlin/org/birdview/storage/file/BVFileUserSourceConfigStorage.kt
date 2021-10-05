@@ -15,7 +15,7 @@ import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors.toList
 import javax.inject.Named
 
-@Profile(BVProfiles.FILESTORE)
+@Profile(BVProfiles.LOCAL)
 @Named
 class BVFileUserSourceConfigStorage(
         private val bvFoldersConfig: BVFoldersConfig,

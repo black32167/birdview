@@ -11,7 +11,7 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 
-@Profile(BVProfiles.FIRESTORE)
+@Profile(BVProfiles.CLOUD)
 @Repository
 open class BVFireUserStorage(
     open val fireStore: BVFireStoreAccessor,
