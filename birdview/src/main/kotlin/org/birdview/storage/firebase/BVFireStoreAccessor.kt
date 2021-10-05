@@ -17,4 +17,7 @@ class BVFireStoreAccessor(
 
     fun getUserSourcesCollection(bvUser: String) =
         getUserCollection().document(bvUser).collection(BVFireCollections.USER_SOURCES)
+
+    fun getDocumentsCollection() =
+        clientProvider.getClientForCollection(BVFireCollections.DOCUMENTS)
 }
