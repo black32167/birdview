@@ -84,7 +84,6 @@ open class JiraTaskService(
                     refs = extractRefsIds(issue, issueLinks),
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(bvUser = bvUser, issue, sourceName = sourceName),
-                    sourceType = getType(),
                     priority = extractPriority(issue),
                     sourceName = sourceName
             )

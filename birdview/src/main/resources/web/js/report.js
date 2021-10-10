@@ -193,7 +193,7 @@ function refresh() {
         `?reportType=${reportType}` +
         `&daysBack=${daysBack}` +
         `&user=${user}` +
-        `&sourceType=${source}` +
+        `&sourceName=${source}` +
         `&representationType=${representationType}` +
         `&userRole=${userRole}`)
         .done(function( nodes ) {

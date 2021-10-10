@@ -26,6 +26,7 @@ import javax.inject.Inject
 @SpringBootTest("spring.main.allow-bean-definition-overriding=true")
 @RunWith(SpringRunner::class)
 class DocumentTreeBuilderTest {
+    private val BV_USER = "bvUser"
     private var TIME_INSTANT = OffsetDateTime.now()
     private val documentStorage = BVInMemoryDocumentStorage(mock(BVDocumentPredicate::class.java))
 
@@ -52,7 +53,7 @@ class DocumentTreeBuilderTest {
                 doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID, RelativeHierarchyType.LINK_TO_PARENT))),
                 doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID, RelativeHierarchyType.LINK_TO_PARENT)))
         )
-        val views = documentTreeBuilder.buildTree(docs, documentStorage)
+        val views = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)
         Assert.assertEquals(1, views.size)
         Assert.assertEquals(1, views.first().subNodes.size)
         Assert.assertEquals(1, views.first().subNodes.first().subNodes.size)
@@ -66,7 +67,7 @@ class DocumentTreeBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt")))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)
 
         assertEquals(1, tree.size)
         val uniqueDoc = tree.first()
@@ -82,7 +83,7 @@ class DocumentTreeBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD), docRef("id2", RelativeHierarchyType.LINK_TO_CHILD)))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)
 
         assertFalse(tree.isEmpty())
         assertTrue(tree.first().doc.ids.contains("id0"))
@@ -97,7 +98,7 @@ class DocumentTreeBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
@@ -110,7 +111,7 @@ class DocumentTreeBuilderTest {
                 doc(listOf("id2"), SourceType.JIRA, listOf()),
                 doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
@@ -119,7 +120,7 @@ class DocumentTreeBuilderTest {
     @Test
     fun testTreeBuilderMultipleIds() {
         val docs = persistDocs(doc(listOf("parentId", "alternativeParentId"), SourceType.JIRA))
-        val views = documentTreeBuilder.buildTree(docs, documentStorage)
+        val views = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)
         Assert.assertEquals(1, views.size)
     }
 
@@ -131,11 +132,11 @@ class DocumentTreeBuilderTest {
         val docs = listOf(
                 doc(listOf(DOC1_ID), SourceType.JIRA, updated = OffsetDateTime.now()),
                         doc(listOf(DOC2_ID), SourceType.JIRA, updated = OffsetDateTime.now().minusSeconds(10000)))
-        val othersGroup1 = documentTreeBuilder.buildTree(docs, documentStorage)[0]
+        val othersGroup1 = documentTreeBuilder.buildTree(BV_USER, docs, documentStorage)[0]
         val jiraGroup1 = othersGroup1.subNodes.first()
         assertTrue(jiraGroup1.subNodes.first().doc.ids.contains(DOC1_ID))
 
-        val othersGroup2 = documentTreeBuilder.buildTree(docs.reversed(), documentStorage)[0]
+        val othersGroup2 = documentTreeBuilder.buildTree(BV_USER, docs.reversed(), documentStorage)[0]
         val jiraGroup2 = othersGroup2.subNodes.first()
         assertTrue(jiraGroup2.subNodes.first().doc.ids.contains(DOC1_ID))
     }
@@ -152,7 +153,6 @@ class DocumentTreeBuilderTest {
                     httpUrl = "httpUrl",
                     refs = refIds,
                     status = BVDocumentStatus.BACKLOG,
-                    sourceType = sourceType,
                     sourceName = "sourceName")
 
     private fun dateSeq(): OffsetDateTime {
@@ -175,7 +175,7 @@ class DocumentTreeBuilderTest {
 
     fun persistDocs(vararg docs:BVDocument): List<BVDocument> {
         docs.forEach { doc->
-            documentStorage.updateDocument(doc)
+            documentStorage.updateDocument(doc, BV_USER)
         }
         return docs.toList()
     }

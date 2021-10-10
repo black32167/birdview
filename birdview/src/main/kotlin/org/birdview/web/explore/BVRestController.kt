@@ -27,12 +27,12 @@ class BVRestController(
         private val documentTreeBuilder: DocumentTreeBuilder
 ) {
     class DocumentRequest(
-            val user: String?,
-            val reportType: ReportType,
-            val daysBack: Long,
-            val sourceType: String?,
-            val userRole: UserRole?,
-            var representationType: RepresentationType
+        val user: String?,
+        val reportType: ReportType,
+        val daysBack: Long,
+        val sourceName: String?,
+        val userRole: UserRole?,
+        var representationType: RepresentationType
     )
 
     @GetMapping("documents")
@@ -49,13 +49,13 @@ class BVRestController(
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(after = todayInUserTz.minusDays(documentRequest.daysBack)),
                     userFilter = UserFilter(userAlias = user, role = role),
-                    sourceType = documentRequest.sourceType,
+                    sourceName = documentRequest.sourceName,
                     representationType = documentRequest.representationType)
             //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
             val docs = taskService.getDocuments(docFilter)
 
             val docViewsRoots = documentTreeBuilder
-                    .buildTree(docs, documentStorage)
+                    .buildTree(bvUser = user, docs, documentStorage)
                     .toMutableList()
 
             if (documentRequest.representationType == RepresentationType.LIST) {

@@ -63,7 +63,6 @@ open class GDriveTaskService(
                 users = extractUsers(bvUser, file, config),
                 refs = BVFilters.filterRefsFromText(file.name).map { BVDocumentRef(it) },
                 status = BVDocumentStatus.PROGRESS,
-                sourceType = getType(),
                 operations = extractOperations(file, config.sourceName),
                 sourceName = config.sourceName
         )

@@ -106,7 +106,7 @@ class BVInMemoryUserDataUpdater (
         val documentSessionConsumer = object:BVSessionDocumentConsumer {
             override fun consume(documents: List<BVDocument>) {
                 documents.forEach { doc->
-                    documentStorage.updateDocument(doc)
+                    documentStorage.updateDocument(doc, bvUser)
                     doc.ids.forEach { loadedIds += it.id }
                     loadedDocs[doc.internalId] = doc
                 }
@@ -147,7 +147,7 @@ class BVInMemoryUserDataUpdater (
         log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)
         documentsLoader.loadDocsByIds(bvUser, missedDocsIds) { docChunk ->
             docChunk.forEach { doc->
-                documentStorage.updateDocument(doc)
+                documentStorage.updateDocument(doc, bvUser)
                 loadedReferredDocs[doc.internalId] = doc
             }
         }.forEach(this::waitForCompletion)

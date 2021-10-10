@@ -1,4 +1,4 @@
-package org.birdview.firebase
+package org.birdview.it.firebase
 
 import org.birdview.BVProfiles
 import org.birdview.storage.firebase.BVFirebaseClientProvider

@@ -65,7 +65,7 @@ class BVInMemoryDocumentStorage(
     override fun getDocuments(searchingDocsIds: Collection<String>): List<BVDocument> =
         searchingDocsIds.mapNotNull (this::findDocument)
 
-    override fun updateDocument(doc: BVDocument) {
+    override fun updateDocument(doc: BVDocument, bvUser: String) {
         doc.ids
                 .map { it.id }
                 .forEach { docExternalId->

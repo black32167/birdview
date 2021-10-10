@@ -60,8 +60,6 @@ open class TrelloTaskService(
                         refs = BVFilters.filterRefsFromText("${card.desc} ${card.name}")
                                 .map { BVDocumentRef(it) },
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
-                        // TODO: load user by id to infer user name!
-                        sourceType = getType(),
                         sourceName = sourceConfig.sourceName
                 )
             }

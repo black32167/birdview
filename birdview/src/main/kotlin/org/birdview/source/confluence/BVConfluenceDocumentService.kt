@@ -71,7 +71,6 @@ class BVConfluenceDocumentService (
                 refs = extractRefs(confluenceDocument), // TODO
                 status = null,
                 operations = extractOperations(bvUser = bvUser, confluenceDocument, comments, sourceName),
-                sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW,
                 sourceName = sourceName
         )

@@ -3,12 +3,12 @@ package org.birdview.model
 import java.time.OffsetDateTime
 
 data class BVDocumentFilter(
-        val docStatuses: List<BVDocumentStatus>,
-        val grouping: Boolean,
-        val updatedPeriod: TimeIntervalFilter,
-        val userFilter: UserFilter,
-        val sourceType:String? = null,
-        val representationType: RepresentationType = RepresentationType.LIST
+    val docStatuses: List<BVDocumentStatus>,
+    val grouping: Boolean,
+    val updatedPeriod: TimeIntervalFilter,
+    val userFilter: UserFilter,
+    val sourceName:String? = null,
+    val representationType: RepresentationType = RepresentationType.LIST
 )
 
 enum class UserRole {

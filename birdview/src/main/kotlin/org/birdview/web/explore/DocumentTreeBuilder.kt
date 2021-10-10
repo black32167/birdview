@@ -2,9 +2,10 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentRef
-import org.birdview.source.BVDocumentNodesRelation
+import org.birdview.source.BVDocumentRelationFactory
 import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.web.explore.model.BVDocumentView
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.slf4j.LoggerFactory
@@ -12,7 +13,9 @@ import javax.inject.Named
 
 @Named
 class DocumentTreeBuilder(
-    val documentViewFactory: BVDocumentViewFactory
+    val documentViewFactory: BVDocumentViewFactory,
+    val documentRelationFactory: BVDocumentRelationFactory,
+    val userSourceConfigStorage: BVUserSourceConfigStorage
 ) {
     inner class DocumentForestBuilder (
             private val documentStorage: BVDocumentStorage
@@ -21,12 +24,12 @@ class DocumentTreeBuilder(
         private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
         private val alternatives = mutableMapOf<String, MutableSet<String>>()
 
-        fun createNode(doc: BVDocument): BVDocumentViewTreeNode =
+        fun createNode(bvUser:String, doc: BVDocument): BVDocumentViewTreeNode =
             internalId2Node.computeIfAbsent(doc.internalId) {
                 BVDocumentViewTreeNode(
                     doc = documentViewFactory.create(doc),
                     lastUpdated = doc.updated,
-                    sourceType = doc.sourceType
+                    sourceType = userSourceConfigStorage.getSource(bvUser = bvUser, sourceName = doc.sourceName)!!.sourceType
                 )
             }
 
@@ -91,7 +94,7 @@ class DocumentTreeBuilder(
                 .toList()
                 .sortedByDescending { it.lastUpdated }
 
-        fun addAndLinkNodes(_docs: List<BVDocument>) {
+        fun addAndLinkNodes(bvUser: String, _docs: List<BVDocument>) {
             log.info("Linking docs: ${_docs.map { "\n\t${it.title}(${it.ids.firstOrNull()?.id})" }.joinToString()}")
 
             val processedIds = mutableSetOf<String>()
@@ -102,7 +105,7 @@ class DocumentTreeBuilder(
                 val refDocs = mutableMapOf<String, BVDocument>()
                 docsToProcess.values.forEach { originalDoc ->
                     processedIds += originalDoc.internalId
-                    val originalDocNode = createNode(originalDoc)
+                    val originalDocNode = createNode(bvUser = bvUser, originalDoc)
 
                     val outgoingLinks: List<BVDocumentRef> = originalDoc.refs
                     val incomingLinks: List<BVDocumentRef> = originalDoc.ids.map { it.id }
@@ -116,12 +119,12 @@ class DocumentTreeBuilder(
                         if (referredDoc != null) {
 
                             val relation =
-                                BVDocumentNodesRelation.from(referredDoc, originalDoc, ref.hierarchyType)
+                                documentRelationFactory.from(bvUser = bvUser, referredDoc, originalDoc, ref.hierarchyType)
 
                             if (relation != null /*&& relation.child.internalId == originalDocNode.internalId */) {
                                 if (relation.child.internalId == originalDocNode.internalId) {
-                                    val parentNode = createNode(relation.parent)
-                                    val childNode = createNode(relation.child)
+                                    val parentNode = createNode(bvUser = bvUser, relation.parent)
+                                    val childNode = createNode(bvUser = bvUser, relation.child)
                                     refDocs[referredDoc.internalId] = referredDoc
                                     parentNode.addSubNode(childNode)
                                     val parentNodeLastUpdated = parentNode.lastUpdated
@@ -144,10 +147,10 @@ class DocumentTreeBuilder(
         }
     }
 
-    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage): List<BVDocumentViewTreeNode> {
+    fun buildTree(bvUser: String, _docs: List<BVDocument>, documentStorage: BVDocumentStorage): List<BVDocumentViewTreeNode> {
         val tree = DocumentForestBuilder(documentStorage)
 
-        tree.addAndLinkNodes(_docs)
+        tree.addAndLinkNodes(bvUser = bvUser, _docs)
 
         try {
             tree.mergeAlternatives()

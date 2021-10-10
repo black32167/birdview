@@ -20,7 +20,6 @@ data class BVDocument (
         val refs: List<BVDocumentRef> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
-        val sourceType: SourceType,
         val sourceName: String,
         val priority: Priority = Priority.NORMAL,
         val internalId: String = UUID.randomUUID().toString()

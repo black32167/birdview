@@ -69,7 +69,6 @@ open class GithubTaskService(
                          },
                 status = status,
                 operations = operations,
-                sourceType = getType(),
                 sourceName = githubConfig.sourceName
         )
     }

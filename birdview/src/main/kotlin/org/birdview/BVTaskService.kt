@@ -19,7 +19,7 @@ open class BVTaskService(
             documentStorage.findDocuments(filter)
         }
 
-        if (filter.sourceType != "") {
+        if (filter.sourceName != "") {
             return filteredDocs
         }
 
