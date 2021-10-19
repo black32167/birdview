@@ -2,6 +2,7 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentRef
+import org.birdview.model.RelativeHierarchyType
 import org.birdview.source.BVDocumentRelationFactory
 import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
@@ -99,6 +100,18 @@ class DocumentTreeBuilder(
 
             val processedIds = mutableSetOf<String>()
             var docsToProcess:Map<String, BVDocument> = _docs.filter { !processedIds.contains(it.internalId) }.associateBy { it.internalId }
+            val referringDocsMap: Map<String, List<BVDocument>> = docsToProcess.values
+                .flatMap { it.refs }
+                .map { it.docId.id }
+                .let { allExternalIds -> documentStorage.getReferringDocuments(allExternalIds.toSet()) }
+                .flatMap { referringDoc: BVDocument ->  referringDoc.refs.map { it.docId.id to referringDoc } }
+                .fold(mutableMapOf<String, MutableList<BVDocument>>()) { acc, mapping ->
+                    val (docId, referringDoc) = mapping
+                    acc.computeIfAbsent(docId) { mutableListOf() }
+                        .add(referringDoc)
+                    acc
+                }
+
 
             while (docsToProcess.isNotEmpty()) {
                 log.info("resolving refs for docs ({})", docsToProcess.size)
@@ -108,8 +121,24 @@ class DocumentTreeBuilder(
                     val originalDocNode = createNode(bvUser = bvUser, originalDoc)
 
                     val outgoingLinks: List<BVDocumentRef> = originalDoc.refs
-                    val incomingLinks: List<BVDocumentRef> = originalDoc.ids.map { it.id }
-                        .let { externalIds -> documentStorage.getIncomingRefsByExternalIds(externalIds.toSet()) }
+                    val externalIds = originalDoc.ids.map { it.id }
+                    val incomingLinks: List<BVDocumentRef> = externalIds
+                        .flatMap{ externalId-> referringDocsMap.get(externalId) ?: listOf() }
+                        .flatMap { parentCandidateDoc ->
+                            parentCandidateDoc.refs.filter { ref ->
+                                externalIds.contains(ref.docId.id)
+                            }.mapNotNull { originalRef->parentCandidateDoc.ids.firstOrNull()?.let { parentId->
+                                val newRelType = if (originalRef.hierarchyType == RelativeHierarchyType.LINK_TO_PARENT) {
+                                    RelativeHierarchyType.LINK_TO_CHILD
+                                } else if (originalRef.hierarchyType == RelativeHierarchyType.LINK_TO_CHILD) {
+                                    RelativeHierarchyType.LINK_TO_PARENT
+                                } else {
+                                    RelativeHierarchyType.UNSPECIFIED
+                                }
+                                BVDocumentRef(parentId, newRelType)
+                            }}
+                        }
+
                     log.info("Linking '{}':{}",
                         "${originalDoc.title}(${originalDoc.ids.firstOrNull()?.id})",
                         (incomingLinks.map {"\n\t${it.docId.id}->"} + outgoingLinks.map {"\n\t->${it.docId.id}"}).joinToString())

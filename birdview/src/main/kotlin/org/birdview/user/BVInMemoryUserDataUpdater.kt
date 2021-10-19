@@ -140,9 +140,7 @@ class BVInMemoryUserDataUpdater (
     private fun loadReferredDocs(bvUser: String, originalDocs: Collection<BVDocument>): Collection<BVDocument> {
         val referredDocsIds = BVDocumentUtils.getReferencedDocIdsByHierarchyType(
             originalDocs, setOf(LINK_TO_PARENT, UNSPECIFIED))
-        val missedDocsIds = referredDocsIds.filter {
-            !documentStorage.containsDocWithExternalId(it)
-        }
+        val missedDocsIds: List<String> = documentStorage.removeExistingExternalIds(referredDocsIds)
         val loadedReferredDocs = ConcurrentHashMap<String, BVDocument>()
         log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)
         documentsLoader.loadDocsByIds(bvUser, missedDocsIds) { docChunk ->

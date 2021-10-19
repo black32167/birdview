@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit4.SpringRunner
 import java.time.OffsetDateTime
+import java.util.*
 import javax.inject.Inject
 
 @Import(TestConfig::class)
@@ -153,7 +154,9 @@ class DocumentTreeBuilderTest {
                     httpUrl = "httpUrl",
                     refs = refIds,
                     status = BVDocumentStatus.BACKLOG,
-                    sourceName = "sourceName")
+                    sourceName = "sourceName",
+                    internalId = UUID.randomUUID().toString()
+            )
 
     private fun dateSeq(): OffsetDateTime {
         TIME_INSTANT = TIME_INSTANT.plusSeconds(10)

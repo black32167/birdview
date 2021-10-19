@@ -12,6 +12,7 @@ import org.birdview.source.SourceType
 import org.birdview.source.jira.model.*
 import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
+import org.birdview.utils.BVDocumentUtils
 import org.birdview.utils.BVFilters
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -53,7 +54,7 @@ open class JiraTaskService(
         val issueKeys = keyList.filter { BVFilters.JIRA_KEY_REGEX.matches(it) }
         val issueUrls = keyList.filter { JIRA_REST_URL_REGEX.matches(it) }
         userSourceConfigProvider.getSourceConfig(
-            sourceName = sourceName, bvUser = bvUser)?.also { config ->
+            sourceName = sourceName, bvUser = bvUser).also { config ->
             val client = jiraClient
             client.loadByKeys(bvUser = bvUser, sourceName = sourceName, issueKeys.distinct()) { issues ->
                 chunkConsumer.invoke(issues.map { mapDocument(it, bvUser = bvUser, sourceName = sourceName, baseUrl = config.baseUrl) })
@@ -85,7 +86,8 @@ open class JiraTaskService(
                     status = JiraIssueStatusMapper.toBVStatus(issue.fields.status.name),
                     operations = extractOperations(bvUser = bvUser, issue, sourceName = sourceName),
                     priority = extractPriority(issue),
-                    sourceName = sourceName
+                    sourceName = sourceName,
+                    internalId = BVDocumentUtils.hashId("${baseUrl}/browse/${issue.key}")
             )
         } catch (e:Exception) {
             throw RuntimeException("Could not parse issue $issue", e)

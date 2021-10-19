@@ -54,6 +54,8 @@ class IntegrationTestSetupFixture(
     fun getUserSources(bvUser: String): List<BVUserSourceConfig> =
         userSourcesStorage.listSources(bvUser)
 
-    fun getUsers(): List<Pair<String, BVUserSettings>> = userStorage.listUserNames()
+    fun getUserNames(enabled:Boolean = true): List<String> = userStorage.listUserNames()
         .map { bvUser-> Pair(bvUser, userStorage.getUserSettings(bvUser)) }
+        .filter { (name, profile) -> profile.enabled == enabled  }
+        .map { (name, profile) -> name }
 }

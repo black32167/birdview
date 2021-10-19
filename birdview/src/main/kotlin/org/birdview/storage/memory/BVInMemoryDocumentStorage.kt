@@ -3,9 +3,7 @@ package org.birdview.storage.memory
 import org.birdview.BVProfiles
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
-import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
-import org.birdview.model.RelativeHierarchyType.*
 import org.birdview.storage.BVDocumentStorage
 import org.springframework.context.annotation.Profile
 import java.util.*
@@ -62,8 +60,8 @@ class BVInMemoryDocumentStorage(
                 .toMutableList()
     }
 
-    override fun getDocuments(searchingDocsIds: Collection<String>): List<BVDocument> =
-        searchingDocsIds.mapNotNull (this::findDocument)
+    override fun getDocuments(externalDocsIds: Collection<String>): List<BVDocument> =
+        externalDocsIds.mapNotNull (this::findDocument)
 
     override fun updateDocument(doc: BVDocument, bvUser: String) {
         doc.ids
@@ -83,31 +81,17 @@ class BVInMemoryDocumentStorage(
             .map { it.count() }
             .sum()
 
-    override fun containsDocWithExternalId(externalId: String): Boolean =
-        sourceName2SourceStorage.values
-            .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
+    override fun removeExistingExternalIds(externalIds: List<String>): List<String> =
+        externalIds.filter { externalId ->
+            sourceName2SourceStorage.values
+                .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
+        }
 
-    override fun getIncomingRefsByExternalIds(externalIds: Set<String>): List<BVDocumentRef> =
+    override fun getReferringDocuments(externalIds: Set<String>): List<BVDocument> =
         externalIds.flatMap { externalId ->
-            val refs: List<BVDocumentRef> = sourceName2SourceStorage.values.flatMap { source ->
-                val refs: List<BVDocumentRef> = source.internalId2docHolder.values.map(DocHolder::doc)
-                    .flatMap { parentCandidateDoc ->
-                        parentCandidateDoc.refs.filter { ref ->
-                            ref.docId.id == externalId
-                        }.mapNotNull { originalRef->parentCandidateDoc.ids.firstOrNull()?.let { parentId->
-                            val newRelType = if (originalRef.hierarchyType == LINK_TO_PARENT) {
-                                LINK_TO_CHILD
-                            } else if (originalRef.hierarchyType == LINK_TO_CHILD) {
-                                LINK_TO_PARENT
-                            } else {
-                                UNSPECIFIED
-                            }
-                            BVDocumentRef(parentId, newRelType)
-                        }}
-                    }
-                refs
+            sourceName2SourceStorage.values.flatMap { source ->
+                source.internalId2docHolder.values.map(DocHolder::doc)
             }.toList()
-            refs
         }
 
     private fun prepareToFilter(doc: BVDocument): BVDocument =

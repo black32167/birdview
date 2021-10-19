@@ -13,6 +13,7 @@ import org.birdview.source.BVTaskSource
 import org.birdview.source.SourceType
 import org.birdview.source.trello.model.TrelloCard
 import org.birdview.utils.BVDateTimeUtils
+import org.birdview.utils.BVDocumentUtils
 import org.birdview.utils.BVFilters
 import javax.inject.Named
 
@@ -60,7 +61,8 @@ open class TrelloTaskService(
                         refs = BVFilters.filterRefsFromText("${card.desc} ${card.name}")
                                 .map { BVDocumentRef(it) },
                         status = mapStatus(listsMap[card.idList]?.name ?: ""),
-                        sourceName = sourceConfig.sourceName
+                        sourceName = sourceConfig.sourceName,
+                        internalId = BVDocumentUtils.hashId(card.url)
                 )
             }
 

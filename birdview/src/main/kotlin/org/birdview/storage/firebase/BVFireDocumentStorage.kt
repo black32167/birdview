@@ -1,69 +1,44 @@
 package org.birdview.storage.firebase
 
+import com.google.cloud.firestore.DocumentSnapshot
 import org.birdview.BVProfiles
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
-import org.birdview.model.BVDocumentRef
-import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.time.RealTimeService
 import org.birdview.utils.JsonDeserializer
 import org.springframework.context.annotation.Profile
-import org.springframework.stereotype.Repository
+import javax.inject.Named
 
 @Profile(BVProfiles.CLOUD)
-@Repository
+@Named
 open class BVFireDocumentStorage(
-    open val collectionAccessor: BVFireStoreAccessor,
+    open val underlyingStorage: BVFireDocumentUnderlyingStorage,
     open val serializer: JsonDeserializer,
     open val timeService: RealTimeService,
     private val docPredicate: BVDocumentPredicate,
     private val userSourceConfigStorage: BVUserSourceConfigStorage
 ): BVDocumentStorage {
-    class BVFirePersistingDocument (
-        val id: String,
-        val content:String, // Serialized BVDocument
-        val sourceName: String,
-        val sourceType: SourceType,
-        val updated: Long,
-        val indexed: Long,
-        val bvUser: String
-    )
-
-    override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> =
-        collectionAccessor.getDocumentsCollection()
-            .run {
-                filter.updatedPeriod.after?.let { after ->
-                    whereGreaterThan(BVFirePersistingDocument::updated.name, after.toInstant().toEpochMilli())
-                } ?: this
-            }
-            .run {
-                filter.updatedPeriod.before?.let { before ->
-                    whereLessThan(BVFirePersistingDocument::updated.name, before.toInstant().toEpochMilli())
-                } ?: this
-            }
-            .run {
-                whereEqualTo(BVFirePersistingDocument::bvUser.name, filter.userFilter.userAlias)
-            }
-            .run {
-                filter.sourceName?.let { sourceName ->
-                    whereEqualTo(BVFirePersistingDocument::sourceName.name, sourceName)
-                } ?: this
-            }
-            .get().get()
-            .documents
-            .mapNotNull { docSnapshot -> DocumentObjectMapper.toObjectCatching(docSnapshot, BVFirePersistingDocument::class) }
-            .map { persistentDoc -> serializer.deserializeString(persistentDoc.content, BVDocument::class.java) }
-            .filter { docPredicate.test(it, filter) }
-
-    override fun getDocuments(searchingDocsIds: Collection<String>): List<BVDocument> {
-        TODO("Not yet implemented")
+    companion object {
+        private const val FIRESTORE_MAX_CHUNK_SIZE = 10
     }
 
+    // TODO: add exception interceptor into spring-web
+    // TODO: rework/decompose filter @Cacheable(BVCacheNames.DOCUMENTS_CACHE)
+    override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> =
+        underlyingStorage.findDocuments(filter)
+            .mapNotNull { docSnapshot -> extractDoc(docSnapshot) }
+            .filter { docPredicate.test(it, filter) }
+
+    override fun getDocuments(externalDocsIds: Collection<String>): List<BVDocument> =
+        externalDocsIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
+            .flatMap { referredDocsIdsChunk -> underlyingStorage.getDocumentsByExternalIds(referredDocsIdsChunk) }
+            .mapNotNull { docSnapshot -> extractDoc(docSnapshot) }
+
     override fun updateDocument(doc: BVDocument, bvUser: String) {
-        val persistent = BVFirePersistingDocument(
+        val persistent = BVFireDocumentUnderlyingStorage.BVFirePersistingDocument(
             id = doc.internalId,
             content = serializer.serializeToString(doc),
             updated = inferUpdated(doc),
@@ -71,25 +46,43 @@ open class BVFireDocumentStorage(
             indexed = timeService.getNow().toInstant().toEpochMilli(),
             sourceName = doc.sourceName,
             sourceType = userSourceConfigStorage.getSource(bvUser = bvUser, sourceName = doc.sourceName)?.sourceType
-                ?: throw NoSuchElementException("Source not found for bvUser = ${bvUser}, sourceName = ${doc.sourceName}")
+                ?: throw NoSuchElementException("Source not found for bvUser = ${bvUser}, sourceName = ${doc.sourceName}",),
+            externalIds = doc.ids.map { it.id },
+            externalRefs = doc.refs.map { it.docId.id }
         )
-        collectionAccessor.getDocumentsCollection().document(doc.internalId).set(persistent)
+        underlyingStorage.updateDocument(persistent)
     }
 
     override fun count(): Int {
-        TODO("Not yet implemented")
+        return -1
     }
 
-    override fun containsDocWithExternalId(externalId: String): Boolean {
-        TODO("Not yet implemented")
+    override fun removeExistingExternalIds(externalIds: List<String>): List<String> {
+        if (externalIds.isEmpty()) {
+            return listOf()
+        }
+
+        val existingIds: List<String> =
+            externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
+                .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(referredDocsIdsChunk) }
+                .flatMap { docSnapshot -> docSnapshot.get(BVFireDocumentUnderlyingStorage.BVFirePersistingDocument::externalIds.name) as List<String> }
+
+        return externalIds.filter { !existingIds.contains(it) }
     }
 
-    override fun getIncomingRefsByExternalIds(externalIds: Set<String>): List<BVDocumentRef> {
-        TODO("Not yet implemented")
-    }
+    override fun getReferringDocuments(externalIds: Set<String>): List<BVDocument> =
+        externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
+            .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(referredDocsIdsChunk) }
+            .mapNotNull { referringDocRef ->
+                DocumentObjectMapper.toObjectCatching(referringDocRef, BVFireDocumentUnderlyingStorage.BVFirePersistingDocument::class)
+            }
+            .map { persistentDocContainer ->
+                serializer.deserializeString(persistentDocContainer.content, BVDocument::class.java)
+            }
 
-    private fun inferContributors(doc: BVDocument): List<String> =
-        doc.operations.map { it.author }
+    private fun extractDoc(docSnapshot: DocumentSnapshot): BVDocument? =
+        DocumentObjectMapper.toObjectCatching(docSnapshot, BVFireDocumentUnderlyingStorage.BVFirePersistingDocument::class)
+            ?.let { persistentDoc -> serializer.deserializeString(persistentDoc.content, BVDocument::class.java) }
 
     private fun inferUpdated(doc: BVDocument): Long =
         doc.operations
