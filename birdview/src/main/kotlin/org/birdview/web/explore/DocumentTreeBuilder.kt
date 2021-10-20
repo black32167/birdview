@@ -95,35 +95,34 @@ class DocumentTreeBuilder(
                 .toList()
                 .sortedByDescending { it.lastUpdated }
 
-        fun addAndLinkNodes(bvUser: String, _docs: List<BVDocument>) {
-            log.info("Linking docs: ${_docs.map { "\n\t${it.title}(${it.ids.firstOrNull()?.id})" }.joinToString()}")
+        fun addAndLinkNodes(bvUser: String, inputDocs: List<BVDocument>) {
+            log.info("Linking docs: ${inputDocs.map { "\n\t${it.title}(${it.ids.firstOrNull()?.id})" }.joinToString()}")
+
+            val referringDocs = inputDocs
+                .flatMap { it.ids }
+                .map { it.id }
+                .let { allExternalIds -> documentStorage.getReferringDocuments(allExternalIds.toSet()) }
+            val targetDocId2ReferringDocs: Map<String, List<BVDocument>> = referringDocs
+                .flatMap { referringDoc: BVDocument ->  referringDoc.refs.map { it.docId.id to referringDoc } }
+                .groupBy({it.first}, {it.second})
+
+            var id2doc:Map<String, BVDocument> = inputDocs.associateBy { it.internalId }
+            val externalId2Doc: Map<String, BVDocument> = (inputDocs + referringDocs)
+                .flatMap { doc-> doc.ids.map { it.id to doc } }
+                .associateBy ({ it.first }, { it.second })
 
             val processedIds = mutableSetOf<String>()
-            var docsToProcess:Map<String, BVDocument> = _docs.filter { !processedIds.contains(it.internalId) }.associateBy { it.internalId }
-            val referringDocsMap: Map<String, List<BVDocument>> = docsToProcess.values
-                .flatMap { it.refs }
-                .map { it.docId.id }
-                .let { allExternalIds -> documentStorage.getReferringDocuments(allExternalIds.toSet()) }
-                .flatMap { referringDoc: BVDocument ->  referringDoc.refs.map { it.docId.id to referringDoc } }
-                .fold(mutableMapOf<String, MutableList<BVDocument>>()) { acc, mapping ->
-                    val (docId, referringDoc) = mapping
-                    acc.computeIfAbsent(docId) { mutableListOf() }
-                        .add(referringDoc)
-                    acc
-                }
-
-
-            while (docsToProcess.isNotEmpty()) {
-                log.info("resolving refs for docs ({})", docsToProcess.size)
+            while (id2doc.isNotEmpty()) {
+                log.info("resolving refs for docs ({})", id2doc.size)
                 val refDocs = mutableMapOf<String, BVDocument>()
-                docsToProcess.values.forEach { originalDoc ->
+                id2doc.values.forEach { originalDoc ->
                     processedIds += originalDoc.internalId
                     val originalDocNode = createNode(bvUser = bvUser, originalDoc)
 
                     val outgoingLinks: List<BVDocumentRef> = originalDoc.refs
                     val externalIds = originalDoc.ids.map { it.id }
                     val incomingLinks: List<BVDocumentRef> = externalIds
-                        .flatMap{ externalId-> referringDocsMap.get(externalId) ?: listOf() }
+                        .flatMap { externalId-> targetDocId2ReferringDocs.get(externalId) ?: listOf() }
                         .flatMap { parentCandidateDoc ->
                             parentCandidateDoc.refs.filter { ref ->
                                 externalIds.contains(ref.docId.id)
@@ -144,9 +143,7 @@ class DocumentTreeBuilder(
                         (incomingLinks.map {"\n\t${it.docId.id}->"} + outgoingLinks.map {"\n\t->${it.docId.id}"}).joinToString())
 
                     for (ref in (outgoingLinks + incomingLinks)) {
-                        val referredDoc = documentStorage.getDocuments(setOf(ref.docId.id)).firstOrNull()
-                        if (referredDoc != null) {
-
+                        externalId2Doc[ref.docId.id]?.also {  referredDoc ->
                             val relation =
                                 documentRelationFactory.from(bvUser = bvUser, referredDoc, originalDoc, ref.hierarchyType)
 
@@ -171,7 +168,7 @@ class DocumentTreeBuilder(
                         }
                     }
                 }
-                docsToProcess = refDocs.filter { (internalId, _) -> !processedIds.contains(internalId) }
+                id2doc = refDocs.filter { (internalId, _) -> !processedIds.contains(internalId) }
             }
         }
     }

@@ -38,7 +38,7 @@ open class BVFireDocumentStorage(
             .mapNotNull { docSnapshot -> extractDoc(docSnapshot) }
 
     override fun updateDocument(doc: BVDocument, bvUser: String) {
-        val persistent = BVFireDocumentUnderlyingStorage.BVFirePersistingDocument(
+        val persistent = BVFirePersistingDocument(
             id = doc.internalId,
             content = serializer.serializeToString(doc),
             updated = inferUpdated(doc),
@@ -65,7 +65,7 @@ open class BVFireDocumentStorage(
         val existingIds: List<String> =
             externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
                 .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(referredDocsIdsChunk) }
-                .flatMap { docSnapshot -> docSnapshot.get(BVFireDocumentUnderlyingStorage.BVFirePersistingDocument::externalIds.name) as List<String> }
+                .flatMap { docSnapshot -> docSnapshot.get(BVFirePersistingDocument::externalIds.name) as List<String> }
 
         return externalIds.filter { !existingIds.contains(it) }
     }
@@ -74,14 +74,14 @@ open class BVFireDocumentStorage(
         externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
             .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(referredDocsIdsChunk) }
             .mapNotNull { referringDocRef ->
-                DocumentObjectMapper.toObjectCatching(referringDocRef, BVFireDocumentUnderlyingStorage.BVFirePersistingDocument::class)
+                DocumentObjectMapper.toObjectCatching(referringDocRef, BVFirePersistingDocument::class)
             }
             .map { persistentDocContainer ->
                 serializer.deserializeString(persistentDocContainer.content, BVDocument::class.java)
             }
 
     private fun extractDoc(docSnapshot: DocumentSnapshot): BVDocument? =
-        DocumentObjectMapper.toObjectCatching(docSnapshot, BVFireDocumentUnderlyingStorage.BVFirePersistingDocument::class)
+        DocumentObjectMapper.toObjectCatching(docSnapshot, BVFirePersistingDocument::class)
             ?.let { persistentDoc -> serializer.deserializeString(persistentDoc.content, BVDocument::class.java) }
 
     private fun inferUpdated(doc: BVDocument): Long =
