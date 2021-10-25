@@ -23,12 +23,13 @@ open class BVTaskService(
             return filteredDocs
         }
 
-        return filteredDocs + getReferencedDocs(filteredDocs)
+        return filteredDocs + getReferencedDocs(filter.userFilter.userAlias, filteredDocs)
     }
 
     // TODO: non-optimal
-    private fun getReferencedDocs(filteredDocs: List<BVDocument>): List<BVDocument> {
+    private fun getReferencedDocs(bvUser:String, filteredDocs: List<BVDocument>): List<BVDocument> {
         return documentStorage.getDocuments(
+            bvUser,
             getReferencedDocIdsByHierarchyType(
                 filteredDocs, setOf(RelativeHierarchyType.LINK_TO_PARENT)))
     }

@@ -7,9 +7,8 @@ import java.time.OffsetDateTime
 interface BVDocumentStorage {
     fun getLastUpdatedDocument(bvUser: String, sourceName: String): OffsetDateTime?
     fun findDocuments(filter: BVDocumentFilter): List<BVDocument>
-    fun getDocuments(externalDocsIds: Collection<String>): List<BVDocument>
-    fun updateDocument(doc: BVDocument, bvUser: String)
-    fun count(): Int
-    fun removeExistingExternalIds(externalIds: List<String>): List<String>
-    fun getReferringDocuments(externalIds: Set<String>): List<BVDocument>
+    fun getDocuments(bvUser:String, externalDocsIds: Collection<String>): List<BVDocument>
+    fun updateDocument(bvUser: String, doc: BVDocument)
+    fun removeExistingExternalIds(bvUser:String, externalIds: List<String>): List<String>
+    fun getReferringDocuments(bvUser:String, externalIds: Set<String>): List<BVDocument>
 }

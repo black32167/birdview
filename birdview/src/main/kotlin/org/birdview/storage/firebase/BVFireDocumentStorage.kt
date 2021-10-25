@@ -39,12 +39,12 @@ open class BVFireDocumentStorage(
             .mapNotNull { docSnapshot -> extractDoc(docSnapshot) }
             .filter { docPredicate.test(it, filter) }
 
-    override fun getDocuments(externalDocsIds: Collection<String>): List<BVDocument> =
+    override fun getDocuments(bvUser: String, externalDocsIds: Collection<String>): List<BVDocument> =
         externalDocsIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
-            .flatMap { referredDocsIdsChunk -> underlyingStorage.getDocumentsByExternalIds(referredDocsIdsChunk) }
+            .flatMap { referredDocsIdsChunk -> underlyingStorage.getDocumentsByExternalIds(bvUser, referredDocsIdsChunk) }
             .mapNotNull { docSnapshot -> extractDoc(docSnapshot) }
 
-    override fun updateDocument(doc: BVDocument, bvUser: String) {
+    override fun updateDocument(bvUser: String, doc: BVDocument) {
         val persistent = BVFirePersistingDocument(
             id = doc.internalId,
             content = serializer.serializeToString(doc),
@@ -60,26 +60,22 @@ open class BVFireDocumentStorage(
         underlyingStorage.updateDocument(persistent)
     }
 
-    override fun count(): Int {
-        return -1
-    }
-
-    override fun removeExistingExternalIds(externalIds: List<String>): List<String> {
+    override fun removeExistingExternalIds(bvUser: String, externalIds: List<String>): List<String> {
         if (externalIds.isEmpty()) {
             return listOf()
         }
 
         val existingIds: List<String> =
             externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
-                .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(referredDocsIdsChunk) }
+                .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(bvUser, referredDocsIdsChunk) }
                 .flatMap { docSnapshot -> docSnapshot.get(BVFirePersistingDocument::externalIds.name) as List<String> }
 
         return externalIds.filter { !existingIds.contains(it) }
     }
 
-    override fun getReferringDocuments(externalIds: Set<String>): List<BVDocument> =
+    override fun getReferringDocuments(bvUser: String, externalIds: Set<String>): List<BVDocument> =
         externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
-            .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(referredDocsIdsChunk) }
+            .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(bvUser, referredDocsIdsChunk) }
             .mapNotNull { referringDocRef ->
                 DocumentObjectMapper.toObjectCatching(referringDocRef, BVFirePersistingDocument::class)
             }

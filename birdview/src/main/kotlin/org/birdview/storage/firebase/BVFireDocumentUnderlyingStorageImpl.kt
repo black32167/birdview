@@ -15,24 +15,23 @@ open class BVFireDocumentUnderlyingStorageImpl(
 ):BVFireDocumentUnderlyingStorage {
 
     override fun updateDocument(persistent: BVFirePersistingDocument) {
-        docCollection().document(persistent.id).set(persistent)
+        docCollection(persistent.bvUser).document(persistent.id).set(persistent)
     }
     
     override fun findDocuments(filter: BVDocumentFilter): List<DocumentSnapshot> =
-        docCollection()
+        docCollection(filter.userFilter.userAlias)
             .run {
-                filter.updatedPeriod.after?.let { after ->
-                    whereGreaterThan(BVFirePersistingDocument::updated.name, after.toInstant().toEpochMilli())
-                } ?: this
+                whereGreaterThan(
+                        BVFirePersistingDocument::updated.name, filter.updatedPeriod.after.toInstant().toEpochMilli())
             }
             .run {
                 filter.updatedPeriod.before?.let { before ->
                     whereLessThan(BVFirePersistingDocument::updated.name, before.toInstant().toEpochMilli())
                 } ?: this
             }
-            .run {
-                whereEqualTo(BVFirePersistingDocument::bvUser.name, filter.userFilter.userAlias)
-            }
+//            .run {
+//                whereEqualTo(BVFirePersistingDocument::bvUser.name, filter.userFilter.userAlias)
+//            }
             .run {
                 filter.sourceName
                     ?.takeIf { it.isNotEmpty() }
@@ -44,29 +43,29 @@ open class BVFireDocumentUnderlyingStorageImpl(
             .get().get()
             .documents
 
-    override fun getDocumentsByExternalIds(externalDocsIds: Collection<String>): List<DocumentSnapshot> =
+    override fun getDocumentsByExternalIds(bvUser:String, externalDocsIds: Collection<String>): List<DocumentSnapshot> =
         if (externalDocsIds.isEmpty()) {
             listOf()
         } else {
-            docCollection()
+            docCollection(bvUser)
                 .whereArrayContainsAny(BVFirePersistingDocument::externalIds.name, externalDocsIds.toList())
                 .get().get().documents
         }
     
-    override fun getReferringDocumentsByRefIds(externalDocsIds: Collection<String>): List<DocumentSnapshot> =
+    override fun getReferringDocumentsByRefIds(bvUser:String, externalDocsIds: Collection<String>): List<DocumentSnapshot> =
         if (externalDocsIds.isEmpty()) {
             listOf()
         } else {
-            docCollection()
+            docCollection(bvUser)
                 .whereArrayContainsAny(BVFirePersistingDocument::externalRefs.name, externalDocsIds.toList())
                 .get().get()
                 .documents
         }
 
     override fun getLatestDocument(bvUser: String, sourceName: String): Long? =
-        docCollection()
+        docCollection(bvUser)
             .select(BVFirePersistingDocument::updated.name)
-            .whereEqualTo(BVFirePersistingDocument::bvUser.name, bvUser)
+//            .whereEqualTo(BVFirePersistingDocument::bvUser.name, bvUser)
             .whereEqualTo(BVFirePersistingDocument::sourceName.name, sourceName)
             .orderBy(BVFirePersistingDocument::updated.name, Query.Direction.DESCENDING)
             .limit(1)
@@ -74,7 +73,6 @@ open class BVFireDocumentUnderlyingStorageImpl(
             .firstOrNull()
             ?.get(BVFirePersistingDocument::updated.name, Long::class.java)
 
-
-    private fun docCollection() =
-        collectionAccessor.getDocumentsCollection()
+    private fun docCollection(bvUser:String) =
+        collectionAccessor.getDocumentsCollection(bvUser)
 }

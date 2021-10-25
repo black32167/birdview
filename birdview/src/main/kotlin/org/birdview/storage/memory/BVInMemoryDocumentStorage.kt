@@ -71,10 +71,10 @@ class BVInMemoryDocumentStorage(
                 .toMutableList()
     }
 
-    override fun getDocuments(externalDocsIds: Collection<String>): List<BVDocument> =
+    override fun getDocuments(bvUser: String, externalDocsIds: Collection<String>): List<BVDocument> =
         externalDocsIds.mapNotNull (this::findDocument)
 
-    override fun updateDocument(doc: BVDocument, bvUser: String) {
+    override fun updateDocument(bvUser: String, doc: BVDocument) {
         doc.ids
                 .map { it.id }
                 .forEach { docExternalId->
@@ -87,18 +87,13 @@ class BVInMemoryDocumentStorage(
                 }
     }
 
-    override fun count(): Int =
-        sourceName2SourceStorage.values
-            .map { it.count() }
-            .sum()
-
-    override fun removeExistingExternalIds(externalIds: List<String>): List<String> =
+    override fun removeExistingExternalIds(bvUser: String, externalIds: List<String>): List<String> =
         externalIds.filter { externalId ->
             sourceName2SourceStorage.values
                 .any { sourceStorage -> sourceStorage.findDocumentByExternalId(externalId) != null }
         }
 
-    override fun getReferringDocuments(externalIds: Set<String>): List<BVDocument> =
+    override fun getReferringDocuments(bvUser: String, externalIds: Set<String>): List<BVDocument> =
         externalIds.flatMap { externalId ->
             sourceName2SourceStorage.values.flatMap { source ->
                 source.internalId2docHolder.values.map(DocHolder::doc)

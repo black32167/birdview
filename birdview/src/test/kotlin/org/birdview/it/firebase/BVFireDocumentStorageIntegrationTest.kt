@@ -39,11 +39,11 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val (user1, user2) = setupFixture.getUserNames()
         val user1Source  = setupFixture.getUserSources(user1).first()
         val doc1 = createDoc(source = user1Source)
-        documentStorage.updateDocument(doc1, user1)
+        documentStorage.updateDocument(user1, doc1)
 
         val user2Source  = setupFixture.getUserSources(user2).first()
         val doc2 = createDoc(source = user2Source)
-        documentStorage.updateDocument(doc2, user2);
+        documentStorage.updateDocument(user2, doc2);
 
         val foundDocs = documentStorage.findDocuments(BVDocumentFilter(
             updatedPeriod = TimeIntervalFilter(after = past),
@@ -63,10 +63,10 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val (user1Source, user2Source) = setupFixture.getUserSources(user)
 
         val doc1 = createDoc(updated = now, source = user1Source)
-        documentStorage.updateDocument(doc1, user)
+        documentStorage.updateDocument(user, doc1)
 
         val doc2 = createDoc(source = user2Source)
-        documentStorage.updateDocument(doc2, user)
+        documentStorage.updateDocument(user, doc2)
 
         val foundDocs = documentStorage.findDocuments(BVDocumentFilter(
             updatedPeriod = TimeIntervalFilter(after = past),
@@ -87,10 +87,10 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val user1Source = setupFixture.getUserSources(user).first()
 
         val doc1 = createDoc(source = user1Source, refIds= listOf("doc2"))
-        documentStorage.updateDocument(doc1, user)
-        documentStorage.updateDocument(createDoc(updated = now, source = user1Source, ids = listOf("doc2")), user)
+        documentStorage.updateDocument(user, doc1)
+        documentStorage.updateDocument(user, createDoc(updated = now, source = user1Source, ids = listOf("doc2")))
 
-        val referringDocs = documentStorage.getReferringDocuments(setOf("doc2"))
+        val referringDocs = documentStorage.getReferringDocuments(user, setOf("doc2"))
 
         assertThat(referringDocs).hasSize(1)
         assertThat(referringDocs.first().internalId).isEqualTo(doc1.internalId)
@@ -101,9 +101,9 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val user = setupFixture.getUserNames().first()
         val user1Source = setupFixture.getUserSources(user).first()
 
-        documentStorage.updateDocument(createDoc(updated = now, source = user1Source, ids = listOf("doc1")), user)
+        documentStorage.updateDocument(user, createDoc(updated = now, source = user1Source, ids = listOf("doc1")))
 
-        val missedIds = documentStorage.removeExistingExternalIds(listOf("doc2", "doc1"))
+        val missedIds = documentStorage.removeExistingExternalIds(user, listOf("doc2", "doc1"))
 
         assertThat(missedIds).containsExactlyInAnyOrder("doc2")
     }
@@ -113,9 +113,9 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val user = setupFixture.getUserNames().first()
         val user1Source = setupFixture.getUserSources(user).first()
 
-        documentStorage.updateDocument(createDoc(updated = now, source = user1Source, ids = listOf("doc1")), user)
+        documentStorage.updateDocument(user, createDoc(updated = now, source = user1Source, ids = listOf("doc1")))
 
-        val missedIds = documentStorage.removeExistingExternalIds(listOf())
+        val missedIds = documentStorage.removeExistingExternalIds(user, listOf())
 
         assertThat(missedIds).isEmpty()
     }
@@ -125,10 +125,11 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val user = setupFixture.getUserNames().first()
         val user1Source = setupFixture.getUserSources(user).first()
 
-        documentStorage.updateDocument(createDoc(updated = now, source = user1Source, ids = listOf("doc1")), user)
+        documentStorage.updateDocument(user, createDoc(updated = now, source = user1Source, ids = listOf("doc1")))
 
         assertThatThrownBy {
             documentStorage.removeExistingExternalIds(
+                user,
                 listOf(
                     "doc1",
                     "doc2",
@@ -152,9 +153,10 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val user = setupFixture.getUserNames().first()
         val user1Source = setupFixture.getUserSources(user).first()
 
-        documentStorage.updateDocument(createDoc(updated = now, source = user1Source, ids = listOf("doc1")), user)
+        documentStorage.updateDocument(user, createDoc(updated = now, source = user1Source, ids = listOf("doc1")))
 
-        val missedIds = documentStorage.removeExistingExternalIds(listOf("doc1","doc2", "doc3","doc4", "doc5","doc6", "doc7","doc8", "doc9","doc10", "doc1"))
+        val missedIds = documentStorage.removeExistingExternalIds(
+            user, listOf("doc1","doc2", "doc3","doc4", "doc5","doc6", "doc7","doc8", "doc9","doc10", "doc1"))
 
         assertThat(missedIds).hasSize(9)
     }
@@ -165,9 +167,9 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
         val user1Source = setupFixture.getUserSources(user).first()
 
         val savingDoc = createDoc(updated = now, source = user1Source, ids = listOf("doc1"))
-        documentStorage.updateDocument(savingDoc, user)
+        documentStorage.updateDocument(user, savingDoc)
 
-        val retrievedDocs = documentStorage.getDocuments(listOf("doc2", "doc1"))
+        val retrievedDocs = documentStorage.getDocuments(user, listOf("doc2", "doc1"))
 
         assertThat(retrievedDocs).hasSize(1)
         assertThat(retrievedDocs.first().internalId).isEqualTo(savingDoc.internalId)

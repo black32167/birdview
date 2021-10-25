@@ -13,11 +13,14 @@ class BVFireStoreAccessor(
         clientProvider.getClientForCollection(BVFireCollections.USERS)
 
     fun getRefreshTokensCollection(bvUser: String): CollectionReference =
-        getUserCollection().document(bvUser).collection(BVFireCollections.OAUTH_REFRESH_TOKENS)
+        getUserReference(bvUser).collection(BVFireCollections.OAUTH_REFRESH_TOKENS)
 
     fun getUserSourcesCollection(bvUser: String) =
-        getUserCollection().document(bvUser).collection(BVFireCollections.USER_SOURCES)
+        getUserReference(bvUser).collection(BVFireCollections.USER_SOURCES)
 
-    fun getDocumentsCollection() =
-        clientProvider.getClientForCollection(BVFireCollections.DOCUMENTS)
+    fun getDocumentsCollection(bvUser: String) =
+        getUserReference(bvUser).collection(BVFireCollections.DOCUMENTS)
+
+    private fun getUserReference(bvUser:String) =
+        getUserCollection().document(bvUser)
 }

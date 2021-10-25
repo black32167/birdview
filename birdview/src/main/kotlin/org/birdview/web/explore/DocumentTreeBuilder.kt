@@ -101,7 +101,7 @@ class DocumentTreeBuilder(
             val referringDocs = inputDocs
                 .flatMap { it.ids }
                 .map { it.id }
-                .let { allExternalIds -> documentStorage.getReferringDocuments(allExternalIds.toSet()) }
+                .let { allExternalIds -> documentStorage.getReferringDocuments(bvUser, allExternalIds.toSet()) }
             val targetDocId2ReferringDocs: Map<String, List<BVDocument>> = referringDocs
                 .flatMap { referringDoc: BVDocument ->  referringDoc.refs.map { it.docId.id to referringDoc } }
                 .groupBy({it.first}, {it.second})

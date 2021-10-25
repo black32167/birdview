@@ -178,7 +178,7 @@ class DocumentTreeBuilderTest {
 
     fun persistDocs(vararg docs:BVDocument): List<BVDocument> {
         docs.forEach { doc->
-            documentStorage.updateDocument(doc, BV_USER)
+            documentStorage.updateDocument(BV_USER, doc)
         }
         return docs.toList()
     }

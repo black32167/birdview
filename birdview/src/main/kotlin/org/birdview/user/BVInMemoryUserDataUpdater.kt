@@ -79,8 +79,7 @@ class BVInMemoryUserDataUpdater (
                 }
             }
 
-            log.info(">>>>>>>>> Finished refreshing users ${bvUsers.joinToString (",")}. " +
-                    "Overall ${documentStorage.count()} documents loaded.")
+            log.info(">>>>>>>>> Finished refreshing users ${bvUsers.joinToString (",")}.")
         }
     }
 
@@ -96,7 +95,7 @@ class BVInMemoryUserDataUpdater (
         val documentSessionConsumer = object:BVSessionDocumentConsumer {
             override fun consume(documents: List<BVDocument>) {
                 documents.forEach { doc->
-                    documentStorage.updateDocument(doc, bvUser)
+                    documentStorage.updateDocument(bvUser, doc)
                     doc.ids.forEach { loadedIds += it.id }
                     loadedDocs[doc.internalId] = doc
                 }
@@ -129,12 +128,12 @@ class BVInMemoryUserDataUpdater (
     private fun loadReferredDocs(bvUser: String, originalDocs: Collection<BVDocument>): Collection<BVDocument> {
         val referredDocsIds = BVDocumentUtils.getReferencedDocIdsByHierarchyType(
             originalDocs, setOf(LINK_TO_PARENT, UNSPECIFIED))
-        val missedDocsIds: List<String> = documentStorage.removeExistingExternalIds(referredDocsIds)
+        val missedDocsIds: List<String> = documentStorage.removeExistingExternalIds(bvUser, referredDocsIds)
         val loadedReferredDocs = ConcurrentHashMap<String, BVDocument>()
         log.info("Referred docs:{}, missed docs:{}", referredDocsIds.size, missedDocsIds.size)
         documentsLoader.loadDocsByIds(bvUser, missedDocsIds) { docChunk ->
             docChunk.forEach { doc->
-                documentStorage.updateDocument(doc, bvUser)
+                documentStorage.updateDocument(bvUser, doc)
                 loadedReferredDocs[doc.internalId] = doc
             }
         }.forEach(this::waitForCompletion)
