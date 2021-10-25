@@ -8,4 +8,5 @@ interface BVFireDocumentUnderlyingStorage {
     fun findDocuments(filter: BVDocumentFilter): List<DocumentSnapshot>
     fun getDocumentsByExternalIds(externalDocsIds: Collection<String>): List<DocumentSnapshot>
     fun getReferringDocumentsByRefIds(externalDocsIds: Collection<String>): List<DocumentSnapshot>
+    fun getLatestDocument(bvUser: String, sourceName: String): Long?
 }

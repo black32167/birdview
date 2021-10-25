@@ -10,6 +10,9 @@ import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.time.RealTimeService
 import org.birdview.utils.JsonDeserializer
 import org.springframework.context.annotation.Profile
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import javax.inject.Named
 
 @Profile(BVProfiles.CLOUD)
@@ -24,6 +27,10 @@ open class BVFireDocumentStorage(
     companion object {
         private const val FIRESTORE_MAX_CHUNK_SIZE = 10
     }
+
+    override fun getLastUpdatedDocument(bvUser: String, sourceName: String): OffsetDateTime? =
+        underlyingStorage.getLatestDocument(bvUser, sourceName)
+            ?.let { timstampMs -> Instant.ofEpochMilli(timstampMs).atOffset(ZoneOffset.UTC) }
 
     // TODO: add exception interceptor into spring-web
     // TODO: rework/decompose filter @Cacheable(BVCacheNames.DOCUMENTS_CACHE)

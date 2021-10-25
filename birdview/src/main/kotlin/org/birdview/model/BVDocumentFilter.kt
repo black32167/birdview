@@ -23,6 +23,6 @@ data class UserFilter(
 )
 
 data class TimeIntervalFilter(
-    val after: OffsetDateTime? = null,
+    val after: OffsetDateTime,
     val before: OffsetDateTime? = null
 )

@@ -6,6 +6,7 @@ import org.birdview.model.BVDocumentFilter
 import org.birdview.model.BVDocumentStatus
 import org.birdview.storage.BVDocumentStorage
 import org.springframework.context.annotation.Profile
+import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Named
@@ -24,6 +25,9 @@ class BVInMemoryDocumentStorage(
     ) {
         val externalId2docHolder: MutableMap<String, DocHolder> = ConcurrentHashMap() // id -> doc
         val internalId2docHolder: MutableMap<String, DocHolder> = ConcurrentHashMap()
+
+        fun getAllDocuments() =
+            externalId2docHolder.values.map { it.doc }
 
         fun findDocument(externalId: String): BVDocument? = externalId2docHolder[externalId]?.doc
 
@@ -53,6 +57,13 @@ class BVInMemoryDocumentStorage(
     // docId -> sourceName -> SourceStorage
     private val externalId2SourceNames = ConcurrentHashMap<String, MutableSet<String>>()
     private val sourceName2SourceStorage = ConcurrentHashMap<String, SourceStorage>()
+
+    override fun getLastUpdatedDocument(bvUser: String, sourceName: String): OffsetDateTime? =
+        sourceName2SourceStorage.values
+            .flatMap { it.getAllDocuments() }
+            .filter { it.sourceName == sourceName } // No user check for local run
+            .mapNotNull { it.updated  }
+            .maxOrNull()
 
     override fun findDocuments(filter: BVDocumentFilter): List<BVDocument> {
         return sourceName2SourceStorage.values

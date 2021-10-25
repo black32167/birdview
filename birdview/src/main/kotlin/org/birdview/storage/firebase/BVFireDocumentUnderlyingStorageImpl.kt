@@ -1,6 +1,7 @@
 package org.birdview.storage.firebase
 
 import com.google.cloud.firestore.DocumentSnapshot
+import com.google.cloud.firestore.Query
 import org.birdview.BVProfiles
 import org.birdview.model.BVDocumentFilter
 import org.springframework.context.annotation.Profile
@@ -61,6 +62,18 @@ open class BVFireDocumentUnderlyingStorageImpl(
                 .get().get()
                 .documents
         }
+
+    override fun getLatestDocument(bvUser: String, sourceName: String): Long? =
+        docCollection()
+            .select(BVFirePersistingDocument::updated.name)
+            .whereEqualTo(BVFirePersistingDocument::bvUser.name, bvUser)
+            .whereEqualTo(BVFirePersistingDocument::sourceName.name, sourceName)
+            .orderBy(BVFirePersistingDocument::updated.name, Query.Direction.DESCENDING)
+            .limit(1)
+            .get().get()
+            .firstOrNull()
+            ?.get(BVFirePersistingDocument::updated.name, Long::class.java)
+
 
     private fun docCollection() =
         collectionAccessor.getDocumentsCollection()

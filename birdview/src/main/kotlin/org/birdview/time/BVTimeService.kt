@@ -4,7 +4,10 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 
 interface BVTimeService {
-    fun getNow(zoneId:ZoneId = ZoneId.of("UTC")): OffsetDateTime
+    companion object {
+        val UTC = ZoneId.of("UTC")
+    }
+    fun getNow(zoneId:ZoneId = UTC): OffsetDateTime
 
     fun getTodayInUserZone(bvUser: String): OffsetDateTime
 }
