@@ -9,7 +9,7 @@ import java.nio.file.Path
 import javax.inject.Named
 
 @Named
-class JsonDeserializer {
+class JsonMapper {
     private val objectMapper = ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .registerModule(KotlinModule())

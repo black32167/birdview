@@ -7,7 +7,6 @@ import org.birdview.model.BVDocumentFilter
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 
-
 @Profile(BVProfiles.CLOUD)
 @Repository
 open class BVFireDocumentUnderlyingStorageImpl(
@@ -15,7 +14,7 @@ open class BVFireDocumentUnderlyingStorageImpl(
 ):BVFireDocumentUnderlyingStorage {
 
     override fun updateDocument(persistent: BVFirePersistingDocument) {
-        docCollection(persistent.bvUser).document(persistent.id).set(persistent)
+        docCollection(persistent.bvUser).document(persistent.id).set(persistent).get()
     }
     
     override fun findDocuments(filter: BVDocumentFilter): List<DocumentSnapshot> =

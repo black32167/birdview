@@ -8,7 +8,7 @@ import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.memory.BVDocumentPredicate
 import org.birdview.time.RealTimeService
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.CryptoMapper
 import org.springframework.context.annotation.Profile
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -19,7 +19,7 @@ import javax.inject.Named
 @Named
 open class BVFireDocumentStorage(
     open val underlyingStorage: BVFireDocumentUnderlyingStorage,
-    open val serializer: JsonDeserializer,
+    open val serializer: CryptoMapper,
     open val timeService: RealTimeService,
     private val docPredicate: BVDocumentPredicate,
     private val userSourceConfigStorage: BVUserSourceConfigStorage
@@ -47,7 +47,7 @@ open class BVFireDocumentStorage(
     override fun updateDocument(bvUser: String, doc: BVDocument) {
         val persistent = BVFirePersistingDocument(
             id = doc.internalId,
-            content = serializer.serializeToString(doc),
+            content = serializer.serialize(doc),
             updated = inferUpdated(doc),
             bvUser = bvUser,
             indexed = timeService.getNow().toInstant().toEpochMilli(),
@@ -67,7 +67,7 @@ open class BVFireDocumentStorage(
 
         val existingIds: List<String> =
             externalIds.chunked(FIRESTORE_MAX_CHUNK_SIZE)
-                .flatMap { referredDocsIdsChunk -> underlyingStorage.getReferringDocumentsByRefIds(bvUser, referredDocsIdsChunk) }
+                .flatMap { referredDocsIdsChunk -> underlyingStorage.getDocumentsByExternalIds(bvUser, referredDocsIdsChunk) }
                 .flatMap { docSnapshot -> docSnapshot.get(BVFirePersistingDocument::externalIds.name) as List<String> }
 
         return externalIds.filter { !existingIds.contains(it) }
@@ -80,12 +80,12 @@ open class BVFireDocumentStorage(
                 DocumentObjectMapper.toObjectCatching(referringDocRef, BVFirePersistingDocument::class)
             }
             .map { persistentDocContainer ->
-                serializer.deserializeString(persistentDocContainer.content, BVDocument::class.java)
+                serializer.deserialize(persistentDocContainer.content, BVDocument::class.java)
             }
 
     private fun extractDoc(docSnapshot: DocumentSnapshot): BVDocument? =
         DocumentObjectMapper.toObjectCatching(docSnapshot, BVFirePersistingDocument::class)
-            ?.let { persistentDoc -> serializer.deserializeString(persistentDoc.content, BVDocument::class.java) }
+            ?.let { persistentDoc -> serializer.deserialize(persistentDoc.content, BVDocument::class.java) }
 
     private fun inferUpdated(doc: BVDocument): Long =
         doc.operations

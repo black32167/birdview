@@ -2,7 +2,7 @@ package org.birdview.source.http.log.record
 
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.log.HttpInteraction
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.JsonMapper
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -10,7 +10,7 @@ import java.util.*
 class LoggingDelegateHttpClient(
     private val delegate: BVHttpClient,
     private val outputFolder: Path,
-    private val jsonDeserializer: JsonDeserializer
+    private val jsonMapper: JsonMapper
 ): BVHttpClient {
     override val basePath: String
         get() = delegate.basePath
@@ -25,7 +25,7 @@ class LoggingDelegateHttpClient(
             )
         }
             .let { payload: String ->
-                jsonDeserializer.deserializeString(payload, resultClass)
+                jsonMapper.deserializeString(payload, resultClass)
             }
 
     override fun <T> post(resultClass: Class<T>, postEntity: Any, subPath: String?, parameters: Map<String, Any>): T =
@@ -33,12 +33,12 @@ class LoggingDelegateHttpClient(
             serialize(
                 endpointUrl = subPath,
                 resultType = resultClass.simpleName,
-                parameters = parameters + jsonDeserializer.objectToMap(postEntity),
+                parameters = parameters + jsonMapper.objectToMap(postEntity),
                 responsePayload = payload
             )
         }
             .let { payload: String ->
-                jsonDeserializer.deserializeString(payload, resultClass)
+                jsonMapper.deserializeString(payload, resultClass)
             }
 
 
@@ -55,7 +55,7 @@ class LoggingDelegateHttpClient(
         )
     }
         .let { payload: String ->
-            jsonDeserializer.deserializeString(payload, resultClass)
+            jsonMapper.deserializeString(payload, resultClass)
         }
 
     private fun serialize(
@@ -80,7 +80,7 @@ class LoggingDelegateHttpClient(
         if (Files.exists(outputFile)) {
             throw IllegalStateException("File ${outputFile} already exists")
         }
-        jsonDeserializer.serialize(
+        jsonMapper.serialize(
             outputFile,
             interaction
         )

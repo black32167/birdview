@@ -8,11 +8,14 @@ import javax.inject.Named
 
 @Named
 class BVFirebaseClientProvider {
+    companion object {
+        private val app = FirebaseApp.initializeApp()
+    }
+
     private lateinit var delegateClient: Firestore;
 
     @PostConstruct
     private fun init() {
-        val app = FirebaseApp.initializeApp()
         delegateClient = FirestoreClient.getFirestore(app)
     }
 

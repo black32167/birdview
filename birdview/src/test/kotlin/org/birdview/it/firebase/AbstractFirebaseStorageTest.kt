@@ -23,9 +23,7 @@ abstract class AbstractFirebaseStorageTest {
     fun initTest() {
         val client = clientProvider.getClient()
         for (coll in client.listCollections()) {
-            for(doc in coll.listDocuments()) {
-                doc.delete()
-            }
+            client.recursiveDelete(coll).get()
         }
     }
 }

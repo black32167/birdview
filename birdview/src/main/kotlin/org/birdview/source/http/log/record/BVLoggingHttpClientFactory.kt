@@ -3,7 +3,7 @@ package org.birdview.source.http.log.record
 import org.birdview.config.BVFoldersConfig
 import org.birdview.source.http.BVHttpClient
 import org.birdview.source.http.BVHttpClientFactory
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.JsonMapper
 import org.birdview.utils.remote.ApiAuth
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -11,7 +11,7 @@ import java.util.function.Predicate
 
 class BVLoggingHttpClientFactory(
     private val delegate: BVHttpClientFactory,
-    private val jsonDeserializer: JsonDeserializer,
+    private val jsonMapper: JsonMapper,
     foldersConfig: BVFoldersConfig
 ): BVHttpClientFactory {
     private val logFolder = foldersConfig.getHttpInteractionsLogFolder()
@@ -32,11 +32,11 @@ class BVLoggingHttpClientFactory(
         LoggingDelegateHttpClient(
             delegate.getHttpClientAuthenticated(url, authProvider),
             logFolder,
-            jsonDeserializer)
+            jsonMapper)
 
     override fun getHttpClientUnauthenticated(url: String): BVHttpClient =
         LoggingDelegateHttpClient(
             delegate.getHttpClientUnauthenticated(url),
             logFolder,
-            jsonDeserializer)
+            jsonMapper)
 }

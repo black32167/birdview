@@ -1,7 +1,6 @@
 package org.birdview.it.firebase
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
 import org.birdview.analysis.BVDocumentOperation
@@ -82,7 +81,6 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
 
     @Test
     fun testGetReferringDocuments() {
-
         val user = setupFixture.getUserNames().first()
         val user1Source = setupFixture.getUserSources(user).first()
 
@@ -127,24 +125,23 @@ class BVFireDocumentStorageIntegrationTest: AbstractFirebaseStorageTest() {
 
         documentStorage.updateDocument(user, createDoc(updated = now, source = user1Source, ids = listOf("doc1")))
 
-        assertThatThrownBy {
-            documentStorage.removeExistingExternalIds(
-                user,
-                listOf(
-                    "doc1",
-                    "doc2",
-                    "doc3",
-                    "doc4",
-                    "doc5",
-                    "doc6",
-                    "doc7",
-                    "doc8",
-                    "doc9",
-                    "doc10",
-                    "doc11"
-                )
+
+        documentStorage.removeExistingExternalIds(
+            user,
+            listOf(
+                "doc1",
+                "doc2",
+                "doc3",
+                "doc4",
+                "doc5",
+                "doc6",
+                "doc7",
+                "doc8",
+                "doc9",
+                "doc10",
+                "doc11"
             )
-        }
+        )
 
     }
 
