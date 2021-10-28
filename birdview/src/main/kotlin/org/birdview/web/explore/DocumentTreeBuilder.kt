@@ -2,9 +2,11 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentRef
-import org.birdview.source.BVDocumentNodesRelation
+import org.birdview.model.RelativeHierarchyType
+import org.birdview.source.BVDocumentRelationFactory
 import org.birdview.source.SourceType
 import org.birdview.storage.BVDocumentStorage
+import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.web.explore.model.BVDocumentView
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.slf4j.LoggerFactory
@@ -12,7 +14,10 @@ import javax.inject.Named
 
 @Named
 class DocumentTreeBuilder(
-    val documentViewFactory: BVDocumentViewFactory
+    val documentViewFactory: BVDocumentViewFactory,
+    val documentRelationFactory: BVDocumentRelationFactory,
+    val userSourceConfigStorage: BVUserSourceConfigStorage,
+    val documentStorage: BVDocumentStorage
 ) {
     inner class DocumentForestBuilder (
             private val documentStorage: BVDocumentStorage
@@ -21,12 +26,12 @@ class DocumentTreeBuilder(
         private val internalId2Node = mutableMapOf<String, BVDocumentViewTreeNode>()
         private val alternatives = mutableMapOf<String, MutableSet<String>>()
 
-        fun createNode(doc: BVDocument): BVDocumentViewTreeNode =
+        fun createNode(bvUser:String, doc: BVDocument): BVDocumentViewTreeNode =
             internalId2Node.computeIfAbsent(doc.internalId) {
                 BVDocumentViewTreeNode(
                     doc = documentViewFactory.create(doc),
                     lastUpdated = doc.updated,
-                    sourceType = doc.sourceType
+                    sourceType = userSourceConfigStorage.getSource(bvUser = bvUser, sourceName = doc.sourceName)!!.sourceType
                 )
             }
 
@@ -91,37 +96,62 @@ class DocumentTreeBuilder(
                 .toList()
                 .sortedByDescending { it.lastUpdated }
 
-        fun addAndLinkNodes(_docs: List<BVDocument>) {
-            log.info("Linking docs: ${_docs.map { "\n\t${it.title}(${it.ids.firstOrNull()?.id})" }.joinToString()}")
+        fun addAndLinkNodes(bvUser: String, inputDocs: List<BVDocument>) {
+            log.info("Linking docs: ${inputDocs.map { "\n\t${it.title}(${it.ids.firstOrNull()?.id})" }.joinToString()}")
+
+            val referringDocs = inputDocs
+                .flatMap { it.ids }
+                .map { it.id }
+                .let { allExternalIds -> documentStorage.getReferringDocuments(bvUser, allExternalIds.toSet()) }
+            val targetDocId2ReferringDocs: Map<String, List<BVDocument>> = referringDocs
+                .flatMap { referringDoc: BVDocument ->  referringDoc.refs.map { it.docId.id to referringDoc } }
+                .groupBy({it.first}, {it.second})
+
+            var id2doc:Map<String, BVDocument> = inputDocs.associateBy { it.internalId }
+            val externalId2Doc: Map<String, BVDocument> = (inputDocs + referringDocs)
+                .flatMap { doc-> doc.ids.map { it.id to doc } }
+                .associateBy ({ it.first }, { it.second })
 
             val processedIds = mutableSetOf<String>()
-            var docsToProcess:Map<String, BVDocument> = _docs.filter { !processedIds.contains(it.internalId) }.associateBy { it.internalId }
-
-            while (docsToProcess.isNotEmpty()) {
-                log.info("resolving refs for docs ({})", docsToProcess.size)
+            while (id2doc.isNotEmpty()) {
+                log.info("resolving refs for docs ({})", id2doc.size)
                 val refDocs = mutableMapOf<String, BVDocument>()
-                docsToProcess.values.forEach { originalDoc ->
+                id2doc.values.forEach { originalDoc ->
                     processedIds += originalDoc.internalId
-                    val originalDocNode = createNode(originalDoc)
+                    val originalDocNode = createNode(bvUser = bvUser, originalDoc)
 
                     val outgoingLinks: List<BVDocumentRef> = originalDoc.refs
-                    val incomingLinks: List<BVDocumentRef> = originalDoc.ids.map { it.id }
-                        .let { externalIds -> documentStorage.getIncomingRefsByExternalIds(externalIds.toSet()) }
+                    val externalIds = originalDoc.ids.map { it.id }
+                    val incomingLinks: List<BVDocumentRef> = externalIds
+                        .flatMap { externalId-> targetDocId2ReferringDocs.get(externalId) ?: listOf() }
+                        .flatMap { parentCandidateDoc ->
+                            parentCandidateDoc.refs.filter { ref ->
+                                externalIds.contains(ref.docId.id)
+                            }.mapNotNull { originalRef->parentCandidateDoc.ids.firstOrNull()?.let { parentId->
+                                val newRelType = if (originalRef.hierarchyType == RelativeHierarchyType.LINK_TO_PARENT) {
+                                    RelativeHierarchyType.LINK_TO_CHILD
+                                } else if (originalRef.hierarchyType == RelativeHierarchyType.LINK_TO_CHILD) {
+                                    RelativeHierarchyType.LINK_TO_PARENT
+                                } else {
+                                    RelativeHierarchyType.UNSPECIFIED
+                                }
+                                BVDocumentRef(parentId, newRelType)
+                            }}
+                        }
+
                     log.info("Linking '{}':{}",
                         "${originalDoc.title}(${originalDoc.ids.firstOrNull()?.id})",
                         (incomingLinks.map {"\n\t${it.docId.id}->"} + outgoingLinks.map {"\n\t->${it.docId.id}"}).joinToString())
 
                     for (ref in (outgoingLinks + incomingLinks)) {
-                        val referredDoc = documentStorage.getDocuments(setOf(ref.docId.id)).firstOrNull()
-                        if (referredDoc != null) {
-
+                        externalId2Doc[ref.docId.id]?.also {  referredDoc ->
                             val relation =
-                                BVDocumentNodesRelation.from(referredDoc, originalDoc, ref.hierarchyType)
+                                documentRelationFactory.from(bvUser = bvUser, referredDoc, originalDoc, ref.hierarchyType)
 
                             if (relation != null /*&& relation.child.internalId == originalDocNode.internalId */) {
                                 if (relation.child.internalId == originalDocNode.internalId) {
-                                    val parentNode = createNode(relation.parent)
-                                    val childNode = createNode(relation.child)
+                                    val parentNode = createNode(bvUser = bvUser, relation.parent)
+                                    val childNode = createNode(bvUser = bvUser, relation.child)
                                     refDocs[referredDoc.internalId] = referredDoc
                                     parentNode.addSubNode(childNode)
                                     val parentNodeLastUpdated = parentNode.lastUpdated
@@ -139,15 +169,15 @@ class DocumentTreeBuilder(
                         }
                     }
                 }
-                docsToProcess = refDocs.filter { (internalId, _) -> !processedIds.contains(internalId) }
+                id2doc = refDocs.filter { (internalId, _) -> !processedIds.contains(internalId) }
             }
         }
     }
 
-    fun buildTree(_docs: List<BVDocument>, documentStorage: BVDocumentStorage): List<BVDocumentViewTreeNode> {
+    fun buildTree(bvUser: String, _docs: List<BVDocument>): List<BVDocumentViewTreeNode> {
         val tree = DocumentForestBuilder(documentStorage)
 
-        tree.addAndLinkNodes(_docs)
+        tree.addAndLinkNodes(bvUser = bvUser, _docs)
 
         try {
             tree.mergeAlternatives()

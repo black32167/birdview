@@ -8,4 +8,5 @@ object BVCacheNames {
     const val USER_SOURCE_SECRET_CACHE_NAME = "userSourceSecret"
     const val HTTP_CLIENT_CACHE_NAME = "HTTP_CLIENT_CACHE"
     const val SOURCE_OAUTH_TOKENS_CACHE_NAME = "SOURCE_OAUTH_TOKENS_CACHE"
+    const val DOCUMENTS_CACHE = "DOCUMENTS_CACHE"
 }

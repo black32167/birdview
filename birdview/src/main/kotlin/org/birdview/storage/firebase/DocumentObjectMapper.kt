@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 
 object DocumentObjectMapper {
     private val log = LoggerFactory.getLogger(DocumentObjectMapper::class.java)
-    private val supportedPrimitives:List<KClass<*>> = listOf(String::class, Boolean::class, List::class)
+    private val supportedPrimitives:List<KClass<*>> = listOf(String::class, Boolean::class, Long::class, List::class)
 
     fun <T: Any> toObjectCatching(doc: DocumentSnapshot, targetClass: KClass<T>): T? {
         val undelyingResolver = object:ParameterResolver {

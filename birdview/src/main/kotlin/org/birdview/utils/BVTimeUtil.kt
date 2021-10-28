@@ -1,6 +1,7 @@
 package org.birdview.utils
 
 import org.slf4j.LoggerFactory
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -31,6 +32,8 @@ object BVTimeUtil {
         val stat = stats.computeIfAbsent(tag) { Stat(tag) }
         try {
             return invocation()
+        } catch (e: InvocationTargetException) {
+            throw e.targetException
         } finally {
             val durationMs = System.currentTimeMillis() - start
             stat.finished(durationMs)

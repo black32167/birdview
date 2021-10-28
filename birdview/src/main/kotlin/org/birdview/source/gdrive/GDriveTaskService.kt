@@ -13,6 +13,7 @@ import org.birdview.source.gdrive.model.GDriveFile
 import org.birdview.source.gdrive.model.GDriveUser
 import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.utils.BVDateTimeUtils
+import org.birdview.utils.BVDocumentUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
 import javax.inject.Named
@@ -63,9 +64,9 @@ open class GDriveTaskService(
                 users = extractUsers(bvUser, file, config),
                 refs = BVFilters.filterRefsFromText(file.name).map { BVDocumentRef(it) },
                 status = BVDocumentStatus.PROGRESS,
-                sourceType = getType(),
                 operations = extractOperations(file, config.sourceName),
-                sourceName = config.sourceName
+                sourceName = config.sourceName,
+                internalId = BVDocumentUtils.hashId(file.webViewLink)
         )
     } catch (e:Exception) {
         log.error("", e)

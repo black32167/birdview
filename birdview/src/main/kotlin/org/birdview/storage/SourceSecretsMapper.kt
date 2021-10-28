@@ -1,18 +1,18 @@
 package org.birdview.storage
 
 import org.birdview.storage.model.source.secrets.BVSourceSecret
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.JsonMapper
 import org.slf4j.LoggerFactory
 import javax.inject.Named
 
 @Named
-class SourceSecretsMapper(private val jsonDeserializer: JsonDeserializer) {
+class SourceSecretsMapper(private val jsonMapper: JsonMapper) {
     private val log = LoggerFactory.getLogger(SourceSecretsMapper::class.java)
 
     fun serialize(secret: BVSourceSecret) =
-        jsonDeserializer.serializeToString(secret)
+        jsonMapper.serializeToString(secret)
 
     fun deserialize(secretToken: String): BVSourceSecret {
-        return jsonDeserializer.deserializeString(secretToken, BVSourceSecret::class.java)
+        return jsonMapper.deserializeString(secretToken, BVSourceSecret::class.java)
     }
 }

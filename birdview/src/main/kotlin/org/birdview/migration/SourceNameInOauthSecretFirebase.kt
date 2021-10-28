@@ -3,13 +3,13 @@ package org.birdview.migration
 import com.google.cloud.firestore.DocumentReference
 import org.birdview.storage.firebase.BVFireStoreAccessor
 import org.birdview.storage.model.source.secrets.BVOAuthSourceSecret
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.JsonMapper
 import org.slf4j.LoggerFactory
 
 //@Named
 class SourceNameInOauthSecretFirebase(
     private val db: BVFireStoreAccessor,
-    private val jsonDeserializer: JsonDeserializer
+    private val jsonMapper: JsonMapper
 ): MigrationTask {
     private val log = LoggerFactory.getLogger(SourceNameInOauthSecretFirebase::class.java)
 
@@ -38,11 +38,11 @@ class SourceNameInOauthSecretFirebase(
         val future = db.clientProvider.getClient().runTransaction {transaction ->
             val sourceDocSnapshot = transaction.get(sourceDocRef).get()
             sourceDocSnapshot.getString("serializedSourceSecret")?.also { serializedSecret->
-                val secret = jsonDeserializer.deserializeString(serializedSecret, BVOMigratingAuthSourceSecret::class.java)
+                val secret = jsonMapper.deserializeString(serializedSecret, BVOMigratingAuthSourceSecret::class.java)
                 if (secret._secretType == "oauth") {
                     val sourceName = sourceDocSnapshot.getString("sourceName")!!
                     val updatedSecret = secret.copy(sourceName = sourceName)
-                    val updatedSerializedSecret = jsonDeserializer.serializeToString(updatedSecret)
+                    val updatedSerializedSecret = jsonMapper.serializeToString(updatedSecret)
                     transaction.update(sourceDocRef, "serializedSourceSecret", updatedSerializedSecret)
                 }
             }

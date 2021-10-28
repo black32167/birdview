@@ -5,7 +5,7 @@ import org.birdview.BVProfiles
 import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.model.source.config.BVUserSourceConfig
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.JsonMapper
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.context.annotation.Profile
@@ -15,11 +15,11 @@ import java.nio.file.StandardCopyOption
 import java.util.stream.Collectors.toList
 import javax.inject.Named
 
-@Profile(BVProfiles.FILESTORE)
+@Profile(BVProfiles.LOCAL)
 @Named
 class BVFileUserSourceConfigStorage(
         private val bvFoldersConfig: BVFoldersConfig,
-        private val jsonDeserializer: JsonDeserializer
+        private val jsonMapper: JsonMapper
 ): BVUserSourceConfigStorage {
 
     @Cacheable(USER_SOURCE_CACHE)
@@ -72,11 +72,11 @@ class BVFileUserSourceConfigStorage(
     }
 
     private fun serialize(file: Path, sourceConfig: BVUserSourceConfig) {
-        jsonDeserializer.serialize(file, sourceConfig)
+        jsonMapper.serialize(file, sourceConfig)
     }
 
     private fun deserialize(file: Path) =
-        jsonDeserializer.deserialize<BVUserSourceConfig>(file)
+        jsonMapper.deserialize<BVUserSourceConfig>(file)
 
     private fun getSourceConfigFileName(bvUserName: String, sourceName: String) =
             getUserSourcesFolder(bvUserName).resolve("${sourceName}.json")

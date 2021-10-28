@@ -7,6 +7,7 @@ import org.birdview.model.UserRole
 import org.birdview.source.*
 import org.birdview.source.confluence.model.ConfluenceSearchItemContent
 import org.birdview.utils.BVDateTimeUtils
+import org.birdview.utils.BVDocumentUtils
 import org.birdview.utils.BVFilters
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -71,9 +72,9 @@ class BVConfluenceDocumentService (
                 refs = extractRefs(confluenceDocument), // TODO
                 status = null,
                 operations = extractOperations(bvUser = bvUser, confluenceDocument, comments, sourceName),
-                sourceType = getType(), //TODO: will overwrite other users
                 priority = Priority.LOW,
-                sourceName = sourceName
+                sourceName = sourceName,
+                internalId = BVDocumentUtils.hashId(docUrl)
         )
     }
 

@@ -12,6 +12,7 @@ import org.birdview.source.github.gql.model.GqlGithubEvent
 import org.birdview.source.github.gql.model.GqlGithubPullRequest
 import org.birdview.source.github.gql.model.GqlGithubReviewUser
 import org.birdview.source.github.gql.model.GqlGithubUserActor
+import org.birdview.utils.BVDocumentUtils
 import org.birdview.utils.BVFilters
 import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
@@ -69,8 +70,8 @@ open class GithubTaskService(
                          },
                 status = status,
                 operations = operations,
-                sourceType = getType(),
-                sourceName = githubConfig.sourceName
+                sourceName = githubConfig.sourceName,
+            internalId = BVDocumentUtils.hashId(pr.url)
         )
     }
 

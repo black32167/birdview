@@ -2,12 +2,11 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.it.fixture.IntegrationTestSetupFixture
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.RelativeHierarchyType
-import org.birdview.source.SourceType
-import org.birdview.storage.memory.BVDocumentPredicate
-import org.birdview.storage.memory.BVInMemoryDocumentStorage
+import org.birdview.storage.BVDocumentStorage
 import org.birdview.utils.TestConfig
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
@@ -15,11 +14,11 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit4.SpringRunner
 import java.time.OffsetDateTime
+import java.util.*
 import javax.inject.Inject
 
 @Import(TestConfig::class)
@@ -27,19 +26,19 @@ import javax.inject.Inject
 @RunWith(SpringRunner::class)
 class DocumentTreeBuilderTest {
     private var TIME_INSTANT = OffsetDateTime.now()
-    private val documentStorage = BVInMemoryDocumentStorage(mock(BVDocumentPredicate::class.java))
 
     @Inject
     private lateinit var documentTreeBuilder: DocumentTreeBuilder
 
+    @Inject
+    private lateinit var documentStorage: BVDocumentStorage
+
+    @Inject
+    private lateinit var setupFixture: IntegrationTestSetupFixture
+
     @Before
     fun init() {
-//        Mockito.`when`(docViewFactory.create(Mockito.any())).thenAnswer { invocation->
-//            val doc = invocation.getArgumentAt(0, BVDocument::class.java)
-//            BVDocumentView()
-//        }
-
-//        documentTreeBuilder = DocumentTreeBuilder(docViewFactory)
+        setupFixture.setup()
     }
 
     @Test
@@ -48,11 +47,11 @@ class DocumentTreeBuilderTest {
         val CHILDREN_ID = "childrenId"
         val GRANDCHILDREN_ID = "grandChildrenId"
         val docs = persistDocs(
-                doc(listOf(PARENT_ID), SourceType.JIRA),
-                doc(listOf(CHILDREN_ID), SourceType.JIRA, listOf(docRef(PARENT_ID, RelativeHierarchyType.LINK_TO_PARENT))),
-                doc(listOf(GRANDCHILDREN_ID), SourceType.GDRIVE, listOf(docRef(CHILDREN_ID, RelativeHierarchyType.LINK_TO_PARENT)))
+                doc(listOf(PARENT_ID)),
+                doc(listOf(CHILDREN_ID), listOf(docRef(PARENT_ID, RelativeHierarchyType.LINK_TO_PARENT))),
+                doc(listOf(GRANDCHILDREN_ID), listOf(docRef(CHILDREN_ID, RelativeHierarchyType.LINK_TO_PARENT)))
         )
-        val views = documentTreeBuilder.buildTree(docs, documentStorage)
+        val views = documentTreeBuilder.buildTree(getUser(), docs)
         Assert.assertEquals(1, views.size)
         Assert.assertEquals(1, views.first().subNodes.size)
         Assert.assertEquals(1, views.first().subNodes.first().subNodes.size)
@@ -62,11 +61,11 @@ class DocumentTreeBuilderTest {
     @Test
     fun testCyclicDependenciesDoNotCreateCycleInTree() {
         val docs = persistDocs(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2"))),
-                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3"))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt")))
+                doc(listOf("id1", "id1Alt"), listOf(docRef("id2"))),
+                doc(listOf("id2"), listOf(docRef("id3"))),
+                doc(listOf("id3"), listOf(docRef("id1Alt")))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(getUser(), docs)
 
         assertEquals(1, tree.size)
         val uniqueDoc = tree.first()
@@ -77,12 +76,18 @@ class DocumentTreeBuilderTest {
     @Test
     fun testCyclicDependencie2DoNotCreateCycleInTree() {
         val docs = persistDocs(
-                doc(listOf("id0"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
-                doc(listOf("id1"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD), docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))),
-                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD), docRef("id2", RelativeHierarchyType.LINK_TO_CHILD)))
+                doc(listOf("id0"), listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(
+                    listOf("id1"),
+                    listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD), docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))
+                ),
+                doc(listOf("id2"), listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(
+                    listOf("id3"),
+                    listOf(docRef("id1", RelativeHierarchyType.LINK_TO_CHILD), docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))
+                )
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(getUser(), docs)
 
         assertFalse(tree.isEmpty())
         assertTrue(tree.first().doc.ids.contains("id0"))
@@ -93,11 +98,11 @@ class DocumentTreeBuilderTest {
     @Test
     fun testDirectedCyclicDependenciesDoNotCreateCycleInTree() {
         val docs = persistDocs(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))),
-                doc(listOf("id2"), SourceType.JIRA, listOf(docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
+                doc(listOf("id1", "id1Alt"), listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id2"), listOf(docRef("id3", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id3"), listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(getUser(), docs)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
@@ -106,11 +111,11 @@ class DocumentTreeBuilderTest {
     @Test
     fun testDirectedBackwardDependency() {
         val docs = persistDocs(
-                doc(listOf("id1", "id1Alt"), SourceType.JIRA, listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))),
-                doc(listOf("id2"), SourceType.JIRA, listOf()),
-                doc(listOf("id3"), SourceType.JIRA, listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
+                doc(listOf("id1", "id1Alt"), listOf(docRef("id2", RelativeHierarchyType.LINK_TO_CHILD))),
+                doc(listOf("id2"), listOf()),
+                doc(listOf("id3"), listOf(docRef("id1Alt", RelativeHierarchyType.LINK_TO_CHILD)))
         )
-        val tree = documentTreeBuilder.buildTree(docs, documentStorage)
+        val tree = documentTreeBuilder.buildTree(getUser(), docs)
 
         assertFalse(tree.isEmpty())
         tree.forEach { assertNoCycles(it, mutableSetOf()) }
@@ -118,8 +123,8 @@ class DocumentTreeBuilderTest {
 
     @Test
     fun testTreeBuilderMultipleIds() {
-        val docs = persistDocs(doc(listOf("parentId", "alternativeParentId"), SourceType.JIRA))
-        val views = documentTreeBuilder.buildTree(docs, documentStorage)
+        val docs = persistDocs(doc(listOf("parentId", "alternativeParentId")))
+        val views = documentTreeBuilder.buildTree(getUser(), docs)
         Assert.assertEquals(1, views.size)
     }
 
@@ -129,18 +134,18 @@ class DocumentTreeBuilderTest {
         val DOC1_ID = "doc1"
         val DOC2_ID = "doc2"
         val docs = listOf(
-                doc(listOf(DOC1_ID), SourceType.JIRA, updated = OffsetDateTime.now()),
-                        doc(listOf(DOC2_ID), SourceType.JIRA, updated = OffsetDateTime.now().minusSeconds(10000)))
-        val othersGroup1 = documentTreeBuilder.buildTree(docs, documentStorage)[0]
+                doc(listOf(DOC1_ID), updated = OffsetDateTime.now()),
+                        doc(listOf(DOC2_ID), updated = OffsetDateTime.now().minusSeconds(10000)))
+        val othersGroup1 = documentTreeBuilder.buildTree(getUser(), docs)[0]
         val jiraGroup1 = othersGroup1.subNodes.first()
         assertTrue(jiraGroup1.subNodes.first().doc.ids.contains(DOC1_ID))
 
-        val othersGroup2 = documentTreeBuilder.buildTree(docs.reversed(), documentStorage)[0]
+        val othersGroup2 = documentTreeBuilder.buildTree(getUser(), docs.reversed())[0]
         val jiraGroup2 = othersGroup2.subNodes.first()
         assertTrue(jiraGroup2.subNodes.first().doc.ids.contains(DOC1_ID))
     }
 
-    private fun doc(ids: List<String>, sourceType: SourceType, refIds: List<BVDocumentRef> = listOf(), updated:OffsetDateTime = dateSeq()): BVDocument =
+    private fun doc(ids: List<String>, refIds: List<BVDocumentRef> = listOf(), updated: OffsetDateTime = dateSeq()): BVDocument =
             BVDocument(
                     ids = ids.map { BVDocumentId(it) }.toSet(),
                     title = ids.first(),
@@ -152,8 +157,9 @@ class DocumentTreeBuilderTest {
                     httpUrl = "httpUrl",
                     refs = refIds,
                     status = BVDocumentStatus.BACKLOG,
-                    sourceType = sourceType,
-                    sourceName = "sourceName")
+                    sourceName = getSourceName(),
+                    internalId = UUID.randomUUID().toString()
+            )
 
     private fun dateSeq(): OffsetDateTime {
         TIME_INSTANT = TIME_INSTANT.plusSeconds(10)
@@ -173,10 +179,16 @@ class DocumentTreeBuilderTest {
         visited.remove(node)
     }
 
-    fun persistDocs(vararg docs:BVDocument): List<BVDocument> {
+    private fun persistDocs(vararg docs:BVDocument): List<BVDocument> {
         docs.forEach { doc->
-            documentStorage.updateDocument(doc)
+            documentStorage.updateDocument(getUser(), doc)
         }
         return docs.toList()
     }
+
+    private fun getUser() =
+        setupFixture.getUserNames().first()
+
+    private fun getSourceName() =
+        setupFixture.getUserSources(getUser()).first().sourceName
 }

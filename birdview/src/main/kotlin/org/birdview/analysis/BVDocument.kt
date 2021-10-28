@@ -5,7 +5,6 @@ import org.birdview.model.BVDocumentStatus
 import org.birdview.model.UserRole
 import org.birdview.source.SourceType
 import java.time.OffsetDateTime
-import java.util.*
 
 data class BVDocument (
         val ids: Set<BVDocumentId>,
@@ -20,10 +19,9 @@ data class BVDocument (
         val refs: List<BVDocumentRef> = emptyList(),
         val status: BVDocumentStatus?,
         val operations: List<BVDocumentOperation> = emptyList(),
-        val sourceType: SourceType,
         val sourceName: String,
         val priority: Priority = Priority.NORMAL,
-        val internalId: String = UUID.randomUUID().toString()
+        val internalId: String
 )
 
 enum class Priority {

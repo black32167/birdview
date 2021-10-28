@@ -7,7 +7,7 @@ import org.birdview.config.BVFoldersConfig
 import org.birdview.storage.BVUserSourceConfigStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.storage.model.BVUserSettings
-import org.birdview.utils.JsonDeserializer
+import org.birdview.utils.JsonMapper
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -17,11 +17,11 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 import javax.inject.Named
 
-@Profile(BVProfiles.FILESTORE)
+@Profile(BVProfiles.LOCAL)
 @Named
 class BVFileUserStorage (
     private val bvFoldersConfig: BVFoldersConfig,
-    private val jsonDeserializer: JsonDeserializer,
+    private val jsonMapper: JsonMapper,
     private val userSourceStorage: BVUserSourceConfigStorage
 ) : BVUserStorage {
     private val log = LoggerFactory.getLogger(BVFileUserStorage::class.java)
@@ -111,11 +111,11 @@ class BVFileUserStorage (
             .filter { (getUserSettings(it).workGroups - workGroups).isNotEmpty() }
 
     private fun serialize(file:Path, userSettings: BVUserSettings) {
-        jsonDeserializer.serialize(file, userSettings)
+        jsonMapper.serialize(file, userSettings)
     }
 
     private fun deserialize(file:Path): BVUserSettings =
-        jsonDeserializer.deserialize(file, BVUserSettings::class.java)
+        jsonMapper.deserialize(file, BVUserSettings::class.java)
 
     private fun getUserSettingsFile(userName: String) =
             bvFoldersConfig.getUserConfigFolder(userName).resolve(userSettingsFile)

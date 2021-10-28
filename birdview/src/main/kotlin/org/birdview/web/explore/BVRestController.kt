@@ -4,7 +4,6 @@ import org.birdview.BVTaskService
 import org.birdview.model.*
 import org.birdview.security.UserContext
 import org.birdview.source.SourceType
-import org.birdview.storage.BVDocumentStorage
 import org.birdview.time.BVTimeService
 import org.birdview.user.BVUserDataUpdater
 import org.birdview.user.BVUserLog
@@ -21,18 +20,17 @@ import org.springframework.web.bind.annotation.RestController
 class BVRestController(
         private val taskService: BVTaskService,
         private val userUpdater: BVUserDataUpdater,
-        private val documentStorage: BVDocumentStorage,
         private val userLog: BVUserLog,
         private val timeService: BVTimeService,
         private val documentTreeBuilder: DocumentTreeBuilder
 ) {
     class DocumentRequest(
-            val user: String?,
-            val reportType: ReportType,
-            val daysBack: Long,
-            val sourceType: String?,
-            val userRole: UserRole?,
-            var representationType: RepresentationType
+        val user: String?,
+        val reportType: ReportType,
+        val daysBack: Long,
+        val sourceName: String?,
+        val userRole: UserRole?,
+        var representationType: RepresentationType
     )
 
     @GetMapping("documents")
@@ -49,13 +47,13 @@ class BVRestController(
                     grouping = true,
                     updatedPeriod = TimeIntervalFilter(after = todayInUserTz.minusDays(documentRequest.daysBack)),
                     userFilter = UserFilter(userAlias = user, role = role),
-                    sourceType = documentRequest.sourceType,
+                    sourceName = documentRequest.sourceName,
                     representationType = documentRequest.representationType)
             //      userUpdater.waitForUserUpdated(tsRequest.userFilter.userAlias)
             val docs = taskService.getDocuments(docFilter)
 
             val docViewsRoots = documentTreeBuilder
-                    .buildTree(docs, documentStorage)
+                    .buildTree(bvUser = user, docs)
                     .toMutableList()
 
             if (documentRequest.representationType == RepresentationType.LIST) {

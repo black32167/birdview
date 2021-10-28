@@ -10,7 +10,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import javax.inject.Named
 
-@Profile(BVProfiles.FILESTORE)
+@Profile(BVProfiles.LOCAL)
 @Named
 class BVFileOAuthTokenStorage(
     val bvFoldersConfig: BVFoldersConfig

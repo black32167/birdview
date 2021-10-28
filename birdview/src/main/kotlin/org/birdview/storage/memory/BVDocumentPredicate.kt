@@ -18,7 +18,7 @@ open class BVDocumentPredicate(
     private val log = LoggerFactory.getLogger(BVDocumentFilter::class.java)
 
     fun test(doc: BVDocument, filter: BVDocumentFilter): Boolean {
-        if(filter.sourceType != "" && filter.sourceType?.let { filterSource -> doc.sourceName == filterSource } == false) {
+        if(filter.sourceName != "" && filter.sourceName?.let { filterSource -> doc.sourceName == filterSource } == false) {
             return false
         }
 

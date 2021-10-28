@@ -2,13 +2,13 @@ package org.birdview.storage
 
 import org.birdview.analysis.BVDocument
 import org.birdview.model.BVDocumentFilter
-import org.birdview.model.BVDocumentRef
+import java.time.OffsetDateTime
 
 interface BVDocumentStorage {
+    fun getLastUpdatedDocument(bvUser: String, sourceName: String): OffsetDateTime?
     fun findDocuments(filter: BVDocumentFilter): List<BVDocument>
-    fun getDocuments(searchingDocsIds: Collection<String>): List<BVDocument>
-    fun updateDocument(doc: BVDocument)
-    fun count(): Int
-    fun containsDocWithExternalId(externalId: String): Boolean
-    fun getIncomingRefsByExternalIds(externalIds: Set<String>): List<BVDocumentRef>
+    fun getDocuments(bvUser:String, externalDocsIds: Collection<String>): List<BVDocument>
+    fun updateDocument(bvUser: String, doc: BVDocument)
+    fun removeExistingExternalIds(bvUser:String, externalIds: List<String>): List<String>
+    fun getReferringDocuments(bvUser:String, externalIds: Set<String>): List<BVDocument>
 }

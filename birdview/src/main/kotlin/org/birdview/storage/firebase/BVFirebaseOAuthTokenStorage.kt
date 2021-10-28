@@ -9,7 +9,7 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.context.annotation.Profile
 import javax.inject.Named
 
-@Profile(BVProfiles.FIRESTORE)
+@Profile(BVProfiles.CLOUD)
 @Named
 open class BVFirebaseOAuthTokenStorage(
     open val collectionAccessor: BVFireStoreAccessor

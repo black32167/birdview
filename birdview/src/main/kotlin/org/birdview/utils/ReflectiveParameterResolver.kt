@@ -23,7 +23,9 @@ class ReflectiveParameterResolver(
                 .firstOrNull { it.name.equals(targetElementName, ignoreCase = true) } as T?
                 ?: throw NoSuchElementException("The enumeration ${classifier.simpleName} does not contain element '${targetElementName}' for parameter '$name'")
         } else if (classifier == Boolean::class) {
-            resolveString(name)?.toBoolean()
+            resolveString(name)?.toBoolean() as? T?
+        } else if (classifier == Long::class) {
+            underlyingParametersProvider.resolve(name, Long::class) as? T?
         } else {
             val jsonTypeInfo:JsonTypeInfo? = classifier.findAnnotation<JsonTypeInfo>()
             val jsonSubTypes:JsonSubTypes? = classifier.findAnnotation<JsonSubTypes>()
