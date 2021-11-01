@@ -45,13 +45,15 @@ class BVDocumentsLoader (
 
                 val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
                     ?: timeService.getTodayInUserZone(bvUser)
+                val minStartTime = lastUpdatedTime ?: now.minusDays(MAX_DAYS_BACK)
                 var timeInterval = TimeIntervalFilter(
-                    after = now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0),
+                    after = maxOf(
+                        minStartTime,
+                        now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)),
                     before = null)
 
-                val minStartTime = lastUpdatedTime ?: now.minusDays(MAX_DAYS_BACK)
                 CompletableFuture.runAsync(Runnable {
-                    while (timeInterval.after > minStartTime) {
+                    while (timeInterval.after >= minStartTime) {
                         log.info("Loading data from ${sourceConfig.sourceName} for ${bvUser}...")
                         val logId = userLog.logMessage(bvUser, "Updating ${sourceConfig.sourceName} (${BVDateTimeUtils.localDateFormat(timeInterval)})")
                         BVTimeUtil.logTimeAndReturn("Loading data from ${sourceConfig.sourceType} for ${bvUser} (${BVDateTimeUtils.offsetFormat(timeInterval)})") {
