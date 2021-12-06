@@ -2,29 +2,22 @@ package org.birdview.web.explore
 
 import org.birdview.analysis.BVDocument
 import org.birdview.analysis.BVDocumentId
+import org.birdview.it.firebase.AbstractFirebaseStorageTest
 import org.birdview.it.fixture.IntegrationTestSetupFixture
 import org.birdview.model.BVDocumentRef
 import org.birdview.model.BVDocumentStatus
 import org.birdview.model.RelativeHierarchyType
 import org.birdview.storage.BVDocumentStorage
-import org.birdview.utils.TestConfig
 import org.birdview.web.explore.model.BVDocumentViewTreeNode
 import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
-import org.springframework.test.context.junit4.SpringRunner
 import java.time.OffsetDateTime
 import java.util.*
 import javax.inject.Inject
 
-@Import(TestConfig::class)
-@SpringBootTest("spring.main.allow-bean-definition-overriding=true")
-@RunWith(SpringRunner::class)
-class DocumentTreeBuilderTest {
+class DocumentTreeBuilderTest : AbstractFirebaseStorageTest() {
     private var TIME_INSTANT = OffsetDateTime.now()
 
     @Inject
