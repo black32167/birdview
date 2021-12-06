@@ -27,6 +27,7 @@ class BVInMemoryUserDataUpdater (
         private val timeService: BVTimeService
 ): BVUserDataUpdater, SmartInitializingSingleton {
     companion object {
+        private val INITIAL_DELAY: Long = System.getProperty("initial.update.delay", "1" ).toLong()
         private const val DELAY_BETWEEN_UPDATES_SECONDS: Long = 30 * 60
         private const val MAX_DAYS_BACK = 30L
     }
@@ -40,7 +41,7 @@ class BVInMemoryUserDataUpdater (
     private val userSemaphores = ConcurrentHashMap<String, Semaphore>()
 
     override fun afterSingletonsInstantiated() {
-        updateScheduleExecutor.scheduleWithFixedDelay(this::refreshUsers, 1, DELAY_BETWEEN_UPDATES_SECONDS, TimeUnit.SECONDS)
+        updateScheduleExecutor.scheduleWithFixedDelay(this::refreshUsers, INITIAL_DELAY, DELAY_BETWEEN_UPDATES_SECONDS, TimeUnit.SECONDS)
     }
 
     private fun refreshUsers() {
