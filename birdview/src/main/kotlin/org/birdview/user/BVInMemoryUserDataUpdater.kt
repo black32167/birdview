@@ -2,7 +2,6 @@ package org.birdview.user
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.birdview.analysis.BVDocument
-import org.birdview.config.EnvironmentVariables
 import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
 import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
 import org.birdview.source.BVSessionDocumentConsumer
@@ -10,7 +9,6 @@ import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
 import org.birdview.time.BVTimeService
 import org.birdview.user.document.BVDocumentsLoader
-import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.SmartInitializingSingleton
@@ -63,8 +61,6 @@ class BVInMemoryUserDataUpdater (
 
         updateScheduleExecutor.submit {
             for (bvUser in idleBvUsers) {
-                val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
-                    ?: timeService.getTodayInUserZone(bvUser)
                 userFutures[bvUser] = userUpdateExecutor.submit {
                     loadUserData(bvUser)
                 }

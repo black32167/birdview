@@ -188,8 +188,17 @@ class DocumentTreeBuilder(
 
             // Group ungrouped by types
             val roots = tree.getRoots();
-            val (singles, trees) = roots.partition { it.subNodes.isEmpty() }
+            var (singles, trees) = roots.partition { it.subNodes.isEmpty() }
 
+            // Remove duplicate leafs in tree
+            val duplicatedLeafIds = mutableSetOf<String>()
+            val duplicatedLeafs:List<BVDocumentViewTreeNode> = findDuplicatedLeafs(
+                trees, encounteredLeafsIds = mutableSetOf(), duplicatedLeafsIds = duplicatedLeafIds)
+            singles += duplicatedLeafs
+            trees = trees.filter { root -> !removeLeaf(root, duplicatedLeafIds) || !root.subNodes.isEmpty() }
+
+
+            // Structure singles(if present) by the document type
             if (singles.isEmpty()) {
                 return trees
             } else {
@@ -212,5 +221,37 @@ class DocumentTreeBuilder(
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
+    }
+
+    private fun removeLeaf (
+        node: BVDocumentViewTreeNode,
+        nodesToRemove: Set<String>
+    ): Boolean {
+        if (nodesToRemove.contains(node.internalId)) {
+            return true
+        }
+
+        val removedGrandchild = node.subNodes.removeIf { children ->
+            removeLeaf(children, nodesToRemove) && children.subNodes.isEmpty()
+        }
+
+        return removedGrandchild
+    }
+
+    private fun findDuplicatedLeafs(nodes: Collection<BVDocumentViewTreeNode>, encounteredLeafsIds: MutableSet<String>, duplicatedLeafsIds: MutableSet<String>): List<BVDocumentViewTreeNode> {
+        val duplicatedLeafs = mutableListOf<BVDocumentViewTreeNode>()
+
+        for (node in nodes) {
+            if (node.subNodes.isEmpty()) { // Leaf
+                val nodeId = node.internalId
+                if (!encounteredLeafsIds.add(nodeId) && duplicatedLeafsIds.add(nodeId)) {
+                    duplicatedLeafs.add(node)
+                }
+            } else {
+                duplicatedLeafs.addAll(findDuplicatedLeafs(node.subNodes, encounteredLeafsIds, duplicatedLeafsIds))
+            }
+        }
+
+        return duplicatedLeafs
     }
 }
