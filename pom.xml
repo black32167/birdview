@@ -15,7 +15,7 @@
         <jersey.version>2.29</jersey.version>
         <junit-version>4.12</junit-version>
         <lucene.version>8.5.1</lucene.version>
-        <springboot.version>2.5.2</springboot.version>
+        <springboot.version>2.5.12</springboot.version>
     </properties>
     <build>
         <pluginManagement>
