@@ -23,6 +23,16 @@ dbuild() {
 	docker build -t ${IMAGE_NAME} -f "${DOCKER_FILE}" "${CTX_DIR}"
 }
 
+usage() {
+  echo "Usage:"
+  echo "${BASH_SOURCE} {docker|maven}"
+}
+
+if [[ "$#" == 0 ]]; then
+  usage
+  exit 1
+fi
+
 case "${1}" in
 docker)
   dbuild
@@ -31,7 +41,7 @@ maven)
   mbuild
   ;;
 *)
-  echo "Usage:"
-  echo "${BASH_SOURCE} {docker|maven}"
+  usage
+  exit 1
   ;;
 esac
