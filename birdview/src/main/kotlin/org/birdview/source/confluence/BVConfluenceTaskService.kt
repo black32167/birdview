@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Named
 
 @Named
-class BVConfluenceDocumentService (
+class BVConfluenceTaskService (
     private val client: ConfluenceClient,
 ): BVTaskSource {
     private val CONFLUENCE_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSX"
