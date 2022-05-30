@@ -1,5 +1,7 @@
 package org.birdview.user.document
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.birdview.analysis.BVDocument
 import org.birdview.config.EnvironmentVariables
 import org.birdview.model.TimeIntervalFilter
@@ -14,7 +16,6 @@ import org.birdview.utils.BVConcurrentUtils
 import org.birdview.utils.BVDateTimeUtils
 import org.birdview.utils.BVTimeUtil
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import javax.inject.Named
@@ -34,52 +35,77 @@ class BVDocumentsLoader (
     private val log = LoggerFactory.getLogger(BVDocumentsLoader::class.java)
     private val executor = Executors.newCachedThreadPool(BVConcurrentUtils.getDaemonThreadFactory("DocLoader-%d"))
 
-    fun loadDocuments(
+    suspend fun loadDocuments(
         bvUser: String,
         documentConsumer: BVSessionDocumentConsumer
-    ): List<Future<*>> =
-        sourceConfigProvider.listEnabledSourceConfigs(bvUser)
-            .map { sourceConfig ->
-                val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
-                val lastUpdatedTime = documentStorage.getLastUpdatedDocument(bvUser = bvUser, sourceName = sourceConfig.sourceName)
+    ) = runBlocking {
+            sourceConfigProvider.listEnabledSourceConfigs(bvUser)
+                .map { sourceConfig ->
+                    val sourceManager = sourcesManager.getBySourceType(sourceConfig.sourceType)
+                    val lastUpdatedTime =
+                        documentStorage.getLastUpdatedDocument(bvUser = bvUser, sourceName = sourceConfig.sourceName)
 
-                val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
-                    ?: timeService.getTodayInUserZone(bvUser)
-                val minStartTime = lastUpdatedTime ?: now.minusDays(MAX_DAYS_BACK)
-                var timeInterval = TimeIntervalFilter(
-                    after = maxOf(
-                        minStartTime,
-                        now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)),
-                    before = null)
+                    val now = System.getenv(EnvironmentVariables.END_UPDATE_PERIOD)
+                        ?.let { BVDateTimeUtils.parse(it, "dd-MM-yyyy") }
+                        ?: timeService.getTodayInUserZone(bvUser)
+                    val minStartTime = lastUpdatedTime ?: now.minusDays(MAX_DAYS_BACK)
+                    var timeInterval = TimeIntervalFilter(
+                        after = maxOf(
+                            minStartTime,
+                            now.minusDays(2).withHour(0).withMinute(0).withSecond(0).withNano(0)
+                        ),
+                        before = null
+                    )
 
-                CompletableFuture.runAsync(Runnable {
-                    while (timeInterval.after >= minStartTime) {
-                        log.info("Loading data from ${sourceConfig.sourceName} for ${bvUser}...")
-                        val logId = userLog.logMessage(bvUser, "Updating ${sourceConfig.sourceName} (${BVDateTimeUtils.localDateFormat(timeInterval)})")
-                        BVTimeUtil.logTimeAndReturn("Loading data from ${sourceConfig.sourceType} for ${bvUser} (${BVDateTimeUtils.offsetFormat(timeInterval)})") {
-                            try {
-                                sourceManager.getTasks(
-                                    bvUser,
-                                    timeInterval,
-                                    sourceConfig,
-                                    documentConsumer
-                                )
-                            } catch (e: Throwable) {
-                                log.error(
-                                    "Error loading documents for ${sourceConfig.sourceType}, sm=${sourceManager.getType()} user=${bvUser}:",
-                                    e
+                    async {
+                        while (timeInterval.after >= minStartTime) {
+                            log.info("Loading data from ${sourceConfig.sourceName} for ${bvUser}...")
+                            val logId = userLog.logMessage(
+                                bvUser,
+                                "Updating ${sourceConfig.sourceName} (${BVDateTimeUtils.localDateFormat(timeInterval)})"
+                            )
+                            BVTimeUtil.logTimeAndReturn(
+                                "Loading data from ${sourceConfig.sourceType} for ${bvUser} (${
+                                    BVDateTimeUtils.offsetFormat(
+                                        timeInterval
+                                    )
+                                })"
+                            ) {
+                                try {
+                                    sourceManager.getTasks(
+                                        bvUser,
+                                        timeInterval,
+                                        sourceConfig,
+                                        documentConsumer
+                                    )
+                                } catch (e: Throwable) {
+                                    log.error(
+                                        "Error loading documents for ${sourceConfig.sourceType}, sm=${sourceManager.getType()} user=${bvUser}:",
+                                        e
+                                    )
+                                }
+                                timeInterval = timeInterval.copy(
+                                    after = timeInterval.after.minusDays(10),
+                                    before = timeInterval.after
                                 )
                             }
-                            timeInterval = timeInterval.copy(
-                                after = timeInterval.after.minusDays(10),
-                                before = timeInterval.after
+                            userLog.logMessage(
+                                bvUser,
+                                "Updated ${sourceConfig.sourceName} (${BVDateTimeUtils.localDateFormat(timeInterval)})",
+                                logId
                             )
                         }
-                        userLog.logMessage(bvUser, "Updated ${sourceConfig.sourceName} (${BVDateTimeUtils.localDateFormat(timeInterval)})", logId)
+                        log.info(
+                            "Loaded data from ${sourceConfig.sourceType} for ${bvUser} (${
+                                BVDateTimeUtils.offsetFormat(
+                                    timeInterval
+                                )
+                            })"
+                        )
                     }
-                    log.info("Loaded data from ${sourceConfig.sourceType} for ${bvUser} (${BVDateTimeUtils.offsetFormat(timeInterval)})")
-                }, executor)
-            }
+                }.forEach { it.await() }
+        }
+
 
     fun loadDocsByIds(
         bvUser: String,

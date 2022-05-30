@@ -1,13 +1,16 @@
 package org.birdview.user
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import org.birdview.analysis.BVDocument
 import org.birdview.model.RelativeHierarchyType.LINK_TO_PARENT
 import org.birdview.model.RelativeHierarchyType.UNSPECIFIED
 import org.birdview.source.BVSessionDocumentConsumer
 import org.birdview.storage.BVDocumentStorage
 import org.birdview.storage.BVUserStorage
-import org.birdview.time.BVTimeService
 import org.birdview.user.document.BVDocumentsLoader
 import org.birdview.utils.BVDocumentUtils
 import org.slf4j.LoggerFactory
@@ -21,8 +24,6 @@ class BVInMemoryUserDataUpdater (
         private val userStorage: BVUserStorage,
         private val documentsLoader: BVDocumentsLoader,
         private val documentStorage: BVDocumentStorage,
-
-        private val timeService: BVTimeService
 ): BVUserDataUpdater, SmartInitializingSingleton {
     companion object {
         private val INITIAL_DELAY: Long = System.getProperty("initial.update.delay", "1" ).toLong()
@@ -30,11 +31,9 @@ class BVInMemoryUserDataUpdater (
         private const val MAX_DAYS_BACK = 30L
     }
     private val log = LoggerFactory.getLogger(BVInMemoryUserDataUpdater::class.java)
-    private data class UserUpdateInfo (val bvUser:String, val timestamp: Long = 0)
     private val updateScheduleExecutor = Executors.newScheduledThreadPool(1, ThreadFactoryBuilder().setNameFormat("UpdateScheduler-%d").build())
     private val userUpdateExecutor = Executors.newFixedThreadPool(3, ThreadFactoryBuilder().setNameFormat("UserUpdater-%d").build())
 
-    private val userFutures = ConcurrentHashMap<String, Future<*>>()
 
     private val userSemaphores = ConcurrentHashMap<String, Semaphore>()
 
@@ -60,29 +59,22 @@ class BVInMemoryUserDataUpdater (
         log.info(">>>>>>>>> Idle users :${idleBvUsers.joinToString (",")}")
 
         updateScheduleExecutor.submit {
-            for (bvUser in idleBvUsers) {
-                userFutures[bvUser] = userUpdateExecutor.submit {
-                    loadUserData(bvUser)
-                }
-            }
-
-            userFutures.forEach { bvUser, future->
-                try {
-                    future.get()
-                } catch (e: Throwable) {
-                    log.error("", e)
-                } finally {
-                    userSemaphores.get(bvUser)?.release()
-                }
+            runBlocking(Dispatchers.IO) {
+                idleBvUsers.map { bvUser->
+                    async {
+                        try {
+                            loadUserData(bvUser)
+                        } finally {
+                            userSemaphores.get(bvUser)?.release()
+                        }
+                    }
+                }.awaitAll()
             }
 
             log.info(">>>>>>>>> Finished refreshing users ${bvUsers.joinToString (",")}.")
         }
     }
 
-    override fun waitForUserUpdated(bvUser: String) {
-        userFutures[bvUser]?.get()
-    }
 
     private fun loadUserData(bvUser: String) {
         log.info(">>>>>>>>> Loading data for '${bvUser}'")
@@ -101,8 +93,9 @@ class BVInMemoryUserDataUpdater (
         }
         try {
             // Loading direct docs:
-            documentsLoader.loadDocuments(bvUser, documentSessionConsumer)
-                .forEach(this::waitForCompletion)
+            runBlocking {
+                documentsLoader.loadDocuments(bvUser, documentSessionConsumer)
+            }
 
             // Loading missed referred docs:
             var loadedReferredDocs: Collection<BVDocument> = loadedDocs.values
