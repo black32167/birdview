@@ -11,7 +11,7 @@
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.4.10</kotlin.version>
+        <kotlin.version>1.6.0</kotlin.version>
         <jersey.version>2.29</jersey.version>
         <junit-version>4.12</junit-version>
         <lucene.version>8.5.1</lucene.version>
